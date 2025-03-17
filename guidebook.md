@@ -1,7 +1,10 @@
 # 명령어
 
+################# docker compose up --build ###################
+
 # frontend
 npx create-expo-app@3.2.0 frontend --example with-router
+npm start
 
 # backend
 npm init -y
