@@ -1,0 +1,45 @@
+services:
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8081:8081"
+    depends_on:
+      - backend
+    networks: 
+      - ai-diagnosis-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    depends_on: # 의존 관계 설정
+      - database # 백엔드는 DB 먼저 실행
+    environment:
+      DATABASE_URL: postgres://root:root@database:5432/aidiagnosis_db
+    networks:
+     - ai-diagnosis-network
+
+  database:
+    image: postgres:17.4-bookworm
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: aidiagnosis_db
+    volumes: 
+      - ai-diagnosis-data:/var/lib/postgresql/data # PostgreSQL 데이터를 저장하여 컨테이너 종료 후에도 유지됨
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # PostgreSQL 컨테이너 처음 실행 시, 실행
+    networks: 
+      - ai-diagnosis-network
+
+
+volumes: 
+  ai-diagnosis-data:
+
+
+networks: # 모든 컨테이너가 같은 네트워크 공유
+  ai-diagnosis-network:
+    driver: bridge
