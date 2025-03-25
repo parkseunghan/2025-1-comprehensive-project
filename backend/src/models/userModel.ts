@@ -1,5 +1,5 @@
 // src/models/userModel.ts
-// 메모리 저장소
+// 사용자 등록
 
 interface User {
     id: number;
