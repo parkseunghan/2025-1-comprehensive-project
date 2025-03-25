@@ -1,4 +1,6 @@
 // src/routes/authRoutes.ts
+// register(사용자 등록) 엔드포인트 라우팅
+
 import express from 'express';
 import { registerUser } from '../controllers/authController';
 

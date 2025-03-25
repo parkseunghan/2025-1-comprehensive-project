@@ -1,4 +1,6 @@
 // src/controllers/authController.ts
+// register(사용자 등록) API 처리 로직
+
 import { Request, Response } from 'express';
 import { createUser } from '../models/userModel';
 

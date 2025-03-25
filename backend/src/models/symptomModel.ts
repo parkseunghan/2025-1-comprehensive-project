@@ -4,17 +4,19 @@
 interface Symptom {
     id: number;
     description: string;
-    severity: string;
+    // severity: string;
 }
 
-let syptoms: Symptom[] = [];
+let symptoms: Symptom[] = [];
 
-export const recordSymtom = (description: string, severity: string) => {
-    const newSymptom: Symptom = { id: syptoms.length + 1, description, severity };
-    syptoms.push(newSymptom);
+// export const recordSymptom = (description: string, severity: string) => {
+export const recordSymptom = (description: string) => {
+    // const newSymptom: Symptom = { id: syptoms.length + 1, description, severity };
+    const newSymptom: Symptom = { id: symptoms.length + 1, description };
+    symptoms.push(newSymptom);
     return newSymptom;
 }
 
 export const getSymptoms = () => {
-    return syptoms;
+    return symptoms;
 }
