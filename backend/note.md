@@ -1,9 +1,22 @@
 models - controllers - routes - server.ts 순으로 코드 작성
 
+api:
+    /users/register
+    - userModel -> authController -> authRoutes 
+
+    /symptoms
+    - symptomModel -> symptomController -> symptomRoutes
+    
+    
+    - userController -> 
+
+
+
 이후 엔드포인트 테스트
 POST /api/*/*
 
 # 1. postman
+
     api: register
     url: http://localhost:5000/api/users/register
     - +create new collection
@@ -16,3 +29,5 @@ POST /api/*/*
         "password": "park123"
         }
     - Send
+
+    
