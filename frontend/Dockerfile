@@ -11,10 +11,6 @@ RUN npm install
 # 모든 소스 코드 복사
 COPY . .
 
-# 환경 변수 설정
-# 서버 실행 포트 설정
-ENV PORT=8081
-
 # 컨테이너 시작 시 실행 명령
 # 서버 실행
 CMD ["npm", "start"]

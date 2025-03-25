@@ -1,0 +1,7 @@
+node_modules
+build
+.gitignore
+npm-cache
+.git
+.env
+.vscode

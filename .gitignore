@@ -5,4 +5,11 @@ backend/node_modules/
 
 # 환경 변수
 .env
+
+
 ai-diagnosis-data
+
+# Docker
+docker-compose
+frontend/Dockerfile
+backend/Dockerfile

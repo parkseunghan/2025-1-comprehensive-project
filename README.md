@@ -9,8 +9,17 @@
 
 ### Backend
     - nodejs
+    - ES Module 사용
 
-
+    npm install
+    - nodemon: 코드 변경 시 자동 재실행
+    - express: 백엔드 프레임워크
+    - cors: CORS 정책 허용
+    - dotenv: 환경변수 관리
+    - pg, sequelize, sequelize-cli: PostgreSQL 연동
+    - body-parser: JSON 요청 처리
+    - multer: 파일 업로드(음성 데이터 저장)
+   
 ### Database
     - postgreSQL
 
