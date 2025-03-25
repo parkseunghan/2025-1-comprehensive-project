@@ -1,15 +1,18 @@
 "use strict";
 // src/models/symptomModel.ts
+// 증상 기록
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSymptoms = exports.recordSymtom = void 0;
-let syptoms = [];
-const recordSymtom = (description, severity) => {
-    const newSymptom = { id: syptoms.length + 1, description, severity };
-    syptoms.push(newSymptom);
+exports.getSymptoms = exports.recordSymptom = void 0;
+let symptoms = [];
+// export const recordSymptom = (description: string, severity: string) => {
+const recordSymptom = (description) => {
+    // const newSymptom: Symptom = { id: syptoms.length + 1, description, severity };
+    const newSymptom = { id: symptoms.length + 1, description };
+    symptoms.push(newSymptom);
     return newSymptom;
 };
-exports.recordSymtom = recordSymtom;
+exports.recordSymptom = recordSymptom;
 const getSymptoms = () => {
-    return syptoms;
+    return symptoms;
 };
 exports.getSymptoms = getSymptoms;

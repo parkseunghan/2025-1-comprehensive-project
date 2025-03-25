@@ -16,15 +16,19 @@ export const addSymptom = (req: Request, res: Response) => {
     }
     */
     const { description } = req.body;
+    console.log('받은 요청 본문:', req.body);  // 요청 본문 확인
+
     if (!description) {
-        res.status(400).json({ message: '증상 설명을 입력해주세요.' })
+        res.status(400).json({ message: '증상을 입력해주세요.' })
+        console.log('증상을 입력해주세요.')
         return;
     }
 
     const newSymptom = recordSymptom(description);
 
     res.status(201).json({
-        message: 'Symptom recorded successfully',
+        message: '증상 입력이 완료되었습니다.',
         symptom: newSymptom
     });
+    console.log('사용자 등록이 완료되었습니다.', newSymptom);
 }

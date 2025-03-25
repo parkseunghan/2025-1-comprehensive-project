@@ -1,4 +1,6 @@
 "use strict";
+// src/controllers/authController.ts
+// register(사용자 등록) API 처리 로직
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerUser = void 0;
 const userModel_1 = require("../models/userModel");
@@ -31,9 +33,9 @@ const registerUser = (req, res) => {
     users.push(newUser);
     */
     res.status(201).json({
-        message: '사용자가 성공적으로 등록되었습니다.',
+        message: '사용자 등록이 완료되었습니다.',
         user: newUser
     });
-    console.log('사용자가 성공적으로 등록되었습니다.', newUser);
+    console.log('사용자 등록이 완료되었습니다.', newUser);
 };
 exports.registerUser = registerUser;

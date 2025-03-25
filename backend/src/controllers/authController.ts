@@ -38,8 +38,8 @@ export const registerUser = (req: Request, res: Response) => {
     */
 
     res.status(201).json({
-        message: '사용자가 성공적으로 등록되었습니다.',
+        message: '사용자 등록이 완료되었습니다.',
         user: newUser
     });
-    console.log('사용자가 성공적으로 등록되었습니다.', newUser);
+    console.log('사용자 등록이 완료되었습니다.', newUser);
 };

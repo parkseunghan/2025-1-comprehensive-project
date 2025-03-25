@@ -1,6 +1,6 @@
 "use strict";
 // src/models/userModel.ts
-// 메모리 저장소
+// 사용자 등록
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUsers = exports.createUser = void 0;
 let users = [];
