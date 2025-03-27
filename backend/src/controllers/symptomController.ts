@@ -1,11 +1,17 @@
 // src/controllers/symptomComtroller.ts
-// symptom(증상) 기록 API 처리
+// symptom(증상 기록), getUserSymptoms(증상 기록 조회) API 처리
 
 import { Request, Response } from 'express';
 import { recordSymptom } from '../models/symptomModel';
 
-export const addSymptom = (req: Request, res: Response) => {
+// 더미 데이터로 증상 기록을 반환
+const symptoms = [
+    { userId: 1, symptom: 'fever', date: '2025-03-01' },
+    { userId: 1, symptom: 'headache', date: '2025-03-02' },
+    { userId: 2, symptom: 'cough', date: '2025-03-01' }
+];
 
+export const addSymptom = (req: Request, res: Response) => {
 
     // 입력 데이터 확인
     /*
@@ -32,3 +38,15 @@ export const addSymptom = (req: Request, res: Response) => {
     });
     console.log('사용자 등록이 완료되었습니다.', newSymptom);
 }
+
+// 사용자의 증상 기록 조회
+export const getUserSymptoms = (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const userSymptoms = symptoms.filter(s => s.userId === parseInt(userId));
+
+    if (userSymptoms.length === 0) {
+        return res.status(404).json({ message: 'No symptoms found for this user' });
+    }
+
+    return res.status(200).json(userSymptoms);
+};
