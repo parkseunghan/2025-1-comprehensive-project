@@ -3,7 +3,7 @@
 // 요청 데이터를 파싱하고, 서비스 로직을 호출하며, 응답을 반환합니다.
 
 import { Request, Response } from "express";
-import * as userService from "../services/user.service"; // 사용자 서비스 로직 호출
+import * as userService from "../services/user.services"; // 사용자 서비스 로직 호출
 
 /**
  * 사용자 ID로 사용자 조회

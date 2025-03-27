@@ -30,6 +30,16 @@ POST /api/*/*
         - userController -> userRoutes
 
     
+# 계층별 구성요소 역할
+
+    | 계층         | 역할 설명 |
+    |--------------|-----------|
+    | **Router**     | 클라이언트의 요청 URL 및 HTTP 메서드를 기반으로 어떤 컨트롤러 함수로 연결할지 결정함 |
+    | **Controller** | 요청(request)을 받고, 파라미터를 정리하고, 적절한 서비스 함수를 호출. HTTP 응답(response)을 반환함 |
+    | **Service**     | 비즈니스 로직 담당 계층. 검증, 연산, 외부 API 호출, 트랜잭션 등을 처리. 모델(ORM)과 통신 |
+    | **Model (ORM)** | 데이터베이스와 직접 연결되는 계층 (Prisma, Sequelize 등). CRUD 처리 전담 |
+
+
 
 
 # 테이블
