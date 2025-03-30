@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.register = void 0;
 const users_1 = require("../mock/users");
 const uuid_1 = require("uuid");
+const jwt_util_1 = require("../utils/jwt.util");
 /**
  * 회원가입 요청 처리
  */
@@ -38,8 +39,13 @@ const login = (email, password) => {
     const user = users_1.users.find((u) => u.email === email && u.password === password);
     if (!user)
         return null;
+    const token = (0, jwt_util_1.generateToken)({
+        id: user.id,
+        email: user.email,
+        name: user.name
+    });
     return {
-        token: `fake-jwt-token-for-${user.id}`,
+        token,
         user: {
             id: user.id,
             email: user.email,
