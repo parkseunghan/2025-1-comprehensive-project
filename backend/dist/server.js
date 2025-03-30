@@ -7,8 +7,6 @@ const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const path_1 = __importDefault(require("path"));
-const authRoutes_1 = __importDefault(require("./src/routes/authRoutes"));
-// import symptomRoutes from './src/routes/symptomRoutes';
 const routes_1 = __importDefault(require("./src/routes"));
 // .env 파일이 root 경로에 있다는 것을 명시적으로 지정
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
@@ -18,9 +16,6 @@ console.log(`Loaded PORT from .env: ${process.env.PORT}`);
 console.log(`Using PORT: ${PORT}`);
 app.use(body_parser_1.default.json());
 // 라우터 연결
-app.use('/api/users', authRoutes_1.default);
-// app.use('/api/symptoms', symptomRoutes);
-// 새 라우터
 app.use('/api', routes_1.default);
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT} `);

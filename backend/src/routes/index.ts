@@ -7,6 +7,7 @@ import diseaseRoutes from "./disease.routes";
 import symptomRoutes from "./symptom.routes";
 import recordRoutes from "./record.routes";
 import predictionRoutes from "./prediction.routes";
+import authRoutes from "./auth.routes"
 
 const router = Router();
 
@@ -24,5 +25,7 @@ router.use("/records", recordRoutes);
 
 // 예측 관련 라우터 연결 (/api/predictions)
 router.use("/predictions", predictionRoutes);
+
+router.use("/auth", authRoutes)
 
 export default router;

@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 🔹 schema.prisma
+// 사용자, 지병, 증상, 증상기록, 예측 모델 구조 정의
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String         @id @default(uuid())
+  email       String         @unique
+  password    String
+  name        String?
+  gender      String
+  age         Int
+  height      Float
+  weight      Float
+  medications String[]       // 약물 배열
+  diseases    UserDisease[]  // N:M
+  records     SymptomRecord[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Disease {
+  id     String        @id @default(uuid())
+  name   String        @unique
+  users  UserDisease[]
+}
+
+model UserDisease {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  disease   Disease  @relation(fields: [diseaseId], references: [id])
+  diseaseId String
+
+  @@unique([userId, diseaseId])
+}
+
+model Symptom {
+  id       String           @id @default(uuid())
+  name     String           @unique
+  records  SymptomOnRecord[]
+}
+
+model SymptomRecord {
+  id         String           @id @default(uuid())
+  user       User             @relation(fields: [userId], references: [id])
+  userId     String
+  symptoms   SymptomOnRecord[]
+  prediction Prediction?
+  createdAt  DateTime         @default(now())
+}
+
+model SymptomOnRecord {
+  id        String         @id @default(uuid())
+  symptom   Symptom        @relation(fields: [symptomId], references: [id])
+  symptomId String
+  record    SymptomRecord  @relation(fields: [recordId], references: [id])
+  recordId  String
+
+  @@unique([symptomId, recordId])
+}
+
+model Prediction {
+  id         String         @id @default(uuid())
+  record     SymptomRecord  @relation(fields: [recordId], references: [id])
+  recordId   String         @unique
+  result     String
+  confidence Float
+  guideline  String
+  createdAt  DateTime       @default(now())
+}
