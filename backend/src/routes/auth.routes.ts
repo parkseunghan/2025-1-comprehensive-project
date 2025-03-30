@@ -1,14 +1,16 @@
 // 🔹 auth.routes.ts
-// 인증 관련 API 라우트 정의
+// 이 파일은 사용자 인증(Authentication) 관련 라우터를 정의합니다.
+// 회원가입 및 로그인 요청을 처리합니다.
 
-import { Router } from 'express';
-import { signup, login, me } from '../controllers/auth.controller';
-import { authMiddleware } from '../middlewares/auth.middleware';
+import { Router } from "express";
+import * as authController from "../controllers/auth.controller";
 
 const router = Router();
 
-router.post('/signup', signup);  // 회원가입 처리
-router.post('/login', login);    // 로그인 처리
-router.get('/me', authMiddleware, me);  // 로그인한 사용자 정보 조회
+// [POST] /auth/register - 회원가입
+router.post("/register", authController.register);
+
+// [POST] /auth/login - 로그인
+router.post("/login", authController.login);
 
 export default router;
