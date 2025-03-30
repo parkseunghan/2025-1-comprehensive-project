@@ -38,15 +38,16 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const diseaseController = __importStar(require("../controllers/disease.controller")); // 지병 컨트롤러 로드
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [GET] /diseases - 지병 검색/목록
 router.get("/", diseaseController.getAllDiseases);
 // [GET] /diseases/:id - 특정 지병 조회
 router.get("/:id", diseaseController.getDiseaseById);
 // [GET] /diseases/users/:userId/ - 사용자의 지병 목록
-router.get("/user/:userId", diseaseController.getUserDiseases);
+router.get("/user/:userId", auth_middleware_1.authMiddleware, diseaseController.getUserDiseases);
 // [POST] /diseases/users/:userId/ - 사용자에게 지병 추가
-router.post("/user/:userId", diseaseController.addUserDisease);
+router.post("/user/:userId", auth_middleware_1.authMiddleware, diseaseController.addUserDisease);
 // [DELETE] /diseases/users/:userId/:diseaseId - 사용자의 지병 삭제
-router.delete("/user/:userId/:diseaseId", diseaseController.deleteUserDisease);
+router.delete("/user/:userId/:diseaseId", auth_middleware_1.authMiddleware, diseaseController.deleteUserDisease);
 exports.default = router;

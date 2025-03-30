@@ -11,7 +11,8 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
   const token = req.headers.authorization?.split(' ')[1]; // Bearer 토큰 추출
 
   if (!token) {
-    return res.status(401).json({ message: '토큰이 없습니다.' });
+    res.status(401).json({ message: '토큰이 없습니다.' });
+    return;
   }
 
   try {
@@ -19,6 +20,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     req.user = decoded;                 // 요청 객체에 사용자 정보 추가
     next();                             // 다음 미들웨어로 이동
   } catch (error) {
-    return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
+    res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
+    return;
   }
 };

@@ -4,6 +4,7 @@
 
 import { Router } from "express";
 import * as diseaseController from "../controllers/disease.controller"; // 지병 컨트롤러 로드
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -14,12 +15,12 @@ router.get("/", diseaseController.getAllDiseases);
 router.get("/:id", diseaseController.getDiseaseById);
 
 // [GET] /diseases/users/:userId/ - 사용자의 지병 목록
-router.get("/user/:userId", diseaseController.getUserDiseases);
+router.get("/user/:userId", authMiddleware, diseaseController.getUserDiseases);
 
 // [POST] /diseases/users/:userId/ - 사용자에게 지병 추가
-router.post("/user/:userId", diseaseController.addUserDisease);
+router.post("/user/:userId", authMiddleware, diseaseController.addUserDisease);
 
 // [DELETE] /diseases/users/:userId/:diseaseId - 사용자의 지병 삭제
-router.delete("/user/:userId/:diseaseId", diseaseController.deleteUserDisease);
+router.delete("/user/:userId/:diseaseId", authMiddleware, diseaseController.deleteUserDisease);
 
 export default router;

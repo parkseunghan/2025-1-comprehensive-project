@@ -11,7 +11,8 @@ const authMiddleware = (req, res, next) => {
     var _a;
     const token = (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split(' ')[1]; // Bearer 토큰 추출
     if (!token) {
-        return res.status(401).json({ message: '토큰이 없습니다.' });
+        res.status(401).json({ message: '토큰이 없습니다.' });
+        return;
     }
     try {
         const decoded = (0, jwt_util_1.verifyToken)(token); // JWT 검증
@@ -19,7 +20,8 @@ const authMiddleware = (req, res, next) => {
         next(); // 다음 미들웨어로 이동
     }
     catch (error) {
-        return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
+        res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
+        return;
     }
 };
 exports.authMiddleware = authMiddleware;
