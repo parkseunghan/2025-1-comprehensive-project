@@ -38,9 +38,10 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const predictionController = __importStar(require("../controllers/prediction.controller"));
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [POST] /symptom-records/:recordId/prediction - 예측 생성 요청
-router.post("/symptom-records/:recordId/prediction", predictionController.createPrediction);
+router.post("/symptom-records/:recordId/prediction", auth_middleware_1.authMiddleware, predictionController.createPrediction);
 // [GET] /symptom-records/:recordId/prediction - 예측 결과 조회
-router.get("/symptom-records/:recordId/prediction", predictionController.getPredictionByRecord);
+router.get("/symptom-records/:recordId/prediction", auth_middleware_1.authMiddleware, predictionController.getPredictionByRecord);
 exports.default = router;

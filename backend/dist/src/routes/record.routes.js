@@ -38,13 +38,14 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const recordController = __importStar(require("../controllers/record.controller"));
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [POST] /users/:userId/symptom-records - 증상 기록 생성
-router.post("/user/:userId/symptom-records", recordController.createSymptomRecord);
+router.post("/user/:userId/symptom-records", auth_middleware_1.authMiddleware, recordController.createSymptomRecord);
 // [GET] /users/:userId/symptom-records - 특정 사용자 증상 기록 전체 조회
-router.get("/user/:userId/symptom-records", recordController.getSymptomRecordsByUser);
+router.get("/user/:userId/symptom-records", auth_middleware_1.authMiddleware, recordController.getSymptomRecordsByUser);
 // [GET] /symptom-records/:id - 개별 증상 기록 조회
-router.get("/symptom-records/:id", recordController.getSymptomRecordById);
+router.get("/symptom-records/:id", auth_middleware_1.authMiddleware, recordController.getSymptomRecordById);
 // [DELETE] /symptom-records/:id - 증상 기록 삭제
-router.delete("/symptom-records/:id", recordController.deleteSymptomRecord);
+router.delete("/symptom-records/:id", auth_middleware_1.authMiddleware, recordController.deleteSymptomRecord);
 exports.default = router;

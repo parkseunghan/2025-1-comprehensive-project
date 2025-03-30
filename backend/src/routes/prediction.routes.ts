@@ -4,13 +4,15 @@
 
 import { Router } from "express";
 import * as predictionController from "../controllers/prediction.controller";
+import { authMiddleware } from "../middlewares/auth.middleware";
+
 
 const router = Router();
 
 // [POST] /symptom-records/:recordId/prediction - 예측 생성 요청
-router.post("/symptom-records/:recordId/prediction", predictionController.createPrediction);
+router.post("/symptom-records/:recordId/prediction", authMiddleware, predictionController.createPrediction);
 
 // [GET] /symptom-records/:recordId/prediction - 예측 결과 조회
-router.get("/symptom-records/:recordId/prediction", predictionController.getPredictionByRecord);
+router.get("/symptom-records/:recordId/prediction", authMiddleware, predictionController.getPredictionByRecord);
 
 export default router;
