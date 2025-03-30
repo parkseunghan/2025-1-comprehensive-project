@@ -4,16 +4,17 @@
 
 import { Router } from "express";
 import * as userController from "../controllers/user.controller"; // 사용자 컨트롤러 로드
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
 // [GET] /users/:id - 특정 사용자 정보 조회
-router.get("/:id", userController.getUserById);
+router.get("/:id", authMiddleware, userController.getUserById);
 
 // [PUT] /users/:id - 사용자 정보 수정
-router.put("/:id", userController.updateUser);
+router.put("/:id", authMiddleware, userController.updateUser);
 
 // [DELETE] /users/:id - 사용자 삭제
-router.delete("/:id", userController.deleteUser);
+router.delete("/:id", authMiddleware, userController.deleteUser);
 
 export default router;

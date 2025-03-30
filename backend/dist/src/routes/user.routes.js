@@ -38,11 +38,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const userController = __importStar(require("../controllers/user.controller")); // 사용자 컨트롤러 로드
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [GET] /users/:id - 특정 사용자 정보 조회
-router.get("/:id", userController.getUserById);
+router.get("/:id", auth_middleware_1.authMiddleware, userController.getUserById);
 // [PUT] /users/:id - 사용자 정보 수정
-router.put("/:id", userController.updateUser);
+router.put("/:id", auth_middleware_1.authMiddleware, userController.updateUser);
 // [DELETE] /users/:id - 사용자 삭제
-router.delete("/:id", userController.deleteUser);
+router.delete("/:id", auth_middleware_1.authMiddleware, userController.deleteUser);
 exports.default = router;
