@@ -4,6 +4,8 @@
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
+    "migrate": "dotenv -e ../.env -- prisma migrate dev --name init",
+    "seed": "dotenv -e ../.env -- ts-node prisma/seed.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "concurrently \"tsc -w\" \"nodemon ./dist/server.js\""
   },
