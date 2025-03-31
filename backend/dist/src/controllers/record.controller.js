@@ -35,6 +35,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteSymptomRecord = exports.getSymptomRecordById = exports.getSymptomRecordsByUser = exports.createSymptomRecord = void 0;
 const recordService = __importStar(require("../services/record.service"));
@@ -42,41 +51,48 @@ const recordService = __importStar(require("../services/record.service"));
  * 사용자 증상 기록 생성
  * POST /users/:userId/symptom-records
  */
-const createSymptomRecord = (req, res) => {
-    const { symptomIds } = req.body; // 증상 ID 배열 추출
-    const result = recordService.create(req.params.userId, symptomIds); // 생성 요청
-    res.status(201).json(result); // 생성된 기록 반환
-};
+const createSymptomRecord = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { symptomIds } = req.body;
+    if (!Array.isArray(symptomIds) || symptomIds.length === 0) {
+        res.status(400).json({ message: "증상 ID 배열이 필요합니다." });
+        return;
+    }
+    const result = yield recordService.create(req.params.userId, symptomIds);
+    res.status(201).json(result);
+});
 exports.createSymptomRecord = createSymptomRecord;
 /**
  * 특정 사용자의 증상 기록 전체 조회
  * GET /users/:userId/symptom-records
  */
-const getSymptomRecordsByUser = (req, res) => {
-    const result = recordService.findByUserId(req.params.userId); // 사용자 기준 필터링
+const getSymptomRecordsByUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield recordService.findByUserId(req.params.userId);
     res.json(result);
-};
+});
 exports.getSymptomRecordsByUser = getSymptomRecordsByUser;
 /**
  * 특정 증상 기록 ID로 조회
  * GET /symptom-records/:id
  */
-const getSymptomRecordById = (req, res) => {
-    const result = recordService.findById(req.params.id); // ID로 찾기
-    if (!result) {
-        res.status(404).json({ message: "Not found" });
+const getSymptomRecordById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const record = yield recordService.findById(req.params.id);
+    if (!record) {
+        res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+        return;
     }
-    else {
-        res.json(result);
-    }
-};
+    res.json(record);
+});
 exports.getSymptomRecordById = getSymptomRecordById;
 /**
  * 특정 증상 기록 삭제
  * DELETE /symptom-records/:id
  */
-const deleteSymptomRecord = (req, res) => {
-    const result = recordService.remove(req.params.id); // 삭제 요청
+const deleteSymptomRecord = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield recordService.remove(req.params.id);
+    if (!result) {
+        res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+        return;
+    }
     res.json(result);
-};
+});
 exports.deleteSymptomRecord = deleteSymptomRecord;

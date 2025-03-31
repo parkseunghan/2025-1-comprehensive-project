@@ -9,18 +9,24 @@ import * as recordService from "../services/record.service";
  * 사용자 증상 기록 생성
  * POST /users/:userId/symptom-records
  */
-export const createSymptomRecord = (req: Request, res: Response): void => {
-  const { symptomIds } = req.body; // 증상 ID 배열 추출
-  const result = recordService.create(req.params.userId, symptomIds); // 생성 요청
-  res.status(201).json(result); // 생성된 기록 반환
+export const createSymptomRecord = async (req: Request, res: Response) => {
+  const { symptomIds } = req.body;
+
+  if (!Array.isArray(symptomIds) || symptomIds.length === 0) {
+    res.status(400).json({ message: "증상 ID 배열이 필요합니다." });
+    return;
+  }
+
+  const result = await recordService.create(req.params.userId, symptomIds);
+  res.status(201).json(result);
 };
 
 /**
  * 특정 사용자의 증상 기록 전체 조회
  * GET /users/:userId/symptom-records
  */
-export const getSymptomRecordsByUser = (req: Request, res: Response): void => {
-  const result = recordService.findByUserId(req.params.userId); // 사용자 기준 필터링
+export const getSymptomRecordsByUser = async (req: Request, res: Response) => {
+  const result = await recordService.findByUserId(req.params.userId);
   res.json(result);
 };
 
@@ -28,20 +34,24 @@ export const getSymptomRecordsByUser = (req: Request, res: Response): void => {
  * 특정 증상 기록 ID로 조회
  * GET /symptom-records/:id
  */
-export const getSymptomRecordById = (req: Request, res: Response): void => {
-  const result = recordService.findById(req.params.id); // ID로 찾기
-  if (!result) {
-    res.status(404).json({ message: "Not found" });
-  } else {
-    res.json(result);
+export const getSymptomRecordById = async (req: Request, res: Response) => {
+  const record = await recordService.findById(req.params.id);
+  if (!record) {
+    res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+    return;
   }
+  res.json(record);
 };
 
 /**
  * 특정 증상 기록 삭제
  * DELETE /symptom-records/:id
  */
-export const deleteSymptomRecord = (req: Request, res: Response): void => {
-  const result = recordService.remove(req.params.id); // 삭제 요청
+export const deleteSymptomRecord = async (req: Request, res: Response) => {
+  const result = await recordService.remove(req.params.id);
+  if (!result) {
+    res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+    return;
+  }
   res.json(result);
 };
