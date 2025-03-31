@@ -24,6 +24,15 @@ export const create = async (recordId: string) => {
   });
 };
 
+/** 예측 삭제 */
+export const remove = async (recordId: string) => {
+  try {
+    return await prisma.prediction.delete({ where: { recordId } });
+  } catch (err) {
+    return null;
+  }
+};
+
 /** 증상 기록 ID로 예측 결과 조회 */
 export const findByRecordId = async (recordId: string) => {
   return await prisma.prediction.findUnique({

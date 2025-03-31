@@ -15,7 +15,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findByRecordId = exports.create = void 0;
+exports.findByRecordId = exports.remove = exports.create = void 0;
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /** 예측 생성 (더미 결과 기반) */
 const create = (recordId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -36,6 +36,16 @@ const create = (recordId) => __awaiter(void 0, void 0, void 0, function* () {
     });
 });
 exports.create = create;
+/** 예측 삭제 */
+const remove = (recordId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        return yield prisma_service_1.default.prediction.delete({ where: { recordId } });
+    }
+    catch (err) {
+        return null;
+    }
+});
+exports.remove = remove;
 /** 증상 기록 ID로 예측 결과 조회 */
 const findByRecordId = (recordId) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma_service_1.default.prediction.findUnique({

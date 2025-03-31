@@ -48,7 +48,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPredictionByRecord = exports.createPrediction = void 0;
+exports.recreatePrediction = exports.deletePrediction = exports.getPredictionByRecord = exports.createPrediction = void 0;
 const predictionService = __importStar(require("../services/prediction.service"));
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
@@ -82,3 +82,28 @@ const getPredictionByRecord = (req, res) => __awaiter(void 0, void 0, void 0, fu
     res.json(result);
 });
 exports.getPredictionByRecord = getPredictionByRecord;
+/** 예측 삭제 */
+const deletePrediction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deleted = yield predictionService.remove(req.params.recordId);
+    if (!deleted) {
+        res.status(404).json({ message: "예측을 찾을 수 없습니다." });
+        return;
+    }
+    res.json(deleted);
+});
+exports.deletePrediction = deletePrediction;
+/** 예측 재요청 (삭제되어도 새로 생성) */
+const recreatePrediction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { recordId } = req.params;
+    const record = yield prisma_service_1.default.symptomRecord.findUnique({ where: { id: recordId } });
+    if (!record) {
+        res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+        return;
+    }
+    // 기존 예측 삭제
+    yield predictionService.remove(recordId);
+    // 새 예측 생성
+    const result = yield predictionService.create(recordId);
+    res.status(201).json(result);
+});
+exports.recreatePrediction = recreatePrediction;

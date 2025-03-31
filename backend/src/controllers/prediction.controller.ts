@@ -41,3 +41,31 @@ export const getPredictionByRecord = async (req: Request, res: Response) => {
 
   res.json(result);
 };
+
+/** 예측 삭제 */
+export const deletePrediction = async (req: Request, res: Response) => {
+  const deleted = await predictionService.remove(req.params.recordId);
+  if (!deleted) {
+    res.status(404).json({ message: "예측을 찾을 수 없습니다." });
+    return;
+  }
+  res.json(deleted);
+};
+
+/** 예측 재요청 (삭제되어도 새로 생성) */
+export const recreatePrediction = async (req: Request, res: Response) => {
+  const { recordId } = req.params;
+
+  const record = await prisma.symptomRecord.findUnique({ where: { id: recordId } });
+  if (!record) {
+    res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+    return;
+  }
+
+  // 기존 예측 삭제
+  await predictionService.remove(recordId);
+
+  // 새 예측 생성
+  const result = await predictionService.create(recordId);
+  res.status(201).json(result);
+};

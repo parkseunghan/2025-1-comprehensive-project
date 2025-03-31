@@ -15,4 +15,10 @@ router.post("/symptom-records/:recordId/prediction", authMiddleware, predictionC
 // [GET] /symptom-records/:recordId/prediction - 예측 결과 조회
 router.get("/symptom-records/:recordId/prediction", authMiddleware, predictionController.getPredictionByRecord);
 
+// [DELETE] /symptom-records/:recordId/prediction - 예측 삭제
+router.delete("/symptom-records/:recordId/prediction", authMiddleware, predictionController.deletePrediction);
+
+// [POST] /symptom-records/:recordId/prediction/retry - 예측 재요청 (삭제 후 생성)
+router.post("/symptom-records/:recordId/prediction/retry", authMiddleware, predictionController.recreatePrediction);
+
 export default router;
