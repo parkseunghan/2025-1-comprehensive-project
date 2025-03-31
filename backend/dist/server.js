@@ -12,8 +12,9 @@ const routes_1 = __importDefault(require("./src/routes"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 const app = (0, express_1.default)();
 const BACKEND_PORT = process.env.BACKEND_PORT || 5000;
-console.log(`Loaded PORT from .env: ${process.env.PORT}`);
+console.log(`Loaded PORT from .env: ${process.env.BACKEND_PORT}`);
 console.log(`Using PORT: ${BACKEND_PORT}`);
+console.log("Database URL:", process.env.DATABASE_URL);
 app.use(body_parser_1.default.json());
 // 라우터 연결
 app.use('/api', routes_1.default);

@@ -11,8 +11,10 @@ const app = express();
 
 const BACKEND_PORT = process.env.BACKEND_PORT || 5000;
 
-console.log(`Loaded PORT from .env: ${process.env.PORT}`);
+console.log(`Loaded PORT from .env: ${process.env.BACKEND_PORT}`);
 console.log(`Using PORT: ${BACKEND_PORT}`);
+console.log("Database URL:", process.env.DATABASE_URL);
+
 
 app.use(bodyParser.json());
 
