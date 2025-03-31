@@ -11,12 +11,12 @@ const routes_1 = __importDefault(require("./src/routes"));
 // .env 파일이 root 경로에 있다는 것을 명시적으로 지정
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 5000;
+const BACKEND_PORT = process.env.BACKEND_PORT || 5000;
 console.log(`Loaded PORT from .env: ${process.env.PORT}`);
-console.log(`Using PORT: ${PORT}`);
+console.log(`Using PORT: ${BACKEND_PORT}`);
 app.use(body_parser_1.default.json());
 // 라우터 연결
 app.use('/api', routes_1.default);
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT} `);
+app.listen(BACKEND_PORT, () => {
+    console.log(`Server is running on http://localhost:${BACKEND_PORT} `);
 });

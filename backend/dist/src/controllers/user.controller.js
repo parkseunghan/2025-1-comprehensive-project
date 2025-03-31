@@ -35,30 +35,45 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUser = exports.updateUser = exports.getUserById = void 0;
 const userService = __importStar(require("../services/user.services")); // 사용자 서비스 로직 호출
 /**
- * 사용자 ID로 사용자 조회
+ * 사용자 ID로 사용자 조회 (Prisma 버전)
  */
-const getUserById = (req, res) => {
-    const user = userService.findById(req.params.id); // 서비스 계층에서 유저 검색
-    res.json(user); // 결과 반환
-};
+const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield userService.findById(req.params.id);
+    if (!user) {
+        res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+        return;
+    }
+    // 🔹 diseases 배열을 평탄화해 name만 추출
+    const formatted = Object.assign(Object.assign({}, user), { diseases: user.diseases.map((ud) => ud.disease), records: user.records.map((r) => (Object.assign(Object.assign({}, r), { symptoms: r.symptoms.map((s) => s.symptom) }))) });
+    res.json(formatted);
+});
 exports.getUserById = getUserById;
 /**
  * 사용자 정보 업데이트
  */
-const updateUser = (req, res) => {
-    const updated = userService.update(req.params.id, req.body); // ID와 업데이트 데이터 전달
-    res.json(updated); // 변경된 사용자 정보 반환
-};
+const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const updated = yield userService.update(req.params.id, req.body);
+    res.json(updated);
+});
 exports.updateUser = updateUser;
 /**
  * 사용자 삭제
  */
-const deleteUser = (req, res) => {
-    const deleted = userService.remove(req.params.id); // 유저 삭제 요청
-    res.json(deleted); // 삭제된 유저 정보 반환
-};
+const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deleted = yield userService.remove(req.params.id);
+    res.json(deleted);
+});
 exports.deleteUser = deleteUser;
