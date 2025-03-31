@@ -1,13 +1,11 @@
 // 🔹 seed.ts
 // Prisma를 통해 초기 더미 데이터를 삽입하는 스크립트입니다.
 
-import { PrismaClient } from "@prisma/client";
+import prisma from "../src/config/prisma.service";
 import dotenv from "dotenv";
 import path from "path";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-
-const prisma = new PrismaClient();
 
 async function main() {
     console.log("🌱 Seeding database...");

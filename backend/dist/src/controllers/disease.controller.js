@@ -1,7 +1,6 @@
 "use strict";
 // 🔹 disease.controller.ts
 // 이 파일은 '지병(Disease)' 관련 API 요청을 처리하는 Express 컨트롤러 계층입니다.
-// 요청 데이터를 파싱하고, 서비스 로직을 호출하며, 응답을 반환합니다.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -35,6 +34,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUserDisease = exports.addUserDisease = exports.getUserDiseases = exports.getDiseaseById = exports.getAllDiseases = void 0;
 const diseaseService = __importStar(require("../services/disease.service"));
@@ -42,50 +50,54 @@ const diseaseService = __importStar(require("../services/disease.service"));
  * 전체 지병 목록을 조회합니다.
  * GET /diseases
  */
-const getAllDiseases = (req, res) => {
-    const result = diseaseService.findAll(); // 전체 지병 데이터 조회
-    res.json(result); // 결과 반환
-};
+const getAllDiseases = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield diseaseService.findAll();
+    res.json(result);
+});
 exports.getAllDiseases = getAllDiseases;
 /**
  * 특정 ID로 지병을 조회합니다.
  * GET /diseases/:id
  */
-const getDiseaseById = (req, res) => {
-    const disease = diseaseService.findById(req.params.id); // ID로 검색
+const getDiseaseById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const disease = yield diseaseService.findById(req.params.id);
     if (!disease) {
-        res.status(404).json({ message: "Not found" }); // 없으면 404
+        res.status(404).json({ message: "지병을 찾을 수 없습니다." });
+        return;
     }
-    else {
-        res.json(disease); // 결과 반환
-    }
-};
+    res.json(disease);
+});
 exports.getDiseaseById = getDiseaseById;
 /**
  * 사용자 ID로 해당 사용자의 지병 목록을 조회합니다.
  * GET /users/:userId/diseases
  */
-const getUserDiseases = (req, res) => {
-    const result = diseaseService.findByUserId(req.params.userId); // userId로 검색
-    res.json(result); // 결과 반환
-};
+const getUserDiseases = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield diseaseService.findByUserId(req.params.userId);
+    res.json(result);
+});
 exports.getUserDiseases = getUserDiseases;
 /**
  * 사용자에게 지병을 추가합니다.
  * POST /users/:userId/diseases
  */
-const addUserDisease = (req, res) => {
-    const { diseaseId } = req.body; // body에서 diseaseId 추출
-    const result = diseaseService.addDiseaseToUser(req.params.userId, diseaseId); // 서비스 호출
-    res.status(201).json(result); // 201 Created 반환
-};
+const addUserDisease = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { diseaseId } = req.body;
+    if (!diseaseId) {
+        res.status(400).json({ message: "diseaseId가 필요합니다." });
+        return;
+    }
+    const result = yield diseaseService.addDiseaseToUser(req.params.userId, diseaseId);
+    res.status(201).json(result);
+});
 exports.addUserDisease = addUserDisease;
 /**
  * 사용자의 지병을 삭제합니다.
  * DELETE /users/:userId/diseases/:diseaseId
  */
-const deleteUserDisease = (req, res) => {
-    const result = diseaseService.removeDiseaseFromUser(req.params.userId, req.params.diseaseId); // 관계 제거
-    res.json(result); // 결과 반환
-};
+const deleteUserDisease = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId, diseaseId } = req.params;
+    const result = yield diseaseService.removeDiseaseFromUser(userId, diseaseId);
+    res.json(result);
+});
 exports.deleteUserDisease = deleteUserDisease;

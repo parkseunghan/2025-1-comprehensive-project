@@ -1,11 +1,7 @@
 // 🔹 user.service.ts
 // 사용자 관련 비즈니스 로직을 처리하는 서비스 계층 (Prisma 버전)
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-
+import prisma from "../config/prisma.service";
 /**
  * 사용자 ID로 전체 정보 조회 (지병 + 증상기록 + 증상 + 예측 포함)
  */

@@ -21,15 +21,17 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.remove = exports.update = exports.findById = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
  * 사용자 ID로 전체 정보 조회 (지병 + 증상기록 + 증상 + 예측 포함)
  */
 const findById = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield prisma.user.findUnique({
+    const user = yield prisma_service_1.default.user.findUnique({
         where: { id },
         include: {
             diseases: { include: { disease: true } },
@@ -52,7 +54,7 @@ exports.findById = findById;
  * 사용자 정보 업데이트
  */
 const update = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
-    return prisma.user.update({
+    return prisma_service_1.default.user.update({
         where: { id },
         data,
     });
@@ -62,7 +64,7 @@ exports.update = update;
  * 사용자 삭제
  */
 const remove = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    return prisma.user.delete({
+    return prisma_service_1.default.user.delete({
         where: { id },
     });
 });

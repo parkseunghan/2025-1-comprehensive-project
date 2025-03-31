@@ -1,11 +1,10 @@
 // 🔹 auth.service.ts
 // 이 파일은 인증 로직을 처리하는 서비스 계층입니다.
 
-import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { generateToken } from "../utils/jwt.util";
 
-const prisma = new PrismaClient();
+import prisma from "../config/prisma.service";
 
 /**
  * 회원가입 요청 처리 (DB 저장)

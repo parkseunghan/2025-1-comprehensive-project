@@ -10,24 +10,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.register = void 0;
-const client_1 = require("@prisma/client");
 const uuid_1 = require("uuid");
 const jwt_util_1 = require("../utils/jwt.util");
-const prisma = new client_1.PrismaClient();
+const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
  * 회원가입 요청 처리 (DB 저장)
  */
 const register = (data) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const exists = yield prisma.user.findUnique({
+    const exists = yield prisma_service_1.default.user.findUnique({
         where: { email: data.email },
     });
     if (exists) {
         return { message: "이미 등록된 이메일입니다." };
     }
-    const newUser = yield prisma.user.create({
+    const newUser = yield prisma_service_1.default.user.create({
         data: {
             id: (0, uuid_1.v4)(),
             email: data.email,
@@ -47,7 +49,7 @@ exports.register = register;
  * 로그인 요청 처리 (DB 조회 → 토큰 발급)
  */
 const login = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield prisma.user.findUnique({
+    const user = yield prisma_service_1.default.user.findUnique({
         where: { email },
     });
     if (!user || user.password !== password)

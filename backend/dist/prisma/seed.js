@@ -14,16 +14,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
+const prisma_service_1 = __importDefault(require("../src/config/prisma.service"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
-const prisma = new client_1.PrismaClient();
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("🌱 Seeding database...");
         // 1. 사용자 생성
-        const user = yield prisma.user.create({
+        const user = yield prisma_service_1.default.user.create({
             data: {
                 id: "user-001",
                 email: "test@example.com",
@@ -37,7 +36,7 @@ function main() {
             },
         });
         // 2. 질병 다수 등록
-        yield prisma.disease.createMany({
+        yield prisma_service_1.default.disease.createMany({
             data: [
                 { id: "disease-001", name: "급성 기관지염" },
                 { id: "disease-002", name: "폐렴" },
@@ -60,7 +59,7 @@ function main() {
             ],
         });
         // 3. 사용자와 지병 연결 (여러 개)
-        yield prisma.userDisease.createMany({
+        yield prisma_service_1.default.userDisease.createMany({
             data: [
                 { id: "user-disease-001", userId: user.id, diseaseId: "disease-001" },
                 { id: "user-disease-002", userId: user.id, diseaseId: "disease-005" },
@@ -68,7 +67,7 @@ function main() {
             ],
         });
         // 4. 증상 등록
-        yield prisma.symptom.createMany({
+        yield prisma_service_1.default.symptom.createMany({
             data: [
                 { id: "symptom-001", name: "두통" },
                 { id: "symptom-002", name: "기침" },
@@ -76,7 +75,7 @@ function main() {
             ],
         });
         // 5. 증상 기록 생성
-        const record = yield prisma.symptomRecord.create({
+        const record = yield prisma_service_1.default.symptomRecord.create({
             data: {
                 id: "record-001",
                 userId: user.id,
@@ -84,7 +83,7 @@ function main() {
             },
         });
         // 6. 증상 기록 ↔ 증상 다대다 연결
-        yield prisma.symptomOnRecord.createMany({
+        yield prisma_service_1.default.symptomOnRecord.createMany({
             data: [
                 { id: "sor-001", recordId: record.id, symptomId: "symptom-001" },
                 { id: "sor-002", recordId: record.id, symptomId: "symptom-002" },
@@ -92,7 +91,7 @@ function main() {
             ],
         });
         // 7. 예측 생성
-        yield prisma.prediction.create({
+        yield prisma_service_1.default.prediction.create({
             data: {
                 id: "prediction-001",
                 recordId: record.id,
@@ -111,5 +110,5 @@ main()
     process.exit(1);
 })
     .finally(() => {
-    prisma.$disconnect();
+    prisma_service_1.default.$disconnect();
 });
