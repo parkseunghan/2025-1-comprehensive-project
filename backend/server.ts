@@ -9,10 +9,10 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+const BACKEND_PORT = process.env.BACKEND_PORT || 5000;
 
 console.log(`Loaded PORT from .env: ${process.env.PORT}`);
-console.log(`Using PORT: ${PORT}`);
+console.log(`Using PORT: ${BACKEND_PORT}`);
 
 app.use(bodyParser.json());
 
@@ -23,6 +23,6 @@ app.use('/api', apiRouter);
 
 
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT} `);
+app.listen(BACKEND_PORT, () => {
+    console.log(`Server is running on http://localhost:${BACKEND_PORT} `);
 });
