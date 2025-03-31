@@ -35,29 +35,50 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPredictionByRecord = exports.createPrediction = void 0;
 const predictionService = __importStar(require("../services/prediction.service"));
+const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
  * 예측 결과 생성 (모델 연결 전 더미 기반)
  * POST /symptom-records/:recordId/prediction
  */
-const createPrediction = (req, res) => {
-    const result = predictionService.create(req.params.recordId); // 예측 생성
+const createPrediction = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { recordId } = req.params;
+    // ✅ 증상 기록이 존재하는지 확인
+    const record = yield prisma_service_1.default.symptomRecord.findUnique({
+        where: { id: recordId },
+    });
+    if (!record) {
+        res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
+        return;
+    }
+    const result = yield predictionService.create(recordId);
     res.status(201).json(result);
-};
+});
 exports.createPrediction = createPrediction;
 /**
  * 특정 증상 기록에 대한 예측 결과 조회
  * GET /symptom-records/:recordId/prediction
  */
-const getPredictionByRecord = (req, res) => {
-    const result = predictionService.findByRecordId(req.params.recordId); // 예측 찾기
+const getPredictionByRecord = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield predictionService.findByRecordId(req.params.recordId);
     if (!result) {
-        res.status(404).json({ message: "Not found" });
+        res.status(404).json({ message: "예측 결과를 찾을 수 없습니다." });
+        return;
     }
-    else {
-        res.json(result);
-    }
-};
+    res.json(result);
+});
 exports.getPredictionByRecord = getPredictionByRecord;
