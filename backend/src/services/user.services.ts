@@ -10,26 +10,32 @@ const prisma = new PrismaClient();
  * 사용자 ID로 전체 정보 조회 (지병 + 증상기록 + 증상 + 예측 포함)
  */
 export const findById = async (id: string) => {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
     include: {
-      diseases: {
-        include: {
-          disease: true,
-        },
-      },
+      diseases: { include: { disease: true } },
       records: {
         include: {
-          symptoms: {
-            include: {
-              symptom: true,
-            },
-          },
+          symptoms: { include: { symptom: true } },
           prediction: true,
         },
       },
     },
   });
+
+  if (!user) return null;
+
+  // password 제거
+  const { password, ...safeUser } = user;
+
+  return {
+    ...safeUser,
+    diseases: user.diseases.map((ud) => ud.disease),
+    records: user.records.map((r) => ({
+      ...r,
+      symptoms: r.symptoms.map((s) => s.symptom),
+    })),
+  };
 };
 
 

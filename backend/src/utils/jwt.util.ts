@@ -30,6 +30,7 @@ export const verifyToken = (token: string): any => {
     try {
         return jwt.verify(token, JWT_SECRET);
     } catch (err) {
+        console.error("❌ JWT 검증 실패:", err);
         return null;
     }
 };

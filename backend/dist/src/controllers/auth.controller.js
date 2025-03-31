@@ -35,6 +35,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.register = void 0;
 const authService = __importStar(require("../services/auth.service"));
@@ -42,24 +51,24 @@ const authService = __importStar(require("../services/auth.service"));
  * 사용자 회원가입 요청 처리
  * POST /auth/register
  */
-const register = (req, res) => {
+const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password, name } = req.body;
-    const result = authService.register({ email, password, name });
+    const result = yield authService.register({ email, password, name });
     res.status(201).json(result);
-};
+});
 exports.register = register;
 /**
  * 사용자 로그인 요청 처리
  * POST /auth/login
  */
-const login = (req, res) => {
+const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
-    const result = authService.login(email, password);
+    const result = yield authService.login(email, password);
     if (!result) {
         res.status(401).json({ message: "Invalid credentials" });
     }
     else {
         res.json(result);
     }
-};
+});
 exports.login = login;

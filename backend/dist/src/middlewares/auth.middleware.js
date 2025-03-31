@@ -16,8 +16,13 @@ const authMiddleware = (req, res, next) => {
     }
     try {
         const decoded = (0, jwt_util_1.verifyToken)(token); // JWT 검증
+        // ✅ 토큰 구조 검증: id, email 필수
+        if (!decoded || typeof decoded !== "object" || !("id" in decoded) || !("email" in decoded)) {
+            res.status(401).json({ message: "유효하지 않은 토큰입니다." });
+            return;
+        }
         req.user = decoded; // 요청 객체에 사용자 정보 추가
-        next(); // 다음 미들웨어로 이동
+        return next(); // 다음 미들웨어로 이동
     }
     catch (error) {
         res.status(401).json({ message: '유효하지 않은 토큰입니다.' });

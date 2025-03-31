@@ -9,9 +9,9 @@ import * as authService from "../services/auth.service";
  * 사용자 회원가입 요청 처리
  * POST /auth/register
  */
-export const register = (req: Request, res: Response): void => {
+export const register = async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
-  const result = authService.register({ email, password, name });
+  const result = await authService.register({ email, password, name });
   res.status(201).json(result);
 };
 
@@ -19,9 +19,9 @@ export const register = (req: Request, res: Response): void => {
  * 사용자 로그인 요청 처리
  * POST /auth/login
  */
-export const login = (req: Request, res: Response): void => {
+export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const result = authService.login(email, password);
+  const result = await authService.login(email, password);
 
   if (!result) {
     res.status(401).json({ message: "Invalid credentials" });

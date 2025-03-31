@@ -31,6 +31,7 @@ const verifyToken = (token) => {
         return jsonwebtoken_1.default.verify(token, JWT_SECRET);
     }
     catch (err) {
+        console.error("❌ JWT 검증 실패:", err);
         return null;
     }
 };
