@@ -10,11 +10,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.register = void 0;
+exports.getUserById = exports.login = exports.register = void 0;
 const uuid_1 = require("uuid");
 const jwt_util_1 = require("../utils/jwt.util");
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
@@ -69,3 +80,17 @@ const login = (email, password) => __awaiter(void 0, void 0, void 0, function* (
     };
 });
 exports.login = login;
+/**
+* 사용자 ID로 사용자 정보 조회
+*/
+const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield prisma_service_1.default.user.findUnique({
+        where: { id },
+    });
+    if (!user)
+        return null;
+    // 비밀번호는 클라이언트에 전달하지 않음
+    const { password } = user, safeUser = __rest(user, ["password"]);
+    return safeUser;
+});
+exports.getUserById = getUserById;

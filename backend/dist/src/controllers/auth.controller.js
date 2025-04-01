@@ -45,7 +45,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.register = void 0;
+exports.getMe = exports.login = exports.register = void 0;
 const authService = __importStar(require("../services/auth.service"));
 /**
  * 사용자 회원가입 요청 처리
@@ -72,3 +72,22 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.login = login;
+/**
+ * 로그인된 사용자 정보 조회
+ * GET /auth/me
+ */
+const getMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    if (!userId) {
+        res.status(401).json({ message: "인증 정보가 없습니다." });
+        return;
+    }
+    const user = yield authService.getUserById(userId);
+    if (!user) {
+        res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+        return;
+    }
+    res.json(user);
+});
+exports.getMe = getMe;

@@ -38,9 +38,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const authController = __importStar(require("../controllers/auth.controller"));
+const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [POST] /auth/register - 회원가입
 router.post("/register", authController.register);
 // [POST] /auth/login - 로그인
 router.post("/login", authController.login);
+// [GET] /auth/me - 로그인된 사용자 정보 조회
+router.get("/me", auth_middleware_1.authMiddleware, authController.getMe);
 exports.default = router;

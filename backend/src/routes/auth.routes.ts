@@ -4,6 +4,7 @@
 
 import { Router } from "express";
 import * as authController from "../controllers/auth.controller";
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router();
 
@@ -12,5 +13,8 @@ router.post("/register", authController.register);
 
 // [POST] /auth/login - 로그인
 router.post("/login", authController.login);
+
+// [GET] /auth/me - 로그인된 사용자 정보 조회
+router.get("/me", authMiddleware, authController.getMe);
 
 export default router;

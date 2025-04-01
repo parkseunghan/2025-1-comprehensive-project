@@ -11,52 +11,67 @@ import prisma from "../config/prisma.service";
  */
 export const register = async (data: { email: string; password: string; name?: string }) => {
     const exists = await prisma.user.findUnique({
-      where: { email: data.email },
+        where: { email: data.email },
     });
-  
+
     if (exists) {
-      return { message: "이미 등록된 이메일입니다." };
+        return { message: "이미 등록된 이메일입니다." };
     }
-  
+
     const newUser = await prisma.user.create({
-      data: {
-        id: uuidv4(),
-        email: data.email,
-        password: data.password,
-        name: data.name ?? "",
-        gender: "",
-        age: 0,
-        height: 0,
-        weight: 0,
-        medications: [],
-      },
+        data: {
+            id: uuidv4(),
+            email: data.email,
+            password: data.password,
+            name: data.name ?? "",
+            gender: "",
+            age: 0,
+            height: 0,
+            weight: 0,
+            medications: [],
+        },
     });
-  
+
     return newUser;
-  };
+};
 
 /**
  * 로그인 요청 처리 (DB 조회 → 토큰 발급)
  */
 export const login = async (email: string, password: string) => {
     const user = await prisma.user.findUnique({
-      where: { email },
+        where: { email },
     });
-  
+
     if (!user || user.password !== password) return null;
-  
+
     const token = generateToken({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    });
-  
-    return {
-      token,
-      user: {
         id: user.id,
         email: user.email,
         name: user.name,
-      },
+    });
+
+    return {
+        token,
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+        },
     };
-  };
+};
+
+/**
+* 사용자 ID로 사용자 정보 조회
+*/
+export const getUserById = async (id: string) => {
+    const user = await prisma.user.findUnique({
+        where: { id },
+    });
+
+    if (!user) return null;
+
+    // 비밀번호는 클라이언트에 전달하지 않음
+    const { password, ...safeUser } = user;
+    return safeUser;
+};

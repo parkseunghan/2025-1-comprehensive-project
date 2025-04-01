@@ -33,3 +33,37 @@
 - [ ] [GET] `/model/status` - AI 모델 상태 확인
 - [ ] [POST] `/model/predict` - 예측 모델 테스트 호출
 
+
+
+--------------
+
+
+1. 연동할 API 정리 (최소 기능)
+프론트엔드에서 사용하게 될 우선순위 API는 다음과 같습니다:
+
+1️⃣ 인증
+- [ ] POST /auth/signup 회원가입
+
+- [ ] POST /auth/login 로그인 (→ JWT 저장)
+
+- [ ] GET /auth/me 로그인된 사용자 정보 가져오기
+
+2️⃣ 사용자 프로필
+- [ ] GET /users/:id 사용자 정보 조회
+
+- [ ] PUT /users/:id 사용자 정보 수정
+
+- [ ] GET /users/:userId/diseases 사용자 지병 목록 조회
+
+- [ ] POST /users/:userId/diseases 사용자 지병 등록
+
+3️⃣ 증상 기록 및 예측
+- [ ] GET /symptoms 증상 검색
+
+- [ ] POST /users/:userId/symptom-records 증상 기록 생성
+
+- [ ] POST /symptom-records/:recordId/symptoms 증상 연결
+
+- [ ] POST /symptom-records/:recordId/prediction 예측 생성
+
+- [ ] GET /symptom-records/:recordId/prediction 예측 결과 조회

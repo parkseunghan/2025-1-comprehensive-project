@@ -88,7 +88,7 @@
 | POST   | /symptom-records/:recordId/prediction         | 예측 생성 (AI 결과 저장)        |
 | GET    | /symptom-records/:recordId/prediction         | 예측 결과 조회                   |
 | DELETE | /symptom-records/:recordId/prediction	       | 예측 삭제 - 기존 예측 제거       |
-|	POST   | /symptom-records/:recordId/prediction/retry   | 예측 재요청(삭제 + 생성)         |
+| POST   | /symptom-records/:recordId/prediction/retry   | 예측 재요청(삭제 + 생성)         |
 ---
 
 ## 📌 예시 JSON
