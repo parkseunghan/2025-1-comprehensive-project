@@ -14,9 +14,9 @@ export const useAuth = () => {
 
                 const user = await fetchMe();
                 setUser(user);
-                console.log("✅ 로그인 사용자 정보:", user);
+                console.log("useAuth.ts: ✅ 로그인 사용자 정보:", user);
             } catch (err) {
-                console.log("❌ 사용자 정보 로드 실패:", err);
+                console.log("useAuth.ts: ❌ 사용자 정보 로드 실패:", err);
             }
         };
 

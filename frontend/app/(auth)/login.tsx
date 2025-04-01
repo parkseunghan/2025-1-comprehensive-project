@@ -6,15 +6,15 @@ import { login } from "@/services/auth.api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen() {
-  useEffect(() => {
-    const handleLogin = async () => {
-      const res = await login("test@example.com", "1234");
-      await AsyncStorage.setItem("token", res.token);
-      console.log("✅ 로그인 성공:", res.user);
-    };
+    useEffect(() => {
+        const handleLogin = async () => {
+            const res = await login("test@example.com", "1234");
+            await AsyncStorage.setItem("token", res.token);
+            console.log("✅ 로그인 성공:", res.user);
+        };
 
-    handleLogin();
-  }, []);
+        handleLogin();
+    }, []);
 
-  return null; // UI는 나중에 교체될 예정
+    return null; // UI는 나중에 교체될 예정
 }
