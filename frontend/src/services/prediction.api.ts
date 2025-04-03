@@ -37,3 +37,16 @@ export const requestPrediction = async ({ recordId }: PredictInput): Promise<Pre
     const res = await axios.post(`/predictions/symptom-records/${recordId}/prediction`);
     return res.data;
 };
+
+// src/services/prediction.api.ts
+
+/**
+ * 이미 생성된 예측 결과 조회 (GET)
+ * @param recordId 증상 기록 ID
+ * @returns PredictionResult
+ */
+export const getPredictionByRecord = async (recordId: string): Promise<PredictionResult> => {
+    const res = await axios.get(`/predictions/symptom-records/${recordId}/prediction`);
+    return res.data;
+  };
+  

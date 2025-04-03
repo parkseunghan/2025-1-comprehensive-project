@@ -7,10 +7,11 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { createSymptomRecord } from "@/services/record.api";
-import { requestPrediction } from "@/services/prediction.api";
+import { useRouter } from "expo-router";
 
 export default function SymptomScreen() {
     const { user } = useAuthStore();
+    const router = useRouter();
 
     /**
      * 🔹 handleSymptomPrediction
@@ -33,14 +34,9 @@ export default function SymptomScreen() {
 
             console.log("✅ 증상 기록 생성됨:", record);
 
-            // ✅ 2단계: 예측 요청
-            const prediction = await requestPrediction({ recordId: record.id });
 
-            // ✅ 3단계: 예측 결과 출력
-            console.log("🧠 예측 응답 전체:", prediction);
-            console.log("🧠 예측된 질병:", prediction.result);
-            console.log("🧠 예측된 가이드:", prediction.guideline);
-            console.log("🧠 예측된 심각도:", prediction.confidence);
+            // ✅ 결과 페이지로 이동하며 recordId 전달
+            router.push(`/result?recordId=${record.id}`);
 
         } catch (error) {
             console.error("❌ 예측 요청 실패:", error);
