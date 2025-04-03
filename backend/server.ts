@@ -17,11 +17,12 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:8081";
 app.use(cors({
     origin: FRONTEND_ORIGIN,
     credentials: true, // 쿠키/인증 헤더 허용
-  }));
+}));
 
 console.log(`Loaded PORT from .env: ${process.env.BACKEND_PORT}`);
 console.log(`Using PORT: ${BACKEND_PORT}`);
 console.log("Database URL:", process.env.DATABASE_URL);
+console.log("Origin URL:", process.env.FRONTEND_ORIGIN);
 
 
 app.use(bodyParser.json());

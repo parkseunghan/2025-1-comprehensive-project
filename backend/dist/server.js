@@ -22,6 +22,7 @@ app.use((0, cors_1.default)({
 console.log(`Loaded PORT from .env: ${process.env.BACKEND_PORT}`);
 console.log(`Using PORT: ${BACKEND_PORT}`);
 console.log("Database URL:", process.env.DATABASE_URL);
+console.log("Origin URL:", process.env.FRONTEND_ORIGIN);
 app.use(body_parser_1.default.json());
 // 라우터 연결
 app.use('/api', routes_1.default);
