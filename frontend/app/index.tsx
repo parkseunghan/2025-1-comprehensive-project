@@ -17,13 +17,16 @@ export default function Index() {
         // ✅ Root 라우터가 아직 준비되지 않았으면 아무것도 안 함
         if (!rootNavigation?.key) return;
         if (user === null) return; // 아직 로딩 중
-
+        console.log("로그인 전")
         if (!user) {
             router.replace("/auth/welcome");
+            console.log("로그인 완료")
         } else if (!user.gender) {
             router.replace("/auth/profile-form");
+            console.log("프로필 폼 페이지")
         } else {
             router.replace("/tabs/home");
+            console.log("홈 탭")
         }
     }, [user]);
 
