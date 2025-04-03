@@ -21,6 +21,8 @@ export default function SettingTabScreen() {
    */
   const handleLogout = async () => {
     await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("latestRecordId");
+
     clearUser();
     router.replace("/auth/welcome");
   };
