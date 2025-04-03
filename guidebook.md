@@ -1,3 +1,10 @@
+
+되돌리기
+```sh
+git fetch origin && git reset --hard origin/main && git clean -fd
+```
+
+
 # 명령어
 
 ################# docker compose up --build ###################
