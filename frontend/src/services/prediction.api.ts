@@ -48,5 +48,4 @@ export const requestPrediction = async ({ recordId }: PredictInput): Promise<Pre
 export const getPredictionByRecord = async (recordId: string): Promise<PredictionResult> => {
     const res = await axios.get(`/predictions/symptom-records/${recordId}/prediction`);
     return res.data;
-  };
-  
+};

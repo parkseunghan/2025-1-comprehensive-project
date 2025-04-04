@@ -1,30 +1,30 @@
 /**
  * symptom.tsx
- * 증상 입력 → 증상 기록 저장 → 예측 요청 → 결과 출력까지의 흐름을 담당하는 화면입니다.
- * 현재는 UI 없이 자동 실행되며, 예측 결과는 result 페이지로 이동하여 확인할 수 있습니다.
+ * 증상을 입력하면:
+ * 1. 사용자 증상 기록 생성
+ * 2. 생성된 기록을 기반으로 예측 요청
+ * 3. 결과 페이지(result.tsx)로 이동하며 recordId 전달
+ *
+ * 👉 현재는 UI 없이 더미 증상으로 자동 요청되며,
+ * 향후 사용자 입력 기반으로 수정될 예정입니다.
  */
 
 import { useEffect } from "react";
-import { useAuthStore } from "@/store/auth.store";
-import { createSymptomRecord } from "@/services/record.api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { useAuthStore } from "@/store/auth.store"; // ✅ 로그인 사용자 정보
+import { createSymptomRecord } from "@/services/record.api"; // ✅ 증상 기록 생성 API
+import { router } from "expo-router"; // ✅ 화면 전환
+import AsyncStorage from "@react-native-async-storage/async-storage"; // ✅ 로컬 저장소
 
-/**
- * 🔹 SymptomScreen 컴포넌트
- * - 앱에서 증상을 자동으로 기록하고 예측 페이지로 이동하는 역할을 합니다.
- */
+const STORAGE_KEY = "lastRecordId"; // ✅ 저장 키 상수
+
 export default function SymptomScreen() {
-  // ✅ 로그인된 사용자 정보 가져오기 (zustand 기반 상태 관리)
   const { user } = useAuthStore();
 
   /**
-   * 🔹 handleSymptomPrediction
-   * - 실제로 증상을 저장하고 예측 페이지로 이동하는 비동기 함수입니다.
-   * - 1. 사용자 ID가 없으면 경고 후 중단
-   * - 2. POST /records/user/:userId/symptom-records 로 증상 기록 생성
-   * - 3. recordId를 AsyncStorage에 저장 (새로고침 시 사용)
-   * - 4. result 페이지로 이동하며 recordId를 쿼리스트링으로 전달
+   * handleSymptomPrediction
+   * - 로그인 사용자 기반으로 증상 기록을 생성
+   * - recordId를 AsyncStorage에 저장
+   * - /result 페이지로 이동하면서 recordId 쿼리 전달
    */
   const handleSymptomPrediction = async () => {
     if (!user) {
@@ -33,31 +33,25 @@ export default function SymptomScreen() {
     }
 
     try {
-      // ✅ 1단계: 더미 증상 기반으로 증상 기록 생성
       const record = await createSymptomRecord({
         userId: user.id,
-        symptomIds: ["symptom-001", "symptom-003"], // 👈 실제 UI 입력으로 대체 예정
+        symptomIds: ["symptom-001", "symptom-003"], // 👉 더미 증상 ID
       });
 
-      console.log("✅ 증상 기록 생성됨:", record);
+      // ✅ 로컬에 저장 (새로고침 대비)
+      await AsyncStorage.setItem(STORAGE_KEY, record.id);
 
-      // ✅ 2단계: recordId를 로컬에 저장 → 새로고침 대비
-      await AsyncStorage.setItem("latestRecordId", record.id);
-
-      // ✅ 3단계: 결과 페이지로 이동 (recordId 포함)
+      // ✅ 결과 페이지로 이동 (쿼리 파라미터 전달)
       router.push(`/result?recordId=${record.id}`);
-    } catch (error) {
-      console.error("❌ 증상 기록 또는 예측 요청 실패:", error);
+    } catch (err) {
+      console.error("❌ 예측 요청 실패:", err);
     }
   };
 
-  /**
-   * 🔹 useEffect
-   * - 컴포넌트가 화면에 마운트되자마자 자동으로 handleSymptomPrediction 실행
-   */
+  // 🔄 컴포넌트 마운트 시 자동 실행
   useEffect(() => {
     handleSymptomPrediction();
   }, []);
 
-  return null; // 👉 이후에 증상 선택 UI 등으로 대체될 예정
+  return null; // 👉 향후 증상 선택 UI로 교체 예정
 }
