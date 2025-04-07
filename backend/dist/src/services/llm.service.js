@@ -22,36 +22,60 @@ const axios_1 = __importDefault(require("axios"));
 const buildPrompt = (sentences) => {
     const joined = sentences.map((s) => `"${s}"`).join(", ");
     return `
-당신은 의료 전문 AI입니다.
-다음 문장들에 포함된 증상을 **한국어로만**, **중복 없이**, 하나의 리스트로 추출하세요.
-형식은 반드시 Python 리스트처럼 출력해야 합니다.
-예시: ['기침', '두통', '가려움', '어지럼증']
-문장: ${joined}
+You are a medical AI that specializes in extracting symptoms from user input.
+
+- Your task is to extract **ONLY the symptoms explicitly mentioned** in the text.  
+- Do NOT guess or infer symptoms not mentioned.  
+- Do NOT include explanations, translations, or full sentences.  
+- Do NOT include Korean.
+
+- Respond ONLY with a valid JSON array of English symptom keywords.
+
+- Format: ["headache", "cough", "itchy skin"]  
+- Invalid: "I have a cough.", "My head hurts.", ["기침", "두통"]
+
+Sentences: ${joined}
 `.trim();
 };
 /**
  * 응답 문자열에서 증상 키워드만 정제 추출
  */
 const cleanSymptoms = (raw) => {
-    var _a;
-    return ((_a = raw
-        .match(/'([^']+)'/g)) === null || _a === void 0 ? void 0 : _a.map((s) => s.replace(/'/g, '').trim()).filter((s) => /^[가-힣]+$/.test(s))) || [];
+    try {
+        // 여러 줄 중 JSON 배열만 필터링
+        const matches = raw.match(/\[.*?\]/g); // 여러 배열 추출
+        if (!matches)
+            return [];
+        const parsed = matches
+            .map((m) => JSON.parse(m))
+            .flat()
+            .map((s) => s.toLowerCase().trim())
+            .filter((s) => /^[a-z\s]+$/.test(s) && s.length < 40); // 영어 증상만 필터링
+        return [...new Set(parsed)]; // 중복 제거
+    }
+    catch (e) {
+        console.warn("증상 파싱 실패:", raw);
+        return [];
+    }
 };
 /**
  * mistral 모델에 증상 추출 요청
  */
 const extractSymptomsFromLLM = (sentences) => __awaiter(void 0, void 0, void 0, function* () {
-    // 1. 프롬프트 생성
     const prompt = buildPrompt(sentences);
-    // 2. Ollama 서버로 POST 요청
-    const res = yield axios_1.default.post("http://localhost:11434/api/generate", {
-        model: "mistral", // 실행 중인 모델 이름
-        prompt,
-        stream: false // 스트리밍 응답 비활성화
-    });
-    // 3. 응답에서 증상 키워드 정제
-    const raw = res.data.response.trim();
-    const symptoms = cleanSymptoms(raw);
-    return symptoms;
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+        const res = yield axios_1.default.post("http://localhost:11434/api/generate", {
+            model: "mistral",
+            prompt,
+            stream: false,
+        });
+        const raw = res.data.response.trim();
+        console.log(`[${i + 1}] LLM 응답:`, raw);
+        const symptoms = cleanSymptoms(raw);
+        if (symptoms.length > 0)
+            return symptoms;
+    }
+    return [];
 });
 exports.extractSymptomsFromLLM = extractSymptomsFromLLM;

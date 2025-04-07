@@ -10,11 +10,19 @@ import symptomMap from "../data/symptom-en-ko-map.json"; // 영어 대응 시 �
 const buildPrompt = (sentences: string[]): string => {
     const joined = sentences.map((s) => `"${s}"`).join(", ");
     return `
-당신은 의료 전문 AI입니다.
-다음 문장들에 포함된 증상을 **한국어로만**, **중복 없이**, 하나의 리스트로 추출하세요.
-형식은 반드시 Python 리스트처럼 출력해야 합니다.
-예시: ['기침', '두통', '가려움', '어지럼증']
-문장: ${joined}
+You are a medical AI that specializes in extracting symptoms from user input.
+
+- Your task is to extract **ONLY the symptoms explicitly mentioned** in the text.  
+- Do NOT guess or infer symptoms not mentioned.  
+- Do NOT include explanations, translations, or full sentences.  
+- Do NOT include Korean.
+
+- Respond ONLY with a valid JSON array of English symptom keywords.
+
+- Format: ["headache", "cough", "itchy skin"]  
+- Invalid: "I have a cough.", "My head hurts.", ["기침", "두통"]
+
+Sentences: ${joined}
 `.trim();
 };
 
@@ -22,28 +30,45 @@ const buildPrompt = (sentences: string[]): string => {
  * 응답 문자열에서 증상 키워드만 정제 추출
  */
 const cleanSymptoms = (raw: string): string[] => {
-    return raw
-        .match(/'([^']+)'/g)
-        ?.map((s) => s.replace(/'/g, '').trim())
-        .filter((s) => /^[가-힣]+$/.test(s)) || [];
-};
+    try {
+      // 여러 줄 중 JSON 배열만 필터링
+      const matches = raw.match(/\[.*?\]/g); // 여러 배열 추출
+      if (!matches) return [];
+  
+      const parsed = matches
+        .map((m) => JSON.parse(m) as string[])
+        .flat()
+        .map((s) => s.toLowerCase().trim())
+        .filter((s) => /^[a-z\s]+$/.test(s) && s.length < 40); // 영어 증상만 필터링
+  
+      return [...new Set(parsed)]; // 중복 제거
+    } catch (e) {
+      console.warn("증상 파싱 실패:", raw);
+      return [];
+    }
+  };
+  
 
 /**
  * mistral 모델에 증상 추출 요청
  */
 export const extractSymptomsFromLLM = async (sentences: string[]): Promise<string[]> => {
-    // 1. 프롬프트 생성
     const prompt = buildPrompt(sentences);
+    const maxRetries = 3;
 
-    // 2. Ollama 서버로 POST 요청
-    const res = await axios.post("http://localhost:11434/api/generate", {
-        model: "mistral",   // 실행 중인 모델 이름
-        prompt,
-        stream: false       // 스트리밍 응답 비활성화
-    });
+    for (let i = 0; i < maxRetries; i++) {
+        const res = await axios.post("http://localhost:11434/api/generate", {
+            model: "mistral",
+            prompt,
+            stream: false,
+        });
 
-    // 3. 응답에서 증상 키워드 정제
-    const raw = res.data.response.trim();
-    const symptoms = cleanSymptoms(raw);
-    return symptoms;
+        const raw = res.data.response.trim();
+        console.log(`[${i + 1}] LLM 응답:`, raw);
+
+        const symptoms = cleanSymptoms(raw);
+        if (symptoms.length > 0) return symptoms;
+    }
+
+    return [];
 };
