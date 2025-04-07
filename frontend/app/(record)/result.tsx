@@ -57,6 +57,7 @@ export default function ResultScreen() {
                 setResult(res.result);
                 setGuideline(res.guideline);
                 setConfidence(res.confidence);
+
             } else {
                 // ✅ 이미 예측된 경우
                 const fallback = await getPredictionByRecord(id);
@@ -87,7 +88,7 @@ export default function ResultScreen() {
             {result ? (
                 <>
                     <Text>
-                        🧠 질병: {Array.isArray(result) ? result.join(", ") : "결과 없음"}
+                        🧠 질병: {Array.isArray(result) ? result.join(", ") : result || "결과 없음"}
                     </Text>
                     <Text>📋 가이드라인: {guideline || "없음"}</Text>
                     <Text>📊 신뢰도: {confidence?.toFixed(2)}</Text>

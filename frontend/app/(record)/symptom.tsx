@@ -20,6 +20,19 @@ const STORAGE_KEY = "lastRecordId"; // ✅ 저장 키 상수
 export default function SymptomScreen() {
   const { user } = useAuthStore();
 
+  useEffect(() => {
+    // 디버깅 로그 추가
+    console.log("📱 SymptomScreen - 현재 사용자:", user);
+
+    // 사용자 정보가 있으면 증상 예측 실행
+    if (user) {
+      handleSymptomPrediction();
+    } else {
+      console.warn("⚠️ 사용자 정보가 없습니다. 로그인이 필요합니다.");
+      // 필요시 로그인 페이지로 리다이렉트
+      // router.replace("/login");
+    }
+  }, [user]); // user가 변경될 때마다 실행
   /**
    * handleSymptomPrediction
    * - 로그인 사용자 기반으로 증상 기록을 생성

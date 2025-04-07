@@ -36,7 +36,7 @@ export default function ProfileFormScreen() {
         setUser(updated);
 
         // ✅ 홈으로 이동
-        router.replace("/tabs/home");
+        router.replace("/(tabs)home");
     };
 
     // 컴포넌트 마운트 시 자동 실행

@@ -26,10 +26,10 @@ export const findById = async (id: string) => {
 
   return {
     ...safeUser,
-    diseases: user.diseases.map((ud) => ud.disease),
-    records: user.records.map((r) => ({
+    diseases: user.diseases.map((ud: { disease: any }) => ud.disease),
+    records: user.records.map((r: { symptoms: { symptom: any }[] }) => ({
       ...r,
-      symptoms: r.symptoms.map((s) => s.symptom),
+      symptoms: r.symptoms.map((s: { symptom: any }) => s.symptom),
     })),
   };
 };

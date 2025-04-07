@@ -19,13 +19,13 @@ export default function Index() {
         if (user === null) return; // 아직 로딩 중
         console.log("로그인 전")
         if (!user) {
-            router.replace("/auth/welcome");
+            router.replace("/(auth)/welcome");
             console.log("로그인 완료")
         } else if (!user.gender) {
-            router.replace("/auth/profile-form");
+            router.replace("/(auth)/profile-form");
             console.log("프로필 폼 페이지")
         } else {
-            router.replace("/tabs/home");
+            router.replace("/(tabs)/home");
             console.log("홈 탭")
         }
     }, [user]);

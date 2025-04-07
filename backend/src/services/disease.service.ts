@@ -22,7 +22,7 @@ export const findByUserId = async (userId: string) => {
     },
   });
 
-  return userDiseases.map((ud) => ud.disease);
+  return userDiseases.map((ud: { disease: any }) => ud.disease);
 };
 
 /** 사용자에게 지병 추가 */
