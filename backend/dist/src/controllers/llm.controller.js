@@ -34,6 +34,8 @@ const extractSymptoms = (req, res) => __awaiter(void 0, void 0, void 0, function
         const korean = (0, getKoreanLabels_1.getKoreanLabels)(symptoms);
         // 3. 최종 응답
         res.status(200).json({ korean });
+        // 예: llm.controller.ts
+        console.log('LLM 입력 수신:', req.body.input);
     }
     catch (error) {
         console.error("LLM 호출 오류:", error);

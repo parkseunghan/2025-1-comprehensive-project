@@ -11,6 +11,8 @@ ollama run mistral
 curl -X POST http://localhost:5000/api/llm/extract -H "Content-Type: application/json" -d "{\"texts\":[\"머리가 아프고 기침이 나요. 그리고 피부가 가렵고 따가워요\"]}"
 
 curl -X POST http://localhost:5000/api/llm/extract -H "Content-Type: application/json" -d "{\"texts\":[\"머리가 아프고 기침이 나요\", \"피부가 가렵고 따가워요\"]}"
+
+curl -X POST http://localhost:5000/api/llm/extract -H "Content-Type: application/json" -d "{\"texts\": [\"기침이 나고 열이 있어요\"]}"
 ```
 
 - 테스트
