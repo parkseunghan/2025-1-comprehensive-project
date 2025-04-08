@@ -9,7 +9,7 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 const router = Router();
 
 // [POST] /auth/register - 회원가입
-router.post("/register", authController.register);
+router.post("/signup", authController.signup);
 
 // [POST] /auth/login - 로그인
 router.post("/login", authController.login);

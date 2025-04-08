@@ -41,7 +41,7 @@ const authController = __importStar(require("../controllers/auth.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [POST] /auth/register - 회원가입
-router.post("/register", authController.register);
+router.post("/signup", authController.signup);
 // [POST] /auth/login - 로그인
 router.post("/login", authController.login);
 // [GET] /auth/me - 로그인된 사용자 정보 조회

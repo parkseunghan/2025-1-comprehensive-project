@@ -17,6 +17,7 @@ export interface LoginResponse {
     email: string;
     name: string;
   };
+  message?: string;
 }
 
 /** 🔐 로그인 요청 */
@@ -35,10 +36,10 @@ export interface RegisterRequest {
 }
 
 /** 📝 회원가입 요청 */
-export const registerUser = async (
+export const signupUser  = async (
   payload: RegisterRequest
-): Promise<{ message?: string }> => {
-  const { data } = await axios.post('/auth/register', payload);
+): Promise<LoginResponse> => {
+  const { data } = await axios.post<LoginResponse>('/auth/signup', payload);
   return data;
 };
 

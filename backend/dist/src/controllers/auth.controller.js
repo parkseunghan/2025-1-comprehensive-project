@@ -1,7 +1,7 @@
 "use strict";
 // 🔹 auth.controller.ts
 // 이 파일은 인증(Authentication) 관련 요청을 처리하는 컨트롤러입니다.
-// 더미 사용자 데이터를 기반으로 로그인 및 회원가입 처리를 시뮬레이션합니다.
+// 회원가입, 로그인, 사용자 정보 조회 기능을 제공합니다.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -45,18 +45,38 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.login = exports.register = void 0;
+exports.getMe = exports.login = exports.signup = void 0;
 const authService = __importStar(require("../services/auth.service"));
+const jwt_util_1 = require("../utils/jwt.util");
 /**
  * 사용자 회원가입 요청 처리
  * POST /auth/register
  */
-const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password, name } = req.body;
-    const result = yield authService.register({ email, password, name });
-    res.status(201).json(result);
+    const result = yield authService.signup({ email, password, name });
+    // 이메일 중복 시
+    if ("message" in result) {
+        res.status(400).json({ message: result.message });
+        return;
+    }
+    // ✅ 토큰 발급 및 응답
+    const token = (0, jwt_util_1.generateToken)({
+        id: result.id,
+        email: result.email,
+        name: result.name,
+    });
+    res.status(201).json({
+        token,
+        user: {
+            id: result.id,
+            email: result.email,
+            name: result.name,
+        },
+    });
+    return;
 });
-exports.register = register;
+exports.signup = signup;
 /**
  * 사용자 로그인 요청 처리
  * POST /auth/login
@@ -65,11 +85,11 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
     const result = yield authService.login(email, password);
     if (!result) {
-        res.status(401).json({ message: "Invalid credentials" });
+        res.status(401).json({ message: "이메일 또는 비밀번호가 올바르지 않습니다." });
+        return;
     }
-    else {
-        res.json(result);
-    }
+    res.json(result); // 이미 { token, user } 구조
+    return;
 });
 exports.login = login;
 /**
@@ -89,5 +109,6 @@ const getMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     res.json(user);
+    return;
 });
 exports.getMe = getMe;

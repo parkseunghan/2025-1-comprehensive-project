@@ -1,18 +1,41 @@
 // 🔹 auth.controller.ts
 // 이 파일은 인증(Authentication) 관련 요청을 처리하는 컨트롤러입니다.
-// 더미 사용자 데이터를 기반으로 로그인 및 회원가입 처리를 시뮬레이션합니다.
+// 회원가입, 로그인, 사용자 정보 조회 기능을 제공합니다.
 
 import { Request, Response } from "express";
 import * as authService from "../services/auth.service";
+import { generateToken } from "../utils/jwt.util";
 
 /**
  * 사용자 회원가입 요청 처리
  * POST /auth/register
  */
-export const register = async (req: Request, res: Response) => {
+export const signup = async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
-    const result = await authService.register({ email, password, name });
-    res.status(201).json(result);
+    const result = await authService.signup({ email, password, name });
+
+    // 이메일 중복 시
+    if ("message" in result) {
+        res.status(400).json({ message: result.message });
+        return;
+    }
+
+    // ✅ 토큰 발급 및 응답
+    const token = generateToken({
+        id: result.id,
+        email: result.email,
+        name: result.name,
+    });
+
+    res.status(201).json({
+        token,
+        user: {
+            id: result.id,
+            email: result.email,
+            name: result.name,
+        },
+    });
+    return;
 };
 
 /**
@@ -24,10 +47,12 @@ export const login = async (req: Request, res: Response) => {
     const result = await authService.login(email, password);
 
     if (!result) {
-        res.status(401).json({ message: "Invalid credentials" });
-    } else {
-        res.json(result);
+        res.status(401).json({ message: "이메일 또는 비밀번호가 올바르지 않습니다." });
+        return;
     }
+
+    res.json(result); // 이미 { token, user } 구조
+    return;
 };
 
 /**
@@ -50,4 +75,5 @@ export const getMe = async (req: Request, res: Response) => {
     }
 
     res.json(user);
+    return
 };
