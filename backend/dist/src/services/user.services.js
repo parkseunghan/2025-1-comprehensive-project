@@ -28,7 +28,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.remove = exports.update = exports.findById = void 0;
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
- * 사용자 ID로 전체 정보 조회 (지병 + 증상기록 + 증상 + 예측 포함)
+ * 사용자 ID로 전체 정보 조회 (지병 + 증상기록 + 예측 포함)
  */
 const findById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield prisma_service_1.default.user.findUnique({
@@ -45,18 +45,32 @@ const findById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     });
     if (!user)
         return null;
-    // password 제거
+    // 비밀번호 제외 + 관계 필드 정리
     const { password } = user, safeUser = __rest(user, ["password"]);
     return Object.assign(Object.assign({}, safeUser), { diseases: user.diseases.map((ud) => ud.disease), records: user.records.map((r) => (Object.assign(Object.assign({}, r), { symptoms: r.symptoms.map((s) => s.symptom) }))) });
 });
 exports.findById = findById;
 /**
- * 사용자 정보 업데이트
+ * 사용자 정보 업데이트 (기본 필드 + 지병)
  */
 const update = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
+    const { diseases } = data, rest = __rest(data, ["diseases"]);
     return prisma_service_1.default.user.update({
         where: { id },
-        data,
+        data: Object.assign(Object.assign({}, rest), { diseases: {
+                deleteMany: {}, // 기존 지병 제거
+                create: diseases === null || diseases === void 0 ? void 0 : diseases.map((name) => ({
+                    disease: {
+                        connectOrCreate: {
+                            where: { name },
+                            create: { name },
+                        },
+                    },
+                })),
+            } }),
+        include: {
+            diseases: { include: { disease: true } },
+        },
     });
 });
 exports.update = update;

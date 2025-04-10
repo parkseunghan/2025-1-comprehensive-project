@@ -9,6 +9,7 @@ import recordRoutes from "./record.routes";
 import predictionRoutes from "./prediction.routes";
 import authRoutes from "./auth.routes"
 import llmRoutes from "./llm.routes"
+import medicationRoutes from "./medication.routes";
 
 const router = Router();
 
@@ -32,5 +33,8 @@ router.use("/auth", authRoutes);
 
 // LLM 기반 증상 추출 관련 라우터 연결 (/api/llm)
 router.use("/llm", llmRoutes);
+
+// 약물 관련 라우터 연결 (/api/medications)
+router.use("/medications", medicationRoutes);
 
 export default router;

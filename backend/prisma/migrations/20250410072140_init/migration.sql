@@ -8,7 +8,6 @@ CREATE TABLE "User" (
     "age" INTEGER NOT NULL,
     "height" DOUBLE PRECISION NOT NULL,
     "weight" DOUBLE PRECISION NOT NULL,
-    "medications" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -30,6 +29,23 @@ CREATE TABLE "UserDisease" (
     "diseaseId" TEXT NOT NULL,
 
     CONSTRAINT "UserDisease_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Medication" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "Medication_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserMedication" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "medicationId" TEXT NOT NULL,
+
+    CONSTRAINT "UserMedication_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -80,6 +96,12 @@ CREATE UNIQUE INDEX "Disease_name_key" ON "Disease"("name");
 CREATE UNIQUE INDEX "UserDisease_userId_diseaseId_key" ON "UserDisease"("userId", "diseaseId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Medication_name_key" ON "Medication"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserMedication_userId_medicationId_key" ON "UserMedication"("userId", "medicationId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Symptom_name_key" ON "Symptom"("name");
 
 -- CreateIndex
@@ -93,6 +115,12 @@ ALTER TABLE "UserDisease" ADD CONSTRAINT "UserDisease_userId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "UserDisease" ADD CONSTRAINT "UserDisease_diseaseId_fkey" FOREIGN KEY ("diseaseId") REFERENCES "Disease"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserMedication" ADD CONSTRAINT "UserMedication_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserMedication" ADD CONSTRAINT "UserMedication_medicationId_fkey" FOREIGN KEY ("medicationId") REFERENCES "Medication"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SymptomRecord" ADD CONSTRAINT "SymptomRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

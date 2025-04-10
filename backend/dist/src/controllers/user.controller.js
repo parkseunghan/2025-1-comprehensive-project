@@ -1,7 +1,7 @@
 "use strict";
 // 🔹 user.controller.ts
-// 이 파일은 사용자 API 요청을 처리하는 컨트롤러 계층입니다.
-// 요청 데이터를 파싱하고, 서비스 로직을 호출하며, 응답을 반환합니다.
+// 사용자 API 요청을 처리하는 컨트롤러 계층입니다.
+// 요청 데이터를 파싱하고 서비스 로직을 호출하며 응답을 반환합니다.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -46,9 +46,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUser = exports.updateUser = exports.getUserById = void 0;
-const userService = __importStar(require("../services/user.services")); // 사용자 서비스 로직 호출
+const userService = __importStar(require("../services/user.services"));
 /**
- * 사용자 ID로 사용자 조회 (Prisma 버전)
+ * 사용자 ID로 사용자 조회
+ * GET /users/:id
  */
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield userService.findById(req.params.id);
@@ -56,24 +57,36 @@ const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
         return;
     }
-    // 🔹 diseases 배열을 평탄화해 name만 추출
-    const formatted = Object.assign(Object.assign({}, user), { diseases: user.diseases.map((ud) => ud.disease), records: user.records.map((r) => (Object.assign(Object.assign({}, r), { symptoms: r.symptoms.map((s) => s.symptom) }))) });
-    res.json(formatted);
+    res.json(user);
 });
 exports.getUserById = getUserById;
 /**
  * 사용자 정보 업데이트
+ * PATCH /users/:id
  */
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const updated = yield userService.update(req.params.id, req.body);
-    res.json(updated);
+    try {
+        const updated = yield userService.update(req.params.id, req.body);
+        res.json(updated);
+    }
+    catch (err) {
+        console.error("❌ 사용자 업데이트 오류:", err);
+        res.status(500).json({ message: "사용자 정보를 수정하는 중 오류가 발생했습니다." });
+    }
 });
 exports.updateUser = updateUser;
 /**
  * 사용자 삭제
+ * DELETE /users/:id
  */
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deleted = yield userService.remove(req.params.id);
-    res.json(deleted);
+    try {
+        const deleted = yield userService.remove(req.params.id);
+        res.json(deleted);
+    }
+    catch (err) {
+        console.error("❌ 사용자 삭제 오류:", err);
+        res.status(500).json({ message: "사용자를 삭제하는 중 오류가 발생했습니다." });
+    }
 });
 exports.deleteUser = deleteUser;

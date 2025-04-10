@@ -11,8 +11,8 @@ const router = Router();
 // [GET] /users/:id - 특정 사용자 정보 조회
 router.get("/:id", authMiddleware, userController.getUserById);
 
-// [PUT] /users/:id - 사용자 정보 수정
-router.put("/:id", authMiddleware, userController.updateUser);
+// [PATCH] /users/:id - 사용자 정보 수정
+router.patch("/:id", authMiddleware, userController.updateUser);
 
 // [DELETE] /users/:id - 사용자 삭제
 router.delete("/:id", authMiddleware, userController.deleteUser);

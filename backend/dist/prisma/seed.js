@@ -32,7 +32,6 @@ function main() {
                 age: 30,
                 height: 175.5,
                 weight: 68.2,
-                medications: ["아스피린", "타이레놀"],
             },
         });
         // 2. 질병 다수 등록
@@ -58,12 +57,34 @@ function main() {
                 { id: "disease-018", name: "상기도 감염 (전신감기)" },
             ],
         });
-        // 3. 사용자와 지병 연결 (여러 개)
+        // 2-1. 약물 다수 등록
+        yield prisma_service_1.default.medication.createMany({
+            data: [
+                { id: "med-001", name: "아스피린" },
+                { id: "med-002", name: "타이레놀" },
+                { id: "med-003", name: "이부프로펜" },
+                { id: "med-004", name: "시프로플록사신" },
+                { id: "med-005", name: "로사르탄" },
+                { id: "med-006", name: "에스오메프라졸" },
+                { id: "med-007", name: "메트포르민" },
+                { id: "med-008", name: "리시노프릴" },
+                { id: "med-009", name: "암로디핀" },
+                { id: "med-010", name: "플루옥세틴" },
+            ],
+        });
+        // 3. 사용자-지병 연결
         yield prisma_service_1.default.userDisease.createMany({
             data: [
                 { id: "user-disease-001", userId: user.id, diseaseId: "disease-001" },
                 { id: "user-disease-002", userId: user.id, diseaseId: "disease-005" },
                 { id: "user-disease-003", userId: user.id, diseaseId: "disease-009" },
+            ],
+        });
+        // 3-1. 사용자-약물 연결
+        yield prisma_service_1.default.userMedication.createMany({
+            data: [
+                { id: "user-med-001", userId: user.id, medicationId: "med-001" },
+                { id: "user-med-002", userId: user.id, medicationId: "med-002" },
             ],
         });
         // 4. 증상 등록
@@ -82,7 +103,7 @@ function main() {
                 createdAt: new Date("2025-03-30T10:00:00Z"),
             },
         });
-        // 6. 증상 기록 ↔ 증상 다대다 연결
+        // 6. 증상 기록 ↔ 증상 연결
         yield prisma_service_1.default.symptomOnRecord.createMany({
             data: [
                 { id: "sor-001", recordId: record.id, symptomId: "symptom-001" },

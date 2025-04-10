@@ -42,8 +42,8 @@ const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 // [GET] /users/:id - 특정 사용자 정보 조회
 router.get("/:id", auth_middleware_1.authMiddleware, userController.getUserById);
-// [PUT] /users/:id - 사용자 정보 수정
-router.put("/:id", auth_middleware_1.authMiddleware, userController.updateUser);
+// [PATCH] /users/:id - 사용자 정보 수정
+router.patch("/:id", auth_middleware_1.authMiddleware, userController.updateUser);
 // [DELETE] /users/:id - 사용자 삭제
 router.delete("/:id", auth_middleware_1.authMiddleware, userController.deleteUser);
 exports.default = router;
