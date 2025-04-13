@@ -4,6 +4,8 @@
 
 import { Request, Response } from "express";
 import * as userService from "../services/user.services";
+import { userUpdateSchema } from "../schemas/user.schema";
+import { ZodError } from "zod";
 
 /**
  * 사용자 ID로 사용자 조회
@@ -13,8 +15,7 @@ export const getUserById = async (req: Request, res: Response) => {
   const user = await userService.findById(req.params.id);
 
   if (!user) {
-    res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-    return;
+    return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
   }
 
   res.json(user);
@@ -26,11 +27,23 @@ export const getUserById = async (req: Request, res: Response) => {
  */
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const updated = await userService.update(req.params.id, req.body);
+    // ✅ Zod 유효성 검사 수행
+    const parsed = userUpdateSchema.parse(req.body);
+
+    const updated = await userService.update(req.params.id, parsed);
     res.json(updated);
   } catch (err) {
+    if (err instanceof ZodError) {
+      return res.status(400).json({
+        message: "입력값이 유효하지 않습니다.",
+        errors: err.errors, // 배열 형태로 상세 필드 정보 포함
+      });
+    }
+
     console.error("❌ 사용자 업데이트 오류:", err);
-    res.status(500).json({ message: "사용자 정보를 수정하는 중 오류가 발생했습니다." });
+    res
+      .status(500)
+      .json({ message: "사용자 정보를 수정하는 중 오류가 발생했습니다." });
   }
 };
 

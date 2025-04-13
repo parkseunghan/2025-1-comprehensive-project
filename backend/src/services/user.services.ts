@@ -1,73 +1,82 @@
-// 🔹 user.service.ts
-// 사용자 관련 비즈니스 로직을 처리하는 서비스 계층 (Prisma 버전)
-
 import prisma from "../config/prisma.service";
+import { UserUpdateInput } from "../schemas/user.schema"; // zod 타입 정의
 
-/**
- * 사용자 ID로 전체 정보 조회 (지병 + 증상기록 + 예측 포함)
- */
 export const findById = async (id: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id },
-    include: {
-      diseases: { include: { disease: true } },
-      records: {
+    const user = await prisma.user.findUnique({
+        where: { id },
         include: {
-          symptoms: { include: { symptom: true } },
-          prediction: true,
-        },
-      },
-    },
-  });
-
-  if (!user) return null;
-
-  // 비밀번호 제외 + 관계 필드 정리
-  const { password, ...safeUser } = user;
-
-  return {
-    ...safeUser,
-    diseases: user.diseases.map((ud) => ud.disease), // Disease[] 형태로 평탄화
-    records: user.records.map((r) => ({
-      ...r,
-      symptoms: r.symptoms.map((s) => s.symptom), // Symptom[] 평탄화
-    })),
-  };
-};
-
-/**
- * 사용자 정보 업데이트 (기본 필드 + 지병)
- */
-export const update = async (id: string, data: any) => {
-  const { diseases, ...rest } = data;
-
-  return prisma.user.update({
-    where: { id },
-    data: {
-      ...rest, // gender, age, height, weight, medications 등
-      diseases: {
-        deleteMany: {}, // 기존 지병 제거
-        create: diseases?.map((name: string) => ({
-          disease: {
-            connectOrCreate: {
-              where: { name },
-              create: { name },
+            diseases: { include: { disease: true } },
+            medications: { include: { medication: true } }, // ✅ 추가
+            records: {
+                include: {
+                    symptoms: { include: { symptom: true } },
+                    prediction: true,
+                },
             },
-          },
+        },
+    });
+
+    if (!user) return null;
+
+    const { password, ...safeUser } = user;
+
+    return {
+        ...safeUser,
+        diseases: user.diseases.map((ud) => ud.disease),
+        medications: user.medications.map((um) => um.medication),
+        records: user.records.map((r) => ({
+            ...r,
+            symptoms: r.symptoms.map((s) => s.symptom),
         })),
-      },
-    },
-    include: {
-      diseases: { include: { disease: true } },
-    },
-  });
+    };
 };
 
-/**
- * 사용자 삭제
- */
+export const update = async (id: string, data: UserUpdateInput) => {
+    const { diseases, medications, ...rest } = data;
+
+    // 🔸 1. 질병/약물 존재 여부 확인
+    const validDiseases = await prisma.disease.findMany({
+        where: { name: { in: diseases ?? [] } },
+    });
+    const validMedications = await prisma.medication.findMany({
+        where: { name: { in: medications ?? [] } },
+    });
+
+    // 🔸 2. 존재하지 않는 항목이 있다면 예외 처리
+    if ((diseases?.length || 0) !== validDiseases.length) {
+        throw new Error("유효하지 않은 지병이 포함되어 있습니다.");
+    }
+    if ((medications?.length || 0) !== validMedications.length) {
+        throw new Error("유효하지 않은 약물이 포함되어 있습니다.");
+    }
+
+    // 🔸 3. 업데이트 수행
+    return prisma.user.update({
+        where: { id },
+        data: {
+            ...rest,
+            diseases: {
+                deleteMany: {},
+                create: validDiseases.map((d) => ({
+                    disease: { connect: { id: d.id } },
+                })),
+            },
+            medications: {
+                deleteMany: {},
+                create: validMedications.map((m) => ({
+                    medication: { connect: { id: m.id } },
+                })),
+            },
+        },
+        include: {
+            diseases: { include: { disease: true } },
+            medications: { include: { medication: true } },
+        },
+    });
+};
+
 export const remove = async (id: string) => {
-  return prisma.user.delete({
-    where: { id },
-  });
+    return prisma.user.delete({
+        where: { id },
+    });
 };

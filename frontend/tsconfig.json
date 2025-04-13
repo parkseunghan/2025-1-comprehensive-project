@@ -1,10 +1,14 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-        "@/*": ["src/*"]
+    "compilerOptions": {
+        "baseUrl": ".", // 상대 경로 기준
+        "paths": {
+            "@/*": [
+                "src/*",
+                "components/*",
+                "screens/*"
+            ] // ✅ src와 components 모두 인식하도록 설정
+        },
+        "jsx": "react-native"
     },
-    "jsx": "react-native"
-  },
-  "extends": "expo/tsconfig.base"
+    "extends": "expo/tsconfig.base"
 }

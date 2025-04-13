@@ -47,6 +47,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUser = exports.updateUser = exports.getUserById = void 0;
 const userService = __importStar(require("../services/user.services"));
+const user_schema_1 = require("../schemas/user.schema");
+const zod_1 = require("zod");
 /**
  * 사용자 ID로 사용자 조회
  * GET /users/:id
@@ -54,8 +56,7 @@ const userService = __importStar(require("../services/user.services"));
 const getUserById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield userService.findById(req.params.id);
     if (!user) {
-        res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
-        return;
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
     }
     res.json(user);
 });
@@ -66,12 +67,22 @@ exports.getUserById = getUserById;
  */
 const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const updated = yield userService.update(req.params.id, req.body);
+        // ✅ Zod 유효성 검사 수행
+        const parsed = user_schema_1.userUpdateSchema.parse(req.body);
+        const updated = yield userService.update(req.params.id, parsed);
         res.json(updated);
     }
     catch (err) {
+        if (err instanceof zod_1.ZodError) {
+            return res.status(400).json({
+                message: "입력값이 유효하지 않습니다.",
+                errors: err.errors, // 배열 형태로 상세 필드 정보 포함
+            });
+        }
         console.error("❌ 사용자 업데이트 오류:", err);
-        res.status(500).json({ message: "사용자 정보를 수정하는 중 오류가 발생했습니다." });
+        res
+            .status(500)
+            .json({ message: "사용자 정보를 수정하는 중 오류가 발생했습니다." });
     }
 });
 exports.updateUser = updateUser;
