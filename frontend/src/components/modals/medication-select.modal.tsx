@@ -1,5 +1,8 @@
 // 📄 src/components/modals/medication-select.modal.tsx
 
+// 🔹 약물 선택 모달 컴포넌트
+// 사용자가 복용 중인 약물을 다중 선택할 수 있는 팝업 창입니다.
+
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -8,35 +11,37 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+// 🔸 props 타입 정의
 interface Props {
-  visible: boolean;
-  selected: string[];
-  medicationList: string[]; // ✅ 외부에서 약물 리스트 전달받음
-  onClose: () => void;
-  onSave: (items: string[]) => void;
+  visible: boolean;               // 모달 열림 여부
+  selected: string[];             // 현재 선택된 약물 목록
+  medicationList: string[];      // 전체 약물 리스트
+  isLoading?: boolean;            // 로딩 상태
+  onClose: () => void;            // 닫기 버튼 동작
+  onSave: (items: string[]) => void; // 저장 버튼 동작
 }
 
 export default function MedicationSelectModal({
   visible,
   selected,
   medicationList,
+  isLoading = false,
   onClose,
   onSave,
 }: Props) {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   useEffect(() => {
-    setSelectedItems(selected);
+    setSelectedItems(selected); // 모달 열릴 때 선택 초기화
   }, [visible]);
 
   const toggleItem = (item: string) => {
     setSelectedItems((prev) =>
-      prev.includes(item)
-        ? prev.filter((i) => i !== item)
-        : [...prev, item]
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
     );
   };
 
@@ -45,21 +50,30 @@ export default function MedicationSelectModal({
       <View style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.title}>약물 선택</Text>
-          <FlatList
-            data={medicationList}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.itemRow} onPress={() => toggleItem(item)}>
-                <Ionicons
-                  name={selectedItems.includes(item) ? "checkbox" : "square-outline"}
-                  size={20}
-                  color="#111827"
-                  style={{ marginRight: 8 }}
-                />
-                <Text>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
+
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#D92B4B" />
+          ) : (
+            <FlatList
+              data={medicationList}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.itemRow}
+                  onPress={() => toggleItem(item)}
+                >
+                  <Ionicons
+                    name={selectedItems.includes(item) ? "checkbox" : "square-outline"}
+                    size={20}
+                    color="#111827"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+
           <View style={styles.footer}>
             <TouchableOpacity onPress={onClose}>
               <Text style={styles.closeText}>닫기</Text>
@@ -74,6 +88,7 @@ export default function MedicationSelectModal({
   );
 }
 
+// 🔸 스타일 정의
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
