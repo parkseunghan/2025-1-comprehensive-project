@@ -1,0 +1,28 @@
+{
+    "감기": {
+      "use_focal": false,
+      "loss": "categorical_crossentropy",
+      "output_type": "onehot"
+    },
+    "감염": {
+      "use_focal": true,
+      "loss": "focal",
+      "output_type": "int"
+    },
+    "소화기": {
+      "use_focal": false,
+      "loss": "categorical_crossentropy",
+      "output_type": "onehot"
+    },
+    "호흡기": {
+      "use_focal": false,
+      "loss": "categorical_crossentropy",
+      "output_type": "onehot"
+    },
+    "심혈관": {
+      "use_focal": false,
+      "loss": "categorical_crossentropy",
+      "output_type": "onehot"
+    }
+  }
+  
