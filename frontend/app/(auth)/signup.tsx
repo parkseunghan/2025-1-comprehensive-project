@@ -1,163 +1,176 @@
-import { useState } from 'react';
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    Alert,
-    ActivityIndicator,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+// 📄 app/(auth)/signup.tsx
+// 회원가입 화면 (Zod 유효성 검사 + router 통일)
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { signupUser  } from '@/services/auth.api';
-import { useAuthStore } from '@/store/auth.store';
+import { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { signupUser } from "@/services/auth.api";
+import { useAuthStore } from "@/store/auth.store";
+import { signupSchema, SignupForm } from "@/schemas/auth.schema";
+import BackButton from "@/common/BackButton";
 
 export default function SignupScreen() {
-    const setAuth = useAuthStore((state) => state.setAuth);
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [emailCheckResult, setEmailCheckResult] = useState<null | boolean>(null);
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+  const setAuth = useAuthStore((state) => state.setAuth);
 
-    const checkEmailDuplicate = () => {
-        if (!email.trim()) return;
-        // TODO: 실제 API 연결 예정
-        setEmailCheckResult(email !== 'test@example.com');
-    };
+  const [form, setForm] = useState<SignupForm>({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [emailCheckResult, setEmailCheckResult] = useState<null | boolean>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const isPasswordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const handleChange = (key: keyof SignupForm, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === "email") setEmailCheckResult(null); // 이메일 중복 결과 초기화
+  };
 
-    const handleSignup = async () => {
-        if (!email || !password || !name) {
-            Alert.alert('필수 정보를 입력해주세요.');
-            return;
-        }
-        if (isPasswordMismatch) {
-            Alert.alert('비밀번호가 일치하지 않습니다.');
-            return;
-        }
+  const checkEmailDuplicate = () => {
+    if (!form.email.trim()) return;
+    // TODO: API 연결 예정
+    setEmailCheckResult(form.email !== "test@example.com");
+  };
 
-        try {
-            setIsLoading(true);
-            const res = await signupUser ({ email, password, name });
+  const handleSignup = async () => {
+    try {
+      const parsed = signupSchema.parse(form);
 
-            if (res.message) {
-                Alert.alert(res.message);
-                return;
-            }
-            // 회원가입 성공 → 상태 저장 + 토큰 저장
-            await AsyncStorage.setItem('token', res.token);
-            setAuth(res.token, res.user);
+      setIsLoading(true);
+      const res = await signupUser({
+        email: parsed.email,
+        password: parsed.password,
+        name: parsed.name,
+      });
 
-            // 프로필 작성 화면으로 이동
-            router.replace('/(auth)/profile-form');
-        } catch (err) {
-            console.error('회원가입 오류:', err);
-            Alert.alert('회원가입에 실패했습니다.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      if (res.message) {
+        Alert.alert(res.message);
+        return;
+      }
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#111827" />
-                </TouchableOpacity>
-                <Text style={styles.headerText}>회원가입</Text>
-            </View>
+      await AsyncStorage.setItem("token", res.token);
+      setAuth(res.token, res.user);
 
-            <TextInput
-                style={styles.input}
-                placeholder="이름"
-                placeholderTextColor="#9CA3AF"
-                value={name}
-                onChangeText={setName}
-            />
+      router.replace("/(auth)/profile-form");
+    } catch (err: any) {
+      if (err.name === "ZodError") {
+        Alert.alert("입력 오류", err.issues?.[0]?.message || "입력값이 올바르지 않습니다.");
+      } else {
+        console.error("❌ 회원가입 오류:", err);
+        Alert.alert("회원가입에 실패했습니다.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            <View style={styles.emailRow}>
-                <TextInput
-                    style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                    placeholder="이메일"
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={(text) => {
-                        setEmail(text);
-                        setEmailCheckResult(null);
-                    }}
-                />
-                <TouchableOpacity style={styles.checkButton} onPress={checkEmailDuplicate}>
-                    <Text style={styles.checkButtonText}>중복 확인</Text>
-                </TouchableOpacity>
-            </View>
+  const isPasswordMismatch = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
-            {emailCheckResult !== null ? (
-                <Text
-                    style={[
-                        styles.resultMessage,
-                        { color: emailCheckResult ? '#10B981' : '#EF4444' },
-                    ]}
-                >
-                    {emailCheckResult
-                        ? '가입 가능한 이메일입니다'
-                        : '이미 존재하는 이메일입니다'}
-                </Text>
-            ) : (
-                <View style={{ height: 24 }} />
-            )}
+  return (
+    <View style={styles.container}>
+      {/* 🔙 상단 헤더 */}
+      <View style={styles.header}>
+        <BackButton />
+        <Text style={styles.headerText}>회원가입</Text>
+      </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="비밀번호"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="비밀번호 확인"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-            />
+      {/* 📝 입력 필드 */}
+      <TextInput
+        style={styles.input}
+        placeholder="이름"
+        placeholderTextColor="#9CA3AF"
+        value={form.name}
+        onChangeText={(v) => handleChange("name", v)}
+      />
 
-            {isPasswordMismatch ? (
-                <Text style={styles.errorText}>비밀번호가 일치하지 않습니다</Text>
-            ) : (
-                <View style={{ height: 24 }} />
-            )}
+      <View style={styles.emailRow}>
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="이메일"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={form.email}
+          onChangeText={(v) => handleChange("email", v)}
+        />
+        <TouchableOpacity style={styles.checkButton} onPress={checkEmailDuplicate}>
+          <Text style={styles.checkButtonText}>중복 확인</Text>
+        </TouchableOpacity>
+      </View>
 
-            <TouchableOpacity
-                style={styles.signupButton}
-                onPress={handleSignup}
-                disabled={isLoading}
-            >
-                {isLoading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.signupButtonText}>회원가입</Text>
-                )}
-            </TouchableOpacity>
+      {emailCheckResult !== null ? (
+        <Text
+          style={[
+            styles.resultMessage,
+            { color: emailCheckResult ? "#10B981" : "#EF4444" },
+          ]}
+        >
+          {emailCheckResult
+            ? "가입 가능한 이메일입니다"
+            : "이미 존재하는 이메일입니다"}
+        </Text>
+      ) : (
+        <View style={{ height: 24 }} />
+      )}
 
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>이미 계정이 있으신가요?</Text>
-                <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-                    <Text style={[styles.footerText, { fontWeight: 'bold', marginLeft: 6 }]}>로그인</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+      <TextInput
+        style={styles.input}
+        placeholder="비밀번호"
+        placeholderTextColor="#9CA3AF"
+        secureTextEntry
+        value={form.password}
+        onChangeText={(v) => handleChange("password", v)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="비밀번호 확인"
+        placeholderTextColor="#9CA3AF"
+        secureTextEntry
+        value={form.confirmPassword}
+        onChangeText={(v) => handleChange("confirmPassword", v)}
+      />
+
+      {isPasswordMismatch ? (
+        <Text style={styles.errorText}>비밀번호가 일치하지 않습니다</Text>
+      ) : (
+        <View style={{ height: 24 }} />
+      )}
+
+      <TouchableOpacity
+        style={styles.signupButton}
+        onPress={handleSignup}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.signupButtonText}>회원가입</Text>
+        )}
+      </TouchableOpacity>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>이미 계정이 있으신가요?</Text>
+        <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+          <Text style={[styles.footerText, { fontWeight: "bold", marginLeft: 6 }]}>
+            로그인
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
+
 
 const styles = StyleSheet.create({
     container: {
