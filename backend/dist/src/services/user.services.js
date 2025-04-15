@@ -84,17 +84,23 @@ const update = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     // ✅ 사용자 정보 업데이트
     return prisma_service_1.default.user.update({
         where: { id },
-        data: Object.assign(Object.assign({}, rest), { diseases: {
-                deleteMany: {}, // 기존 관계 제거 후 재생성
-                create: validDiseases.map((d) => ({
-                    disease: { connect: { id: d.id } },
-                })),
-            }, medications: {
-                deleteMany: {},
-                create: validMedications.map((m) => ({
-                    medication: { connect: { id: m.id } },
-                })),
-            } }),
+        data: Object.assign(Object.assign({}, rest), { 
+            // ✅ 선택 시에만 업데이트
+            diseases: diseases
+                ? {
+                    deleteMany: {},
+                    create: validDiseases.map((d) => ({
+                        disease: { connect: { id: d.id } },
+                    })),
+                }
+                : undefined, medications: medications
+                ? {
+                    deleteMany: {},
+                    create: validMedications.map((m) => ({
+                        medication: { connect: { id: m.id } },
+                    })),
+                }
+                : undefined }),
         include: {
             diseases: { include: { disease: true } },
             medications: { include: { medication: true } },

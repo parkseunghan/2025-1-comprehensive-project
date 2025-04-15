@@ -2,7 +2,6 @@
 // 이 파일은 인증 로직을 처리하는 서비스 계층입니다.
 // DB 저장/조회 + 최소 사용자 정보 리턴 (비밀번호 제외)
 
-import { v4 as uuidv4 } from "uuid";
 import { generateToken } from "../utils/jwt.util";
 import prisma from "../config/prisma.service";
 
@@ -18,7 +17,7 @@ export const signup = async (data: {
     | {
         id: string;
         email: string;
-        name?: string; // ✅ Optional: Prisma에 맞춤
+        name?: string;
     }
     | { message: string }
 > => {
@@ -32,22 +31,21 @@ export const signup = async (data: {
 
     const newUser = await prisma.user.create({
         data: {
-            id: uuidv4(),
             email: data.email,
             password: data.password,
-            name: data.name ?? "", // ✅ 기본값 제공
+            name: data.name ?? "",
             gender: "",
             age: 0,
             height: 0,
             weight: 0,
-            medications: [],
+            // ⛔ medications, diseases는 선택사항이므로 생략
         },
     });
 
     return {
         id: newUser.id,
         email: newUser.email,
-        name: newUser.name ?? undefined
+        name: newUser.name ?? undefined,
     };
 };
 
@@ -68,7 +66,7 @@ export const login = async (
     const token = generateToken({
         id: user.id,
         email: user.email,
-        name: user.name ?? "", // ✅ 토큰에도 기본값
+        name: user.name ?? "",
     });
 
     return {
@@ -95,7 +93,8 @@ export const getUserById = async (
     age: number;
     height: number;
     weight: number;
-    medications: string[];
+    medications?: string[]; // ✅ optional 처리
+    diseases?: string[];    // ✅ optional 처리
     createdAt: Date;
     updatedAt: Date;
 } | null> => {
@@ -108,6 +107,7 @@ export const getUserById = async (
     const { password, ...safeUser } = user;
     return {
         ...safeUser,
-        name: user.name ?? undefined, // ✅ 명시적 처리 필요
+        name: user.name ?? undefined,
+        // medications, diseases는 생략 (이 함수에서는 포함하지 않음)
     };
 };
