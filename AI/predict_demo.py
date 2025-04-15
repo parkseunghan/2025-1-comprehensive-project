@@ -64,6 +64,8 @@ result = predict_disease(
     sbert_model
 )
 
-print("\n🎯 예측 결과:")
-for k, v in result.items():
-    print(f"{k}: {v}")
+print("\n🎯 예측 결과 (Top-3):")
+for i, pred in enumerate(result["top_predictions"], start=1):
+    label = pred["label"]
+    prob = pred["prob"]
+    print(f"{i}. {label} ({prob * 100:.1f}%)")

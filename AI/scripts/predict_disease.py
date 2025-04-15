@@ -39,54 +39,60 @@ def calculate_risk_score(input_dict, confidence):
     return score, level, guide
 
 # 전처리 함수 (입력 → MLP + 텍스트 벡터)
-def preprocess_input(input_dict, scaler, mlb_chronic, mlb_meds, sbert_model):
-    gender_map = {"남성": 1, "여성": 0}
+def predict_disease(
+    sample,
+    coarse_model,
+    fine_models,
+    coarse_le,
+    fine_label_encoders,
+    scaler,
+    mlb_chronic,
+    mlb_meds,
+    text_vector  # shape: (1, 384) 정도의 numpy 배열
+):
+    # ✅ 텍스트 벡터 reshape 보정
+    if text_vector.ndim == 1:
+        text_vector = text_vector.reshape(1, -1)
 
-    # SBERT 임베딩
-    text_embedding = sbert_model.encode([input_dict["symptom_keywords"]])[0].reshape(1, -1)
-
-    # 수치 스케일링
-    num_input = np.array([
-        input_dict["Age"],
-        input_dict["Height_cm"],
-        input_dict["Weight_kg"],
-        input_dict["BMI"]
+    # ✅ 수치형 정규화
+    numeric = np.array([
+        sample["Age"], sample["Height_cm"], sample["Weight_kg"], sample["BMI"]
     ]).reshape(1, -1)
-    num_scaled = scaler.transform(num_input)
+    numeric = scaler.transform(numeric)
 
-    gender = np.array([[gender_map.get(input_dict["Gender"], 0)]])
-    chronic_bin = mlb_chronic.transform([input_dict["chronic_diseases"]])
-    meds_bin = mlb_meds.transform([input_dict["medications"]])
+    # ✅ 범주형 처리
+    gender = np.array([[1 if sample["Gender"] == "남성" else 0]])
+    chronic = mlb_chronic.transform([sample["chronic_diseases"]])
+    meds = mlb_meds.transform([sample["medications"]])
 
-    mlp_input = np.concatenate([num_scaled, gender, chronic_bin, meds_bin], axis=1)
-    return mlp_input, text_embedding
+    # ✅ 최종 MLP 입력
+    mlp_input = np.concatenate([numeric, gender, chronic, meds], axis=1)
 
-# 통합 예측 함수
-def predict_disease(input_dict, coarse_model, fine_models, coarse_le, fine_label_encoders,
-                    scaler, mlb_chronic, mlb_meds, sbert_model):
-    mlp_input, text_input = preprocess_input(input_dict, scaler, mlb_chronic, mlb_meds, sbert_model)
-
-    # coarse 예측
-    coarse_probs = coarse_model.predict([mlp_input, text_input])
-    coarse_idx = np.argmax(coarse_probs)
+    # ✅ coarse 예측
+    coarse_pred = coarse_model.predict([mlp_input, text_vector], verbose=0)
+    coarse_idx = np.argmax(coarse_pred, axis=1)[0]
     coarse_label = coarse_le.inverse_transform([coarse_idx])[0]
 
-    # fine 예측
+    # ✅ fine 분기 예측
     fine_model = fine_models[coarse_label]
-    fine_le = fine_label_encoders[coarse_label]
-    fine_probs = fine_model.predict([mlp_input, text_input])
-    fine_idx = np.argmax(fine_probs)
-    fine_label = fine_le.inverse_transform([fine_idx])[0]
-    confidence = round(float(fine_probs[0][fine_idx]), 4)
+    fine_encoder = fine_label_encoders[coarse_label]
+    fine_pred = fine_model.predict([mlp_input, text_vector], verbose=0)
 
-    # 위험도 계산
-    risk_score, risk_level, recommendation = calculate_risk_score(input_dict, confidence)
+    # ✅ Top-3 예측 추출
+    top_indices = np.argsort(fine_pred[0])[::-1][:3]
+    top_labels = fine_encoder.inverse_transform(top_indices)
+    top_probs = fine_pred[0][top_indices]
+
+    # ✅ 위험도 계산 반영
+    risk_score, risk_level, guide = calculate_risk_score(sample, top_probs[0])
 
     return {
         "coarse_label": coarse_label,
-        "fine_prediction": fine_label,
-        "confidence": confidence,
+        "top_predictions": [
+            {"label": top_labels[i], "prob": round(top_probs[i], 4)}
+            for i in range(len(top_labels))
+        ],
         "risk_score": risk_score,
         "risk_level": risk_level,
-        "recommendation": recommendation
+        "recommendation": guide
     }
