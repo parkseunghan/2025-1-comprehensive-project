@@ -4,40 +4,39 @@
 import React from "react";
 import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 
 interface Props {
-  fallbackRoute?: string; // 기본값: "/(tabs)/home"
-  style?: ViewStyle;
-  color?: string;
-  size?: number;
+    fallbackRoute?: string; // 기본값: "/(tabs)/home"
+    style?: ViewStyle;
+    color?: string;
+    size?: number;
 }
 
 export default function BackButton({
-  fallbackRoute = "/(tabs)/home",
-  style,
-  color = "#111827",
-  size = 24,
+    fallbackRoute = "/(tabs)/home",
+    style,
+    color = "#111827",
+    size = 24,
 }: Props) {
-  const router = useRouter();
 
-  const goBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace(fallbackRoute);
-    }
-  };
+    const goBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            router.replace(fallbackRoute);
+        }
+    };
 
-  return (
-    <TouchableOpacity onPress={goBack} style={[styles.button, style]}>
-      <Ionicons name="chevron-back" size={size} color={color} />
-    </TouchableOpacity>
-  );
+    return (
+        <TouchableOpacity onPress={goBack} style={[styles.button, style]}>
+            <Ionicons name="chevron-back" size={size} color={color} />
+        </TouchableOpacity>
+    );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    padding: 8,
-  },
+    button: {
+        padding: 8,
+    },
 });

@@ -14,7 +14,9 @@ import {
 import { router } from "expo-router";
 
 import { useAuth } from "@/hooks/useAuth";
+
 import BackButton from "@/common/BackButton";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function LoginScreen() {
     const { handleLogin, isLoading, error } = useAuth();
@@ -31,8 +33,15 @@ export default function LoginScreen() {
         const success = await handleLogin({ email, password });
 
         if (success) {
+            const { user } = useAuthStore.getState(); // ✅ 최신 로그인된 사용자 정보
+
+            if (!user.gender) {
+              router.replace("/(auth)/profile-form"); // 🧾 프로필 미작성 시
+            } else {
+              router.replace("/(tabs)/home"); // 🏠 홈으로
+            }
             Alert.alert("✅ 로그인 성공", "홈 화면으로 이동합니다.");
-            router.replace("/(tabs)/home");
+           
         }
     };
 

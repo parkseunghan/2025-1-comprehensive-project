@@ -1,34 +1,45 @@
-// index.tsx
-// 앱 시작 시 사용자 상태에 따라 적절한 화면으로 리디렉션합니다.
-
-import { useRouter, useRootNavigationState  } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { router, useRootNavigationState } from "expo-router";
+import { View, ActivityIndicator } from "react-native";
 import { useAuthStore } from "@/store/auth.store";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Index() {
-    const router = useRouter();
-    const rootNavigation = useRootNavigationState();
-    const { user } = useAuthStore();
+  const rootNavigation = useRootNavigationState();
+  const { user } = useAuthStore();
+  const [isReady, setIsReady] = useState(false);
 
-    useAuth(); // ✅ 토큰 기반 /auth/me 자동 호출
+  const { loadUser } = useAuth(); // 자동 로그인 함수만 실행
 
-    useEffect(() => {
-        // ✅ Root 라우터가 아직 준비되지 않았으면 아무것도 안 함
-        if (!rootNavigation?.key) return;
-        if (user === null) return; // 아직 로딩 중
-        console.log("로그인 전")
-        if (!user) {
-            router.replace("/(auth)/welcome");
-            console.log("로그인 완료")
-        } else if (!user.gender) {
-            router.replace("/(auth)/profile-form");
-            console.log("프로필 폼 페이지")
-        } else {
-            router.replace("/(tabs)/home");
-            console.log("홈 탭")
-        }
-    }, [user]);
+  useEffect(() => {
+    if (!rootNavigation?.key) return;
 
-    return null; // UI 없음 (자동 리디렉션 전용)
+    const initialize = async () => {
+      console.log("🟡 Root ready → 자동 로그인 시도");
+      await loadUser(); // ✅ user 상태가 설정될 때까지 기다림
+      setIsReady(true);
+    };
+
+    initialize();
+  }, [rootNavigation?.key]);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    console.log("✅ user 상태:", user);
+
+    if (!user) {
+      router.replace("/(auth)/welcome");
+    } else if (!user.gender) {
+      router.replace("/(auth)/profile-form");
+    } else {
+      router.replace("/(tabs)/home");
+    }
+  }, [isReady, user]);
+
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" color="#D92B4B" />
+    </View>
+  );
 }

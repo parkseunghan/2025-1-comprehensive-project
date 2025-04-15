@@ -19,7 +19,7 @@ export default function LogoutButton() {
       logout();
 
       // 🔹 3. welcome(시작 화면)으로 이동
-      router.replace("/(auth)/login");
+      router.replace("/(auth)/welcome");
     } catch (err) {
       console.error("❌ 로그아웃 오류:", err);
       Alert.alert("로그아웃 실패", "다시 시도해주세요.");
