@@ -27,7 +27,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserById = exports.login = exports.signup = void 0;
-const uuid_1 = require("uuid");
 const jwt_util_1 = require("../utils/jwt.util");
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
@@ -44,21 +43,20 @@ const signup = (data) => __awaiter(void 0, void 0, void 0, function* () {
     }
     const newUser = yield prisma_service_1.default.user.create({
         data: {
-            id: (0, uuid_1.v4)(),
             email: data.email,
             password: data.password,
-            name: (_a = data.name) !== null && _a !== void 0 ? _a : "", // ✅ 기본값 제공
+            name: (_a = data.name) !== null && _a !== void 0 ? _a : "",
             gender: "",
             age: 0,
             height: 0,
             weight: 0,
-            medications: [],
+            // ⛔ medications, diseases는 선택사항이므로 생략
         },
     });
     return {
         id: newUser.id,
         email: newUser.email,
-        name: (_b = newUser.name) !== null && _b !== void 0 ? _b : undefined
+        name: (_b = newUser.name) !== null && _b !== void 0 ? _b : undefined,
     };
 });
 exports.signup = signup;
@@ -76,7 +74,7 @@ const login = (email, password) => __awaiter(void 0, void 0, void 0, function* (
     const token = (0, jwt_util_1.generateToken)({
         id: user.id,
         email: user.email,
-        name: (_a = user.name) !== null && _a !== void 0 ? _a : "", // ✅ 토큰에도 기본값
+        name: (_a = user.name) !== null && _a !== void 0 ? _a : "",
     });
     return {
         token,
