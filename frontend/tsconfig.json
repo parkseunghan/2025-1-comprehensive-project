@@ -5,6 +5,7 @@
             "@/*": [
                 "src/*",
                 "components/*",
+                "assets/*",
                 "screens/*"
             ] // ✅ src와 components 모두 인식하도록 설정
         },

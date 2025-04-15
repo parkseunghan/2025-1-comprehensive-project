@@ -57,7 +57,6 @@ function main() {
                 { id: "disease-018", name: "상기도 감염 (전신감기)" },
             ],
         });
-        // 2-1. 약물 다수 등록
         yield prisma_service_1.default.medication.createMany({
             data: [
                 { id: "med-001", name: "아스피린" },

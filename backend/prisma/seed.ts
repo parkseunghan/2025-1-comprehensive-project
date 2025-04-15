@@ -48,7 +48,6 @@ async function main() {
     ],
   });
 
-  // 2-1. 약물 다수 등록
   await prisma.medication.createMany({
     data: [
       { id: "med-001", name: "아스피린" },

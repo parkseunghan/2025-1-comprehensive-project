@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.corsMiddleware = exports.corsOptions = void 0;
 // 📄 src/config/cors.config.ts
 const cors_1 = __importDefault(require("cors"));
+const path_1 = __importDefault(require("path"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 // ✅ CORS 허용 옵션 정의
 exports.corsOptions = {
     origin: process.env.FRONTEND_ORIGIN || "http://localhost:8081",

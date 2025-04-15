@@ -1,7 +1,3 @@
-// 📄 ProfileDetailScreen.tsx
-// 사용자의 전체 프로필 정보를 조회하고 수정할 수 있는 화면입니다.
-// 이름, 성별, 나이, 키, 몸무게, 지병, 약물을 포함합니다.
-
 import {
     View,
     Text,
@@ -11,23 +7,19 @@ import {
     TextInput,
     Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { fetchCurrentUser, updateUserProfile } from "@/services/user.api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import BackButton from "@/common/BackButton";
-import { toKoreanGender, toEnglishGender } from "@/utils/gender";
-
-
 
 export default function ProfileDetailScreen() {
-    const router = useRouter();
     const { user } = useAuthStore();
+    const router = useRouter();
     const [editField, setEditField] = useState<string | null>(null);
 
-    // ✅ 사용자 전체 프로필 정보 가져오기
     const { data: profile, refetch } = useQuery({
         queryKey: ["user", user?.id],
         queryFn: () => fetchCurrentUser(user!.id),
@@ -48,7 +40,7 @@ export default function ProfileDetailScreen() {
         if (profile) {
             setEditableProfile({
                 name: profile.name ?? "",
-                gender: toKoreanGender(profile.gender ?? ""),
+                gender: profile.gender ?? "",
                 age: String(profile.age ?? ""),
                 height: String(profile.height ?? ""),
                 weight: String(profile.weight ?? ""),
@@ -58,12 +50,16 @@ export default function ProfileDetailScreen() {
         }
     }, [profile]);
 
-    // ✅ 서버에 수정사항 저장
     const mutation = useMutation({
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
-                gender: toEnglishGender(editableProfile.gender),
+                gender:
+                    editableProfile.gender === "남성"
+                        ? "남성"
+                        : editableProfile.gender === "여성"
+                            ? "여성"
+                            : "남성", // fallback
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),
                 weight: parseFloat(editableProfile.weight),
@@ -91,22 +87,13 @@ export default function ProfileDetailScreen() {
         setEditableProfile((prev) => ({ ...prev, [key]: value }));
     };
 
-    const handleSave = () => {
-        mutation.mutate();
-    };
-
     return (
         <View style={styles.root}>
-            {/* 🔙 뒤로가기 */}
-            <BackButton style={{ position: "absolute", top: 20, left: 16, zIndex: 10 }} />
+            <BackButton style={styles.backButton} />
 
-            <ScrollView
-                contentContainerStyle={styles.container}
-                showsVerticalScrollIndicator={false}
-            >
+            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
                 <Text style={styles.title}>프로필 정보</Text>
 
-                {/* 이름 + 이메일 */}
                 <View style={styles.card}>
                     <View style={styles.rowWithEdit}>
                         {editField === "name" ? (
@@ -127,7 +114,6 @@ export default function ProfileDetailScreen() {
                     <Text style={styles.userEmail}>{user?.email}</Text>
                 </View>
 
-                {/* 상세 정보 항목들 */}
                 <View style={styles.infoBox}>
                     {[
                         { key: "gender", label: "성별" },
@@ -149,7 +135,7 @@ export default function ProfileDetailScreen() {
                     ))}
                 </View>
 
-                <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <TouchableOpacity style={styles.saveButton} onPress={() => mutation.mutate()}>
                     <Text style={styles.saveText}>저장</Text>
                 </TouchableOpacity>
             </ScrollView>
@@ -157,7 +143,6 @@ export default function ProfileDetailScreen() {
     );
 }
 
-// 🔸 항목 단위 입력 필드 컴포넌트
 function EditableText({
     label,
     value,
