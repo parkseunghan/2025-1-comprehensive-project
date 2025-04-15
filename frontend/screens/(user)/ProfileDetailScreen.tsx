@@ -1,3 +1,5 @@
+// 📄 screens/(user)/ProfileDetailScreen.tsx
+
 import {
     View,
     Text,
@@ -8,16 +10,19 @@ import {
     Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { fetchCurrentUser, updateUserProfile } from "@/services/user.api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import BackButton from "@/common/BackButton";
+import DiseaseSelectModal from "@/modals/disease-select.modal";
+import MedicationSelectModal from "@/modals/medication-select.modal";
+import { fetchAllDiseases } from "@/services/disease.api";
+import { fetchAllMedications } from "@/services/medication.api";
 
 export default function ProfileDetailScreen() {
     const { user } = useAuthStore();
-    const router = useRouter();
     const [editField, setEditField] = useState<string | null>(null);
 
     const { data: profile, refetch } = useQuery({
@@ -34,6 +39,19 @@ export default function ProfileDetailScreen() {
         weight: "",
         diseases: "",
         medications: "",
+    });
+
+    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+    const [medicationModalOpen, setMedicationModalOpen] = useState(false);
+
+    const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery({
+        queryKey: ["diseases"],
+        queryFn: fetchAllDiseases,
+    });
+
+    const { data: medicationList = [], isLoading: isMedicationLoading } = useQuery({
+        queryKey: ["medications"],
+        queryFn: fetchAllMedications,
     });
 
     useEffect(() => {
@@ -59,7 +77,7 @@ export default function ProfileDetailScreen() {
                         ? "남성"
                         : editableProfile.gender === "여성"
                             ? "여성"
-                            : "남성", // fallback
+                            : "남성",
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),
                 weight: parseFloat(editableProfile.weight),
@@ -86,6 +104,29 @@ export default function ProfileDetailScreen() {
     const handleChange = (key: keyof typeof editableProfile, value: string) => {
         setEditableProfile((prev) => ({ ...prev, [key]: value }));
     };
+
+    const handleEdit = (key: keyof typeof editableProfile) => {
+        if (key === "diseases") {
+            setDiseaseModalOpen(true);
+        } else if (key === "medications") {
+            setMedicationModalOpen(true);
+        } else {
+            setEditField(key);
+        }
+    };
+
+    const editableItems: {
+        key: keyof typeof editableProfile;
+        label: string;
+        icon?: keyof typeof Ionicons.glyphMap;
+    }[] = [
+        { key: "gender", label: "성별" },
+        { key: "age", label: "나이" },
+        { key: "height", label: "키" },
+        { key: "weight", label: "몸무게" },
+        { key: "diseases", label: "지병", icon: "add" },
+        { key: "medications", label: "복용 약물", icon: "add" },
+    ];
 
     return (
         <View style={styles.root}>
@@ -115,22 +156,16 @@ export default function ProfileDetailScreen() {
                 </View>
 
                 <View style={styles.infoBox}>
-                    {[
-                        { key: "gender", label: "성별" },
-                        { key: "age", label: "나이" },
-                        { key: "height", label: "키" },
-                        { key: "weight", label: "몸무게" },
-                        { key: "diseases", label: "지병" },
-                        { key: "medications", label: "복용 약물" },
-                    ].map((item) => (
+                    {editableItems.map((item) => (
                         <EditableText
                             key={item.key}
                             label={item.label}
-                            value={editableProfile[item.key as keyof typeof editableProfile]}
+                            value={editableProfile[item.key]}
                             editable={editField === item.key}
-                            onEdit={() => setEditField(item.key)}
-                            onChange={(v) => handleChange(item.key as keyof typeof editableProfile, v)}
+                            onEdit={() => handleEdit(item.key)}
+                            onChange={(v) => handleChange(item.key, v)}
                             onBlur={() => setEditField(null)}
+                            iconName={item.icon ?? "create-outline"}
                         />
                     ))}
                 </View>
@@ -138,6 +173,36 @@ export default function ProfileDetailScreen() {
                 <TouchableOpacity style={styles.saveButton} onPress={() => mutation.mutate()}>
                     <Text style={styles.saveText}>저장</Text>
                 </TouchableOpacity>
+
+                {/* 🔻 모달 영역 */}
+                <DiseaseSelectModal
+                    visible={diseaseModalOpen}
+                    selected={editableProfile.diseases.split(",").map((d) => d.trim())}
+                    diseaseList={diseaseList}
+                    isLoading={isDiseaseLoading}
+                    onClose={() => setDiseaseModalOpen(false)}
+                    onSave={(items) => {
+                        setEditableProfile((prev) => ({
+                            ...prev,
+                            diseases: items.join(", "),
+                        }));
+                        setDiseaseModalOpen(false);
+                    }}
+                />
+                <MedicationSelectModal
+                    visible={medicationModalOpen}
+                    selected={editableProfile.medications.split(",").map((m) => m.trim())}
+                    medicationList={medicationList}
+                    isLoading={isMedicationLoading}
+                    onClose={() => setMedicationModalOpen(false)}
+                    onSave={(items) => {
+                        setEditableProfile((prev) => ({
+                            ...prev,
+                            medications: items.join(", "),
+                        }));
+                        setMedicationModalOpen(false);
+                    }}
+                />
             </ScrollView>
         </View>
     );
@@ -150,6 +215,7 @@ function EditableText({
     onEdit,
     onChange,
     onBlur,
+    iconName = "create-outline",
 }: {
     label: string;
     value: string;
@@ -157,13 +223,14 @@ function EditableText({
     onEdit: () => void;
     onChange: (text: string) => void;
     onBlur: () => void;
+    iconName?: keyof typeof Ionicons.glyphMap;
 }) {
     return (
         <View style={styles.itemRow}>
             <View style={styles.itemHeader}>
                 <Text style={styles.itemLabel}>{label}</Text>
                 <TouchableOpacity onPress={onEdit}>
-                    <Ionicons name="create-outline" size={16} color="#6B7280" />
+                    <Ionicons name={iconName} size={16} color="#6B7280" />
                 </TouchableOpacity>
             </View>
             {editable ? (
