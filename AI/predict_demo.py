@@ -50,6 +50,10 @@ sample = {
     "medications": ["항생제"]
 }
 
+text_vector = sbert_model.encode([sample["symptom_keywords"].replace(",", " ")])
+
+
+
 # ✅ 예측 실행
 print("\n🤖 질병 예측 중...")
 result = predict_disease(
@@ -61,7 +65,7 @@ result = predict_disease(
     scaler,
     mlb_chronic,
     mlb_meds,
-    sbert_model
+    text_vector
 )
 
 print("\n🎯 예측 결과 (Top-3):")
