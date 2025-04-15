@@ -11,6 +11,7 @@ from sentence_transformers import SentenceTransformer
 from focal_loss import SparseCategoricalFocalLoss
 import joblib
 import os
+import time 
 
 # ✅ 한글 coarse 그룹명을 영문으로 매핑
 GROUP_NAME_MAP = {
@@ -40,14 +41,14 @@ sbert_model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 
 # ✅ 샘플 입력
 sample = {
-    "symptom_keywords": "기침, 가래, 가슴 답답함",
-    "Age": 50,
-    "Gender": "남성",
-    "Height_cm": 175,
-    "Weight_kg": 80,
-    "BMI": 26.1,
-    "chronic_diseases": ["고혈압"],
-    "medications": ["항생제"]
+    "symptom_keywords": "기침, 가래, 두통, 입 맛 없음",
+    "Age": 30,
+    "Gender": "여성성",
+    "Height_cm": 155,
+    "Weight_kg": 55,
+    "BMI": 22.89,
+    "chronic_diseases": ["없음"],
+    "medications": ["없음"]
 }
 
 text_vector = sbert_model.encode([sample["symptom_keywords"].replace(",", " ")])
@@ -56,6 +57,7 @@ text_vector = sbert_model.encode([sample["symptom_keywords"].replace(",", " ")])
 
 # ✅ 예측 실행
 print("\n🤖 질병 예측 중...")
+start = time.time()
 result = predict_disease(
     sample,
     coarse_model,
@@ -68,6 +70,8 @@ result = predict_disease(
     text_vector
 )
 
+end =time.time()
+print(f"\n🕒 예측 소요 시간: {end - start:.3f}초")
 print("\n🎯 예측 결과 (Top-3):")
 for i, pred in enumerate(result["top_predictions"], start=1):
     label = pred["label"]
