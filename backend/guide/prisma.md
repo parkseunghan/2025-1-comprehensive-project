@@ -1,4 +1,10 @@
 
+(db 수정 후)
+migrations 폴더 삭제
+```sh
+npm run reset
+```
+
 
 ```sh
 npm run generate

@@ -1,41 +1,53 @@
-// 🔹 prediction.service.ts
-// 이 파일은 예측(Prediction) 관련 비즈니스 로직을 담당하는 서비스 계층입니다.
-// Prisma를 통해 증상 기록 기반 예측 생성 및 조회를 처리합니다.
+// 📄 prediction.service.ts
+// 파이썬 모델을 child_process로 실행하고 예측 결과를 파싱하여 반환
 
-import prisma from "../config/prisma.service";
+import { spawn } from "child_process";
+import path from "path";
 
-/** 예측 생성 (더미 결과 기반) */
-export const create = async (recordId: string) => {
-  // 이미 예측된 기록인지 확인
-  const existing = await prisma.prediction.findUnique({
-    where: { recordId },
-  });
+interface PredictionInput {
+    userId: string;
+    symptomKeywords: string[];
+}
 
-  if (existing) return { message: "이미 예측이 생성되었습니다." };
+interface PredictionResult {
+    recordId: string;
+    coarse_label: string;
+    top_predictions: { label: string; prob: number }[];
+    risk_score: number;
+    risk_level: string;
+    recommendation: string;
+    elapsed: number;
+}
 
-  // 예측 생성
-  return await prisma.prediction.create({
-    data: {
-      recordId,
-      result: "감기", // ✅ 더미 데이터
-      confidence: 0.91,
-      guideline: "수분 섭취와 휴식을 충분히 취하세요.",
-    },
-  });
-};
+export const runPredictionModel = (input: PredictionInput): Promise<PredictionResult> => {
+    return new Promise((resolve, reject) => {
+        const scriptPath = path.join(__dirname, "../../AI/predict_demo.py");
+        const jsonInput = JSON.stringify(input);
 
-/** 예측 삭제 */
-export const remove = async (recordId: string) => {
-  try {
-    return await prisma.prediction.delete({ where: { recordId } });
-  } catch (err) {
-    return null;
-  }
-};
+        const py = spawn("python", [scriptPath, jsonInput]);
 
-/** 증상 기록 ID로 예측 결과 조회 */
-export const findByRecordId = async (recordId: string) => {
-  return await prisma.prediction.findUnique({
-    where: { recordId },
-  });
+        let output = "";
+        let errorOutput = "";
+
+        py.stdout.on("data", (data) => {
+            output += data.toString();
+        });
+
+        py.stderr.on("data", (data) => {
+            errorOutput += data.toString();
+        });
+
+        py.on("close", (code) => {
+            if (code !== 0) {
+                console.error("[runPredictionModel] Python stderr:", errorOutput);
+                return reject(new Error("파이썬 예측 실행 실패"));
+            }
+            try {
+                const parsed = JSON.parse(output);
+                return resolve(parsed);
+            } catch (e) {
+                return reject(new Error("예측 결과 JSON 파싱 오류: " + e));
+            }
+        });
+    });
 };

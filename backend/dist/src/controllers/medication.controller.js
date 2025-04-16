@@ -68,7 +68,8 @@ const getMedicationById = (req, res) => __awaiter(void 0, void 0, void 0, functi
     try {
         const medication = yield medicationService.findById(req.params.id);
         if (!medication) {
-            return res.status(404).json({ message: "약물을 찾을 수 없습니다." });
+            res.status(404).json({ message: "약물을 찾을 수 없습니다." });
+            return;
         }
         res.json(medication);
     }
@@ -98,7 +99,8 @@ exports.getUserMedications = getUserMedications;
 const addUserMedication = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { medicationId } = req.body;
     if (!medicationId) {
-        return res.status(400).json({ message: "medicationId가 필요합니다." });
+        res.status(400).json({ message: "medicationId가 필요합니다." });
+        return;
     }
     try {
         const result = yield medicationService.addMedicationToUser(req.params.userId, medicationId);

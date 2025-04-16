@@ -87,8 +87,11 @@ model SymptomOnRecord {
   record    SymptomRecord  @relation(fields: [recordId], references: [id])
   recordId  String
 
+  timeOfDay String?        // "morning", "afternoon", "evening", "night" 중 하나
+
   @@unique([symptomId, recordId])
 }
+
 
 model Prediction {
   id           String         @id @default(uuid())

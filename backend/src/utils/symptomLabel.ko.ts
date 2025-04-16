@@ -3,6 +3,7 @@
 
 export const symptomKoreanLabels: Record<string, string> = {
     // 기존 증상 라벨
+    "pain": "기타 통증",
     "headache": "두통",
     "cough": "기침",
     "itching": "가려움",
@@ -15,4 +16,9 @@ export const symptomKoreanLabels: Record<string, string> = {
     "skin sensitivity": "피부 민감",     // 피부가 민감하게 느껴짐
     "skin tightness": "피부 조임",
     "sore throat": "인후통",
+    "rhinorrhea": "콧물",
+    "fever": "열",
+    "abdominal pain": "복통",
+    "body ache": "몸살",
+    "discomfort": "불편함",
 };

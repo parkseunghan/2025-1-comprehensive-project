@@ -61,6 +61,12 @@ export const symptomNormalizationMap: Record<string, string> = {
     "tight skin": "skin tightness",
     "feels tight": "skin tightness",
     "feel tight": "skin tightness",
+    "fever": "fever",
 
-    "sore throat": "sore throat",
+    // 배아픔
+    "stomach pain": "abdominal pain",
+    "stomach ache": "abdominal pain",
+    "runny nose": "rhinorrhea",
+    "nasal discharge": "rhinorrhea",
+    "body aches": "body ache",
 };

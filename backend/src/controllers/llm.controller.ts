@@ -1,39 +1,28 @@
 // 📄 llm.controller.ts
-// 사용자 입력 문장에서 증상을 추출하는 컨트롤러
+// 자연어 증상 문장에서 키워드를 추출하는 단독 테스트용 API
 
 import { Request, Response } from "express";
-import { extractSymptomsFromLLM } from "../services/llm.service";
-import { normalizeSymptoms } from "../utils/normalizeSymptoms";
-import { getKoreanLabels } from "../utils/getKoreanLabels";
+import { extractSymptoms } from "../services/llm.service";
 
 /**
- * POST /llm/extract
- * 사용자 문장 리스트를 받아 LLM으로부터 증상 키워드를 추출하고 정제하여 반환
+ * POST /llm/symptoms
+ * 사용자의 자연어 증상 문장을 받아 증상 키워드를 추출해 반환
  */
-export const extractSymptoms = async (req: Request, res: Response) => {
-    const { texts } = req.body;
-
-    // 유효성 검사: 배열인지, 문장이 있는지 확인
-    if (!Array.isArray(texts) || texts.length === 0) {
-        res.status(400).json({ message: "ko: 문장 배열이 필요합니다." });
-        return;
-    }
-
+export const extractSymptomsHandler = async (req: Request, res: Response) => {
     try {
-        // 1. LLM으로부터 증상 키워드 추출
-        const rawSymptoms = await extractSymptomsFromLLM(texts);
+        const { symptom_text } = req.body;
 
-        // 2. 표준 증상 키워드로 정제
-        const symptoms = normalizeSymptoms(rawSymptoms);
+        if (!symptom_text || typeof symptom_text !== "string") {
+            res.status(400).json({ message: "증상 문장을 입력해주세요." });
+            return;
+        }
 
-        const korean = getKoreanLabels(symptoms);
-        // 3. 최종 응답
-        res.status(200).json({ korean });
-        // 예: llm.controller.ts
-        console.log('LLM 입력 수신:', req.body.input);
-
+        const keywords = await extractSymptoms(symptom_text);
+        res.status(200).json({ keywords });
+        return;
     } catch (error) {
-        console.error("LLM 호출 오류:", error);
-        res.status(500).json({ message: "증상 추출 실패" });
+        console.error("[extractSymptomsHandler] 오류:", error);
+        res.status(500).json({ message: "증상 추출에 실패했습니다." });
+        return;
     }
 };

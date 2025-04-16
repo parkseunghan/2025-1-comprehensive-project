@@ -70,6 +70,7 @@ CREATE TABLE "SymptomOnRecord" (
     "id" TEXT NOT NULL,
     "symptomId" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
+    "timeOfDay" TEXT,
 
     CONSTRAINT "SymptomOnRecord_pkey" PRIMARY KEY ("id")
 );

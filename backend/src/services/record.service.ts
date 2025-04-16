@@ -1,68 +1,68 @@
-// 🔹 record.service.ts
-// 이 파일은 증상 기록(SymptomRecord) 관련 비즈니스 로직을 처리하는 서비스 계층입니다.
+// 📄 record.service.ts
+// 예측 결과와 증상 + 시간 정보를 Prisma를 통해 DB에 저장하는 서비스
 
 import prisma from "../config/prisma.service";
 
-/** 증상 기록 생성 */
-export const create = async (userId: string, symptomIds: string[]) => {
-  const newRecord = await prisma.symptomRecord.create({
+interface PredictionResult {
+  coarse_label: string;
+  risk_score: number;
+  risk_level: string;
+  recommendation: string;
+  elapsed: number;
+  top_predictions: { label: string; prob: number }[];
+  recordId: string;
+}
+
+/**
+ * 예측 결과 저장
+ */
+export const savePredictionResult = async (
+  recordId: string,
+  result: PredictionResult
+) => {
+  await prisma.prediction.create({
     data: {
-      userId,
-      symptoms: {
-        create: symptomIds.map((symptomId) => ({
-          symptomId,
-        })),
-      },
-    },
-    include: {
-      symptoms: {
-        include: {
-          symptom: true,
-        },
-      },
-    },
-  });
+      recordId: recordId,
+      coarseLabel: result.coarse_label,
+      riskScore: result.risk_score,
+      riskLevel: result.risk_level,
+      guideline: result.recommendation,
+      elapsedSec: result.elapsed,
 
-  return newRecord;
-};
-
-/** 사용자 ID로 해당 사용자의 증상 기록 전체 조회 */
-export const findByUserId = async (userId: string) => {
-  return await prisma.symptomRecord.findMany({
-    where: { userId },
-    include: {
-      symptoms: {
-        include: {
-          symptom: true,
-        },
-      },
-      prediction: true,
+      top1: result.top_predictions[0]?.label ?? null,
+      top1Prob: result.top_predictions[0]?.prob ?? null,
+      top2: result.top_predictions[1]?.label ?? null,
+      top2Prob: result.top_predictions[1]?.prob ?? null,
+      top3: result.top_predictions[2]?.label ?? null,
+      top3Prob: result.top_predictions[2]?.prob ?? null,
     },
   });
 };
 
-/** 특정 증상 기록 ID로 조회 */
-export const findById = async (id: string) => {
-  return await prisma.symptomRecord.findUnique({
-    where: { id },
-    include: {
-      symptoms: {
-        include: {
-          symptom: true,
-        },
-      },
-      prediction: true,
-    },
-  });
-};
+/**
+ * 증상 + 시간 정보 저장
+ */
+export const saveSymptomsToRecord = async (
+  recordId: string,
+  symptoms: { symptom: string; time: string | null }[]
+) => {
+  // 기존 증상 모두 삭제
+  await prisma.symptomOnRecord.deleteMany({ where: { recordId } });
 
-/** 특정 증상 기록 삭제 */
-export const remove = async (id: string) => {
-  try {
-    return await prisma.symptomRecord.delete({
-      where: { id },
+  for (const item of symptoms) {
+    // 증상명이 존재하는 경우 연결 (이미 등록된 Symptom 테이블 기준)
+    const symptom = await prisma.symptom.findUnique({
+      where: { name: item.symptom },
     });
-  } catch {
-    return null;
+
+    if (symptom) {
+      await prisma.symptomOnRecord.create({
+        data: {
+          recordId,
+          symptomId: symptom.id,
+          timeOfDay: item.time ?? null,
+        },
+      });
+    }
   }
 };

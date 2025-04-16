@@ -1,71 +1,128 @@
-// 🔹 prediction.controller.ts
-// 이 파일은 예측(Prediction) API 요청을 처리하는 컨트롤러입니다.
-// 증상 기록에 대한 예측 생성 및 조회 기능을 담당합니다.
+// 📄 prediction.controller.ts
+// AI 예측 전체 흐름 컨트롤러 (LLM 증상 추출 → 파이썬 모델 실행 → DB 저장 → 응답 반환)
 
 import { Request, Response } from "express";
-import * as predictionService from "../services/prediction.service";
+import { extractSymptoms } from "../services/llm.service";
+import { runPredictionModel } from "../services/prediction.service";
+import { savePredictionResult, saveSymptomsToRecord } from "../services/record.service";
 import prisma from "../config/prisma.service";
 
 /**
- * 예측 결과 생성 (모델 연결 전 더미 기반)
+ * 예측 생성 - 자연어 입력 기반으로 AI 예측 수행
  * POST /symptom-records/:recordId/prediction
  */
 export const createPrediction = async (req: Request, res: Response) => {
-  const { recordId } = req.params;
+    try {
+        const { symptom_text } = req.body;
+        const { recordId } = req.params;
 
-  // ✅ 증상 기록이 존재하는지 확인
-  const record = await prisma.symptomRecord.findUnique({
-    where: { id: recordId },
-  });
+        if (!req.user?.id) {
+            res.status(401).json({ message: "인증된 사용자가 없습니다." });
+            return;
+        }
 
-  if (!record) {
-    res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
-    return;
-  }
+        // 1️⃣ 증상 + 시간 정보 추출
+        const extracted = await extractSymptoms(symptom_text);
 
-  const result = await predictionService.create(recordId);
-  res.status(201).json(result);
+        // 2️⃣ DB에 증상 기록 저장 (timeOfDay 포함)
+        await saveSymptomsToRecord(recordId, extracted);
+
+        // 3️⃣ 증상 키워드만 추출하여 모델 예측 수행
+        const symptomKeywords = extracted.map((item) => item.symptom);
+        const predictionResult = await runPredictionModel({
+            userId: req.user.id,
+            symptomKeywords,
+        });
+
+        // 4️⃣ 예측 결과 저장
+        await savePredictionResult(recordId, predictionResult);
+        res.status(200).json(predictionResult);
+        return;
+    } catch (error) {
+        console.error("[createPrediction] 예측 생성 오류:", error);
+        res.status(500).json({ message: "예측 생성 중 오류 발생" });
+        return;
+    }
 };
 
 /**
- * 특정 증상 기록에 대한 예측 결과 조회
+ * 예측 조회 - 특정 기록의 예측 결과 반환
  * GET /symptom-records/:recordId/prediction
  */
 export const getPredictionByRecord = async (req: Request, res: Response) => {
-  const result = await predictionService.findByRecordId(req.params.recordId);
+    try {
+        const { recordId } = req.params;
 
-  if (!result) {
-    res.status(404).json({ message: "예측 결과를 찾을 수 없습니다." });
-    return;
-  }
+        const prediction = await prisma.prediction.findUnique({
+            where: { recordId },
+        });
 
-  res.json(result);
+        if (!prediction) {
+            res.status(404).json({ message: "예측 결과가 존재하지 않습니다." });
+            return;
+        }
+
+        res.status(200).json(prediction);
+        return;
+    } catch (error) {
+        console.error("[getPredictionByRecord] 오류:", error);
+        res.status(500).json({ message: "예측 결과 조회 실패" });
+        return;
+    }
 };
 
-/** 예측 삭제 */
+/**
+ * 예측 삭제
+ * DELETE /symptom-records/:recordId/prediction
+ */
 export const deletePrediction = async (req: Request, res: Response) => {
-  const deleted = await predictionService.remove(req.params.recordId);
-  if (!deleted) {
-    res.status(404).json({ message: "예측을 찾을 수 없습니다." });
-    return;
-  }
-  res.json(deleted);
+    try {
+        const { recordId } = req.params;
+
+        await prisma.prediction.delete({
+            where: { recordId },
+        });
+
+        res.status(204).send();
+        return;
+    } catch (error) {
+        console.error("[deletePrediction] 삭제 오류:", error);
+        res.status(500).json({ message: "예측 삭제 실패" });
+        return;
+    }
 };
 
-/** 예측 재요청 (삭제되어도 새로 생성) */
+/**
+ * 예측 재요청 - 기존 예측 삭제 후 다시 생성
+ * POST /symptom-records/:recordId/prediction/retry
+ */
 export const recreatePrediction = async (req: Request, res: Response) => {
-  const { recordId } = req.params;
+    try {
+        const { recordId } = req.params;
+        const { symptom_text } = req.body;
 
-  const record = await prisma.symptomRecord.findUnique({ where: { id: recordId } });
-  if (!record) {
-    res.status(404).json({ message: "증상 기록을 찾을 수 없습니다." });
-    return;
-  }
+        if (!req.user?.id) {
+            res.status(401).json({ message: "인증된 사용자가 없습니다." });
+            return;
+        }
 
-  // 기존 예측 삭제
-  await predictionService.remove(recordId);
+        await prisma.prediction.deleteMany({ where: { recordId } });
 
-  // 새 예측 생성
-  const result = await predictionService.create(recordId);
-  res.status(201).json(result);
+        const extracted = await extractSymptoms(symptom_text);
+        await saveSymptomsToRecord(recordId, extracted);
+
+        const symptomKeywords = extracted.map((item) => item.symptom);
+        const predictionResult = await runPredictionModel({
+            userId: req.user.id,
+            symptomKeywords,
+        });
+
+        await savePredictionResult(recordId, predictionResult);
+        res.status(200).json(predictionResult);
+        return;
+    } catch (error) {
+        console.error("[recreatePrediction] 오류:", error);
+        res.status(500).json({ message: "예측 재요청 실패" });
+        return;
+    }
 };

@@ -1,6 +1,6 @@
 "use strict";
 // 📄 llm.service.ts
-// Ollama + mistral 연동을 통해 증상 키워드를 추출하는 서비스 계층
+// 자연어 증상 문장에서 증상 키워드 및 시간 정보를 LLM으로 추출하는 서비스 (번역 + 추출 → 매핑 → 한글)
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -14,68 +14,100 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extractSymptomsFromLLM = void 0;
+exports.extractSymptoms = void 0;
 const axios_1 = __importDefault(require("axios"));
+const normalizeSymptoms_1 = require("../utils/normalizeSymptoms");
+const getKoreanLabels_1 = require("../utils/getKoreanLabels");
 /**
- * 사용자 입력 문장들로 프롬프트 구성
+ * 자연어 증상 문장에서 증상 + 시간 정보 추출 (최대 3회 시도 후 중복 제거)
+ * @param symptomText 사용자가 입력한 문장 (한글)
+ * @returns [{ symptom: string, time: string | null }]
  */
-const buildPrompt = (sentences) => {
-    const joined = sentences.map((s) => `"${s}"`).join(", ");
-    return `
-You are a medical AI that specializes in extracting symptoms from user input.
+const extractSymptoms = (symptomText) => __awaiter(void 0, void 0, void 0, function* () {
+    const results = [];
+    const prompt = `You are a medical AI that specializes in extracting symptoms from user input.
 
-- Your task is to extract **ONLY the symptoms explicitly mentioned** in the text.  
-- Do NOT guess or infer symptoms not mentioned.  
-- Do NOT include explanations, translations, or full sentences.  
-- Do NOT include Korean.
+Your task is to extract ONLY the medical symptoms explicitly mentioned in the following Korean sentence.
+- DO NOT guess symptoms that are not clearly stated.
+- DO NOT infer, translate, or explain.
+- DO NOT include Korean.
+- DO NOT add modifiers like (mild), (severe), etc.
+- DO NOT include adjectives like "persistent", "chronic", or "frequent" in the symptom field. Instead, express them using the "time" field as "persistent".
+Respond ONLY with a valid JSON array of objects.
+Each object must include:
+- "symptom": an English medical keyword (e.g., "fever", "cough", "abdominal pain")
+- "time": "morning", "afternoon", "evening", "night", "persistent" (if the symptom is **frequent or chronic**), or null
 
-- Respond ONLY with a valid JSON array of English symptom keywords.
+Valid Output:
+[
+  { "symptom": "fever", "time": "night" },
+  { "symptom": "headache", "time": null },
+  { "symptom": "cough", "time": "persistent" }
+]
 
-- Format: ["headache", "cough", "itchy skin"]  
-- Invalid: "I have a cough.", "My head hurts.", ["기침", "두통"]
-
-Sentences: ${joined}
-`.trim();
-};
-/**
- * 응답 문자열에서 증상 키워드만 정제 추출
- */
-const cleanSymptoms = (raw) => {
-    try {
-        // 여러 줄 중 JSON 배열만 필터링
-        const matches = raw.match(/\[.*?\]/g); // 여러 배열 추출
-        if (!matches)
-            return [];
-        const parsed = matches
-            .map((m) => JSON.parse(m))
-            .flat()
-            .map((s) => s.toLowerCase().trim())
-            .filter((s) => /^[a-z\s]+$/.test(s) && s.length < 40); // 영어 증상만 필터링
-        return [...new Set(parsed)]; // 중복 제거
+Now extract symptoms from this sentence:
+"${symptomText}"`;
+    for (let i = 0; i < 3; i++) {
+        console.log(`[extractSymptoms] 🔁 LLM 요청 시도 ${i + 1}...`);
+        try {
+            const res = yield axios_1.default.post("http://localhost:11434/api/generate", {
+                model: "mistral",
+                stream: false,
+                prompt,
+            });
+            const raw = res.data.response.trim();
+            console.log(`[extractSymptoms] ✅ 응답 수신 (시도 ${i + 1}): ${raw}`);
+            let parsed = [];
+            try {
+                parsed = JSON.parse(raw);
+            }
+            catch (e) {
+                console.warn(`[extractSymptoms] ⚠️ 응답 파싱 실패 (시도 ${i + 1})`, raw);
+                continue;
+            }
+            results.push(parsed);
+        }
+        catch (e) {
+            console.error(`[extractSymptoms] ❌ LLM 요청 실패 (시도 ${i + 1})`, e);
+        }
     }
-    catch (e) {
-        console.warn("증상 파싱 실패:", raw);
-        return [];
-    }
-};
-/**
- * mistral 모델에 증상 추출 요청
- */
-const extractSymptomsFromLLM = (sentences) => __awaiter(void 0, void 0, void 0, function* () {
-    const prompt = buildPrompt(sentences);
-    const maxRetries = 3;
-    for (let i = 0; i < maxRetries; i++) {
-        const res = yield axios_1.default.post("http://localhost:11434/api/generate", {
-            model: "mistral",
-            prompt,
-            stream: false,
-        });
-        const raw = res.data.response.trim();
-        console.log(`[${i + 1}] LLM 응답:`, raw);
-        const symptoms = cleanSymptoms(raw);
-        if (symptoms.length > 0)
-            return symptoms;
-    }
-    return [];
+    // ✅ 시간 우선순위 기반 중복 제거 처리
+    const uniqueMap = new Map();
+    const timePriority = {
+        morning: 3,
+        afternoon: 3,
+        evening: 3,
+        night: 3,
+        persistent: 2,
+        "": 1,
+        null: 1,
+    };
+    results.flat().forEach(({ symptom, time }) => {
+        var _a;
+        let cleanSymptom = symptom.replace(/\s*\(.*?\)/g, "").trim().toLowerCase();
+        // ✅ "persistent cough" 보정: time으로 이동
+        let adjustedTime = time;
+        if (cleanSymptom.startsWith("persistent ")) {
+            cleanSymptom = cleanSymptom.replace("persistent ", "").trim();
+            adjustedTime = "persistent";
+        }
+        const normalized = (0, normalizeSymptoms_1.normalizeSymptoms)([cleanSymptom])[0];
+        const korean = (0, getKoreanLabels_1.getKoreanLabels)([normalized])[0];
+        const key = korean;
+        const currentPriority = timePriority[adjustedTime !== null && adjustedTime !== void 0 ? adjustedTime : ""] || 0;
+        if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, { symptom: korean, time: adjustedTime });
+        }
+        else {
+            const existing = uniqueMap.get(key);
+            const existingPriority = timePriority[(_a = existing.time) !== null && _a !== void 0 ? _a : ""] || 0;
+            if (currentPriority > existingPriority) {
+                uniqueMap.set(key, { symptom: korean, time: adjustedTime });
+            }
+        }
+    });
+    const final = Array.from(uniqueMap.values());
+    console.log(`[extractSymptoms] 🧪 최종 정제 결과:`, JSON.stringify(final, null, 2));
+    return final;
 });
-exports.extractSymptomsFromLLM = extractSymptomsFromLLM;
+exports.extractSymptoms = extractSymptoms;
