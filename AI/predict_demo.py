@@ -57,7 +57,8 @@ text_vector = sbert_model.encode([sample["symptom_keywords"].replace(",", " ")])
 
 # ✅ 예측 실행
 print("\n🤖 질병 예측 중...")
-start = time.time()
+start_time = time.time()
+
 result = predict_disease(
     sample,
     coarse_model,
@@ -67,13 +68,17 @@ result = predict_disease(
     scaler,
     mlb_chronic,
     mlb_meds,
-    text_vector
+    sbert_model.encode([sample["symptom_keywords"].replace(",", " ")])
 )
 
-end =time.time()
-print(f"\n🕒 예측 소요 시간: {end - start:.3f}초")
-print("\n🎯 예측 결과 (Top-3):")
-for i, pred in enumerate(result["top_predictions"], start=1):
+elapsed = round(time.time() - start_time, 2)
+
+# ✅ 결과 출력
+print("\n🎯 Top-3 예측 질병")
+for i, pred in enumerate(result["top_predictions"], 1):
     label = pred["label"]
-    prob = pred["prob"]
-    print(f"{i}. {label} ({prob * 100:.1f}%)")
+    prob = pred["prob"] * 100
+    print(f"{i}. {label} ({prob:.1f}%)")
+
+print(f"\n📊 위험도 점수: {result['risk_score']} / {result['risk_level']}")
+print(f"⏱️ 추론 시간: {elapsed}초")
