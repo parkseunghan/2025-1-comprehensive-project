@@ -1,156 +1,268 @@
-// 📄 screens/(home)/HomeScreen.tsx
-// 홈 화면입니다. 로그인된 사용자의 정보를 배너로 표시하며, 주요 기능으로 이동할 수 있는 버튼들을 제공합니다.
-
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-  } from "react-native";
-  import { router } from "expo-router";
-  import { useQuery } from "@tanstack/react-query";
-  
-  import { useAuthStore } from "@/store/auth.store"; // ✅ 로그인 상태
-  import { fetchCurrentUser } from "@/services/user.api"; // ✅ 사용자 전체 프로필 정보
-  
-  export default function HomeScreen() {
-    const { user } = useAuthStore();
-  
-    const { data: profile } = useQuery({
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store";
+import { fetchCurrentUser } from "@/services/user.api";
+import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
+
+export default function HomeScreen() {
+  const { user } = useAuthStore();
+  const { data: profile } = useQuery({
       queryKey: ["user", user?.id],
       queryFn: () => fetchCurrentUser(user!.id),
       enabled: !!user?.id,
-    });
-  
-    return (
-      <ScrollView
-        style={{ backgroundColor: "#ffffff" }}
-        contentContainerStyle={[styles.container, { flexGrow: 1 }]}
-      >
-        {/* 🔹 상단 텍스트 */}
-        <View style={styles.profileRow}>
-          <Text style={styles.profileText}>프로필</Text>
-        </View>
-  
-        {/* 🔹 사용자 정보 배너 */}
-        <View style={styles.banner}>
-          <Text style={styles.bannerTitle}>
-            {profile?.age}세 {profile?.gender} / {profile?.height}cm · {profile?.weight}kg
-          </Text>
-          <Text style={styles.bannerSub}>
-            지병:{" "}
-            {profile?.diseases?.length
-              ? profile.diseases.map((d: { name: string }) => d.name).join(", ")
-              : "없음"}{" "}
-            | 약물:{" "}
-            {profile?.medications?.length
-              ? profile.medications.map((m: { name: string }) => m.name).join(", ")
-              : "없음"}
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/(user)/profile-detail")}
-          >
-            <Text style={styles.startText}>자세히 보기 &gt;</Text>
-          </TouchableOpacity>
-        </View>
-  
-        {/* 🔹 기능 타이틀 */}
-        <Text style={styles.sectionTitle}>기능</Text>
-        <Text style={styles.sectionSub}>주요 기능들을 바로 확인해보세요</Text>
-  
-        {/* 🔹 기능 카드 */}
-        <View style={styles.grid}>
-          {[
-            { label: "자가진단", icon: "🩺", link: "/(record)/symptom" },
-            { label: "건강 통계", icon: "📊" },
-            { label: "의료 도감", icon: "📖" },
-            { label: "기록 보기", icon: "🗂️", link: "/(tabs)/history" },
-          ].map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.card}
-              onPress={() => item.link && router.push(item.link)}
-            >
-              <Text style={styles.cardIcon}>{item.icon}</Text>
-              <Text style={styles.cardLabel}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+  });
+
+  return (
+      <ScrollView style={styles.container}>
+          {/* ✅ 프로필 카드 */}
+          <View style={styles.profileCard}>
+              <View style={styles.profileRow}>
+                  <View style={styles.avatar}>
+                      <Feather name="user" size={24} color="#ffffff" />
+                  </View>
+                  <View style={styles.profileTextContainer}>
+                      <Text style={styles.profileMain}>
+                          {profile?.age || "55"}세 {profile?.gender || "남성"} / {profile?.height || "175"}cm · {profile?.weight || "70"}kg
+                      </Text>
+
+                      <View style={styles.tagGroup}>
+                          <Text style={styles.profileSubLabel}>지병:</Text>
+                          <View style={styles.tagList}>
+                              {(profile?.diseases?.length
+                                  ? profile.diseases
+                                  : [{ name: "없음" }]
+                              ).map((d, idx) => (
+                                  <View key={idx} style={styles.tagBox}>
+                                      <Text style={styles.tagText}>{d.name}</Text>
+                                  </View>
+                              ))}
+                          </View>
+
+                          <Text style={[styles.profileSubLabel, { marginTop: 6 }]}>약물:</Text>
+                          <View style={styles.tagList}>
+                              {(profile?.medications?.length
+                                  ? profile.medications
+                                  : [{ name: "없음" }]
+                              ).map((m, idx) => (
+                                  <View key={idx} style={styles.tagBox}>
+                                      <Text style={styles.tagText}>{m.name}</Text>
+                                  </View>
+                              ))}
+                          </View>
+                      </View>
+                  </View>
+              </View>
+
+              <TouchableOpacity 
+                  style={styles.detailLinkContainer}
+                  onPress={() => router.push("/(user)/profile-detail")}
+              >
+                  <Text style={styles.detailLink}>자세히 보기</Text>
+                  <Text style={styles.detailArrow}>›</Text>
+              </TouchableOpacity>
+          </View>
+
+          {/* ✅ 기능 타이틀 */}
+          <Text style={styles.sectionTitle}>기능</Text>
+          <Text style={styles.sectionSub}>주요 기능들을 바로 확인해보세요</Text>
+
+          {/* ✅ 기능 카드 */}
+          <View style={styles.cardGrid}>
+              <TouchableOpacity
+                  style={[styles.featureCard, styles.diagnosisCard]}
+                  onPress={() => router.push("/(record)/symptom")}
+              >
+                  <View style={styles.iconContainer}>
+                      <View style={[styles.iconCircle, styles.diagnosisIconCircle]}>
+                          <FontAwesome5 name="stethoscope" size={35} color="#7F66FF" />
+                      </View>
+                  </View>
+                  <Text style={styles.cardLabel}>자가진단</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.featureCard, styles.statsCard]}>
+                  <View style={styles.iconContainer}>
+                      <Feather name="bar-chart-2" size={40} color="#ffffff" />
+                  </View>
+                  <Text style={[styles.cardLabel, styles.lightLabel]}>건강 통계</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.featureCard, styles.encyclopediaCard]}>
+                  <View style={styles.iconContainer}>
+                      <Feather name="book-open" size={40} color="#ffffff" />
+                  </View>
+                  <Text style={[styles.cardLabel, styles.lightLabel]}>의료 도감</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                  style={[styles.featureCard, styles.recordsCard]}
+                  onPress={() => router.push("/(tabs)/history")}
+              >
+                  <View style={styles.iconContainer}>
+                      <View style={[styles.iconCircle, styles.recordsIconCircle]}>
+                          <Feather name="folder" size={35} color="#7F66FF" />
+                      </View>
+                  </View>
+                  <Text style={styles.cardLabel}>기록 보기</Text>
+              </TouchableOpacity>
+          </View>
       </ScrollView>
-    );
-  }
-  
-  const styles = StyleSheet.create({
-    container: {
-      paddingVertical: 20,
-      paddingHorizontal: 16,
-      backgroundColor: "#ffffff",
-    },
-    profileRow: {
-      marginBottom: 24,
-    },
-    profileText: {
-      fontSize: 18,
-      fontWeight: "bold",
-      color: "#111827",
-    },
-    banner: {
-      backgroundColor: "#EEF2FF",
-      borderRadius: 12,
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+      flex: 1,
       padding: 20,
+      backgroundColor: "#F4F1FF",
+  },
+  profileCard: {
+      backgroundColor: "#ffffff",
+      borderRadius: 18,
+      padding: 12, // ⬅ 축소
       marginBottom: 24,
-    },
-    bannerTitle: {
-      fontSize: 18,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
+  },
+  profileRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      marginBottom: 8,
+  },
+  avatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: "#7F66FF",
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 12,
+  },
+  profileTextContainer: {
+      flex: 1,
+  },
+  profileMain: {
+      fontSize: 18, // ⬇
       fontWeight: "bold",
-      color: "#3730A3",
-      marginBottom: 6,
-    },
-    bannerSub: {
-      fontSize: 14,
-      color: "#4B5563",
-      marginBottom: 10,
-    },
-    startText: {
-      color: "#3B82F6",
-      fontWeight: "bold",
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: "bold",
-      marginBottom: 4,
       color: "#111827",
-    },
-    sectionSub: {
+      marginBottom: 4,
+  },
+  tagGroup: {
+      marginTop: 2,
+  },
+  profileSubLabel: {
+      fontSize: 12, // ⬇
+      color: "#6B7280",
+      fontWeight: "600",
+      marginBottom: 2,
+  },
+  tagList: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+  },
+  tagBox: {
+      borderWidth: 1,
+      borderColor: "#A78BFA",
+      borderRadius: 5,
+      paddingHorizontal: 6, // ⬇
+      paddingVertical: 1,   // ⬇
+      backgroundColor: "#F3F0FF",
+  },
+  tagText: {
+      fontSize: 11, // ⬇
+      color: "#4B5563",
+      fontWeight: "500",
+  },
+  detailLinkContainer: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      marginTop: 8,
+  },
+  detailLink: {
+      color: "#4171F0",
+      fontWeight: "bold",
+      fontSize: 13,
+  },
+  detailArrow: {
+      color: "#4171F0",
+      fontWeight: "bold",
+      fontSize: 16,
+      marginLeft: 4,
+  },
+  sectionTitle: {
+      fontSize: 22,
+      fontWeight: "bold",
+      color: "#111827",
+      marginBottom: 4,
+  },
+  sectionSub: {
       fontSize: 13,
       color: "#6B7280",
-      marginBottom: 12,
-    },
-    grid: {
+      marginBottom: 20,
+  },
+  cardGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
-      gap: 12,
-    },
-    card: {
+      gap: 16,
+  },
+  featureCard: {
       width: "47%",
-      height: 100,
-      backgroundColor: "#F9FAFB",
-      borderRadius: 10,
+      aspectRatio: 1,
+      borderRadius: 24,
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 12,
-      elevation: 1,
-    },
-    cardIcon: {
-      fontSize: 24,
-      marginBottom: 6,
-    },
-    cardLabel: {
-      fontSize: 14,
+      padding: 16,
+  },
+  diagnosisCard: {
+      backgroundColor: "#FFFFFF",
+  },
+  statsCard: {
+      backgroundColor: "#4171F0",
+  },
+  encyclopediaCard: {
+      backgroundColor: "#4171F0",
+  },
+  recordsCard: {
+      backgroundColor: "#FFFFFF",
+  },
+  iconContainer: {
+      marginBottom: 16,
+      justifyContent: "center",
+      alignItems: "center",
+  },
+  iconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      justifyContent: "center",
+      alignItems: "center",
+  },
+  diagnosisIconCircle: {
+      backgroundColor: "#EFE9FF",
+  },
+  recordsIconCircle: {
+      backgroundColor: "#EFE9FF",
+  },
+  cardLabel: {
+      fontSize: 18,
       fontWeight: "600",
       color: "#111827",
-    },
-  });
-  
+  },
+  lightLabel: {
+      color: "#FFFFFF",
+  },
+});
