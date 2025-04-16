@@ -108,16 +108,33 @@ async function main() {
   });
 
   // 7. 예측 생성
-  await prisma.prediction.create({
+  // 🔹 7. 예측 생성 (업데이트된 구조)
+await prisma.prediction.create({
     data: {
       id: "prediction-001",
       recordId: record.id,
-      result: "감기",
-      confidence: 0.92,
-      guideline: "충분한 휴식과 수분 섭취를 권장합니다.",
+  
+      // coarse/fine 예측 관련
+      coarseLabel: "감기",
+      riskScore: 3.2,
+      riskLevel: "보통",
+  
+      // 상위 예측 질병
+      top1: "급성 비인두염",
+      top1Prob: 0.6212,
+      top2: "급성 인두염",
+      top2Prob: 0.2211,
+      top3: "상기도 감염",
+      top3Prob: 0.1034,
+  
+      // 가이드 및 시간
+      guideline: "전문가 상담을 권장합니다.",
+      elapsedSec: 1.47,
+  
       createdAt: new Date("2025-03-30T10:05:00Z"),
     },
   });
+  
 
   console.log("✅ Seed completed.");
 }

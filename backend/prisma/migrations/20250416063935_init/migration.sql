@@ -78,9 +78,17 @@ CREATE TABLE "SymptomOnRecord" (
 CREATE TABLE "Prediction" (
     "id" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
-    "result" TEXT NOT NULL,
-    "confidence" DOUBLE PRECISION NOT NULL,
+    "coarseLabel" TEXT NOT NULL,
+    "riskScore" DOUBLE PRECISION NOT NULL,
+    "riskLevel" TEXT NOT NULL,
     "guideline" TEXT NOT NULL,
+    "elapsedSec" DOUBLE PRECISION,
+    "top1" TEXT,
+    "top1Prob" DOUBLE PRECISION,
+    "top2" TEXT,
+    "top2Prob" DOUBLE PRECISION,
+    "top3" TEXT,
+    "top3Prob" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Prediction_pkey" PRIMARY KEY ("id")

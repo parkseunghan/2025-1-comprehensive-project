@@ -43,7 +43,7 @@ sbert_model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 sample = {
     "symptom_keywords": "기침, 가래, 두통, 입 맛 없음",
     "Age": 30,
-    "Gender": "여성성",
+    "Gender": "여성",
     "Height_cm": 155,
     "Weight_kg": 55,
     "BMI": 22.89,

@@ -91,11 +91,23 @@ model SymptomOnRecord {
 }
 
 model Prediction {
-  id         String         @id @default(uuid())
-  record     SymptomRecord  @relation(fields: [recordId], references: [id])
-  recordId   String         @unique
-  result     String
-  confidence Float
-  guideline  String
-  createdAt  DateTime       @default(now())
+  id           String         @id @default(uuid())
+  record       SymptomRecord  @relation(fields: [recordId], references: [id])
+  recordId     String         @unique
+
+  coarseLabel  String         // 예: 감기, 감염, 내과 등
+  riskScore    Float          // 예측 위험 점수
+  riskLevel    String         // 낮음, 보통, 높음, 응급 등급
+  guideline    String         // 대응 가이드
+  elapsedSec   Float?         // 예측 소요 시간 (초 단위)
+
+  top1         String?        // 가장 가능성 높은 질병
+  top1Prob     Float?
+  top2         String?
+  top2Prob     Float?
+  top3         String?
+  top3Prob     Float?
+
+  createdAt    DateTime       @default(now())
 }
+
