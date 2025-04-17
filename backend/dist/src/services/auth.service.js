@@ -1,7 +1,6 @@
 "use strict";
-// 🔹 auth.service.ts
-// 이 파일은 인증 로직을 처리하는 서비스 계층입니다.
-// DB 저장/조회 + 최소 사용자 정보 리턴 (비밀번호 제외)
+// 📄 services/auth.service.ts
+// 인증 로직 처리 (회원가입, 로그인, 사용자 조회)
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -30,14 +29,11 @@ exports.getUserById = exports.login = exports.signup = void 0;
 const jwt_util_1 = require("../utils/jwt.util");
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
- * 회원가입 요청 처리
- * 이메일 중복 여부 확인 후 사용자 생성
+ * 🔹 회원가입
  */
 const signup = (data) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    const exists = yield prisma_service_1.default.user.findUnique({
-        where: { email: data.email },
-    });
+    const exists = yield prisma_service_1.default.user.findUnique({ where: { email: data.email } });
     if (exists) {
         return { message: "이미 등록된 이메일입니다." };
     }
@@ -50,7 +46,6 @@ const signup = (data) => __awaiter(void 0, void 0, void 0, function* () {
             age: 0,
             height: 0,
             weight: 0,
-            // ⛔ medications, diseases는 선택사항이므로 생략
         },
     });
     return {
@@ -61,13 +56,19 @@ const signup = (data) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.signup = signup;
 /**
- * 로그인 요청 처리
- * 이메일과 비밀번호 확인 후 토큰 발급
+ * 🔹 로그인
  */
 const login = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const user = yield prisma_service_1.default.user.findUnique({
         where: { email },
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            gender: true,
+            password: true,
+        },
     });
     if (!user || user.password !== password)
         return null;
@@ -82,13 +83,13 @@ const login = (email, password) => __awaiter(void 0, void 0, void 0, function* (
             id: user.id,
             email: user.email,
             name: (_b = user.name) !== null && _b !== void 0 ? _b : undefined,
+            gender: user.gender,
         },
     };
 });
 exports.login = login;
 /**
- * 사용자 ID로 사용자 정보 조회
- * 비밀번호를 제외한 사용자 객체 반환
+ * 🔹 사용자 조회 (GET /auth/me)
  */
 const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;

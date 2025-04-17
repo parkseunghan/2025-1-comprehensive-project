@@ -1,7 +1,6 @@
 "use strict";
-// 🔹 auth.controller.ts
-// 이 파일은 인증(Authentication) 관련 요청을 처리하는 컨트롤러입니다.
-// 회원가입, 로그인, 사용자 정보 조회 기능을 제공합니다.
+// 📄 controllers/auth.controller.ts
+// 인증 관련 API 컨트롤러 (회원가입, 로그인, 사용자 조회)
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -49,22 +48,20 @@ exports.getMe = exports.login = exports.signup = void 0;
 const authService = __importStar(require("../services/auth.service"));
 const jwt_util_1 = require("../utils/jwt.util");
 /**
- * 사용자 회원가입 요청 처리
- * POST /auth/register
+ * 🔹 회원가입
  */
 const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const { email, password, name } = req.body;
     const result = yield authService.signup({ email, password, name });
-    // 이메일 중복 시
     if ("message" in result) {
         res.status(400).json({ message: result.message });
         return;
     }
-    // ✅ 토큰 발급 및 응답
     const token = (0, jwt_util_1.generateToken)({
         id: result.id,
         email: result.email,
-        name: result.name,
+        name: (_a = result.name) !== null && _a !== void 0 ? _a : "",
     });
     res.status(201).json({
         token,
@@ -72,14 +69,13 @@ const signup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             id: result.id,
             email: result.email,
             name: result.name,
+            gender: "", // ✅ 회원가입 직후는 빈 값으로 처리 가능
         },
     });
-    return;
 });
 exports.signup = signup;
 /**
- * 사용자 로그인 요청 처리
- * POST /auth/login
+ * 🔹 로그인
  */
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password } = req.body;
@@ -88,13 +84,11 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.status(401).json({ message: "이메일 또는 비밀번호가 올바르지 않습니다." });
         return;
     }
-    res.json(result); // 이미 { token, user } 구조
-    return;
+    res.json(result); // ✅ result.user.gender 포함됨
 });
 exports.login = login;
 /**
- * 로그인된 사용자 정보 조회
- * GET /auth/me
+ * 🔹 로그인된 사용자 정보 조회
  */
 const getMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -109,6 +103,5 @@ const getMe = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     res.json(user);
-    return;
 });
 exports.getMe = getMe;

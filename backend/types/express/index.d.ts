@@ -1,4 +1,5 @@
-// backend/types/express/index.d.ts
+// 📄 types/express/index.d.ts
+// Express Request 타입 확장 (JWT 인증 이후 req.user 사용을 위함)
 
 declare global {
     namespace Express {
@@ -7,6 +8,7 @@ declare global {
                 id: string;
                 email: string;
                 name?: string;
+                gender?: string;
             };
         }
     }
