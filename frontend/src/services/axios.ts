@@ -1,19 +1,15 @@
 // 📄 src/services/axios.ts
-// Axios 인스턴스 설정
-// - 플랫폼별 baseURL 구성
-// - 요청 시 JWT 토큰 자동 첨부
 
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+import Constants from "expo-constants";
 
-// 🔸 플랫폼에 따라 baseURL 자동 설정
-const baseURL =
-    Platform.OS === "android"
-        ? "http://10.0.2.2:5000/api" // Android 에뮬레이터 전용
-        : "http://localhost:5000/api"; // iOS 시뮬레이터, 웹
+// ✅ .env에서 받은 API_URL에 항상 /api 붙이기
+let baseURL = Constants.expoConfig?.extra?.apiUrl || "http://localhost:5000";
+if (!baseURL.endsWith("/api")) {
+    baseURL = `${baseURL.replace(/\/$/, "")}/api`; // 중복 슬래시 방지해서 /api 붙임
+}
 
-// 🔹 공통 axios 인스턴스 생성
 const axiosInstance = axios.create({
     baseURL,
     headers: {
@@ -21,7 +17,6 @@ const axiosInstance = axios.create({
     },
 });
 
-// 🔹 요청 시 JWT 토큰 자동 첨부 (AsyncStorage 기반)
 axiosInstance.interceptors.request.use(async (config) => {
     const token = await AsyncStorage.getItem("token");
     if (token) {

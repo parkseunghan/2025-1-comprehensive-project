@@ -23,6 +23,7 @@ console.log(`Loaded PORT from .env: ${process.env.BACKEND_PORT}`);
 console.log(`Using PORT: ${BACKEND_PORT}`);
 console.log("Database URL:", process.env.DATABASE_URL);
 console.log("Origin URL:", process.env.FRONTEND_ORIGIN);
+console.log("API URL:", process.env.API_URL);
 app.use(body_parser_1.default.json());
 // 라우터 연결
 app.use('/api', routes_1.default);

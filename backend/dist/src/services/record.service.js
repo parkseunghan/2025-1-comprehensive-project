@@ -14,8 +14,70 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.saveSymptomsToRecord = exports.savePredictionResult = void 0;
+exports.saveSymptomsToRecord = exports.savePredictionResult = exports.remove = exports.findById = exports.findByUserId = exports.create = void 0;
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
+/**
+ * 진단 기록 생성
+ */
+const create = (userId, symptomIds) => __awaiter(void 0, void 0, void 0, function* () {
+    const record = yield prisma_service_1.default.symptomRecord.create({
+        data: { userId },
+    });
+    for (const id of symptomIds) {
+        const symptom = yield prisma_service_1.default.symptom.findUnique({ where: { id } });
+        if (symptom) {
+            yield prisma_service_1.default.symptomOnRecord.create({
+                data: {
+                    recordId: record.id,
+                    symptomId: symptom.id,
+                    timeOfDay: null, // 나중에 시간 정보 받을 수 있도록 확장 가능
+                },
+            });
+        }
+    }
+    return record;
+});
+exports.create = create;
+/**
+ * 사용자별 진단 기록 조회
+ */
+const findByUserId = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    return prisma_service_1.default.symptomRecord.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        include: {
+            prediction: true,
+            symptoms: {
+                include: { symptom: true },
+            },
+        },
+    });
+});
+exports.findByUserId = findByUserId;
+/**
+ * 특정 진단 기록 상세 조회
+ */
+const findById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    return prisma_service_1.default.symptomRecord.findUnique({
+        where: { id },
+        include: {
+            prediction: true,
+            symptoms: {
+                include: { symptom: true },
+            },
+        },
+    });
+});
+exports.findById = findById;
+/**
+ * 진단 기록 삭제
+ */
+const remove = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    return prisma_service_1.default.symptomRecord.delete({
+        where: { id },
+    });
+});
+exports.remove = remove;
 /**
  * 예측 결과 저장
  */
@@ -44,10 +106,8 @@ exports.savePredictionResult = savePredictionResult;
  */
 const saveSymptomsToRecord = (recordId, symptoms) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    // 기존 증상 모두 삭제
     yield prisma_service_1.default.symptomOnRecord.deleteMany({ where: { recordId } });
     for (const item of symptoms) {
-        // 증상명이 존재하는 경우 연결 (이미 등록된 Symptom 테이블 기준)
         const symptom = yield prisma_service_1.default.symptom.findUnique({
             where: { name: item.symptom },
         });
