@@ -4,22 +4,21 @@
 
 import axios from './axios';
 
-// 서버에 보낼 요청 타입
+// ✅ 추출된 단일 증상 키워드의 타입
+export interface LLMExtractKeyword {
+    symptom: string;
+    time: string | null;
+}
+
+// ✅ API 요청 시 보낼 형식
 export interface LLMExtractRequest {
-  input: string; // 사용자 입력 텍스트
+    symptomText: string; // 사용자 입력 텍스트
 }
 
-// 서버로부터 받을 응답 타입
-export interface LLMExtractResponse {
-  symptoms: string[]; // 추출된 증상 키워드 리스트
-}
-
-// 증상 추출 요청 함수
+// ✅ 실제 응답: 증상 배열로 리턴
 export const extractSymptoms = async (
-  input: string
-): Promise<LLMExtractResponse> => {
-  const { data } = await axios.post<LLMExtractResponse>('/llm/extract', {
-    input,
-  });
-  return data;
+    text: string
+): Promise<LLMExtractKeyword[]> => {
+    const res = await axios.post("/llm/extract", { symptomText: text });
+    return res.data.keywords;
 };

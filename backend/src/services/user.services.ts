@@ -4,6 +4,12 @@
 import prisma from "../config/prisma.service";
 import { UserUpdateInput } from "../schemas/user.schema"; // zod 기반 타입 추론
 
+// ✅ BMI 계산 유틸 함수
+const calculateBMI = (weight: number, height: number): number => {
+    const h = height / 100;
+    return +(weight / (h * h)).toFixed(2);
+  };
+
 /**
  * 사용자 ID로 전체 정보 조회 (지병 + 약물 + 증상 기록 + 예측 포함)
  */
@@ -87,6 +93,7 @@ export const update = async (id: string, data: UserUpdateInput) => {
         where: { id },
         data: {
             ...rest,
+            bmi: calculateBMI(rest.weight, rest.height), // ✅ BMI 자동 계산 저장
 
             // ✅ 선택 시에만 업데이트
             diseases: diseases

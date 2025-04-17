@@ -32,6 +32,7 @@ function main() {
                 age: 30,
                 height: 175.5,
                 weight: 68.2,
+                bmi: 20.2
             },
         });
         // 2. 질병 다수 등록

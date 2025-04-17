@@ -50,11 +50,6 @@ export default function ProfileForm() {
         queryFn: fetchAllMedications,
     });
 
-    useEffect(() => {
-        console.log("💊 medicationList in profile-form.tsx:", medicationList);
-      }, [medicationList]);
-      
-
     const [form, setForm] = useState({
         gender: null as "남성" | "여성" | null,
         age: "",

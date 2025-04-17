@@ -1,51 +1,31 @@
-/**
- * prediction.api.ts
- * 이 파일은 증상 기록 ID를 기반으로 질병 예측 결과를 요청하는 API 연동 모듈입니다.
- * POST /predictions 요청을 통해 예측된 질병 리스트를 반환받습니다.
- */
+// 📄 prediction.api.ts
+// 증상 기록 기반으로 AI 예측 결과를 요청하거나 가져오는 API
 
 import axios from "./axios";
+import { PredictInput, PredictionResult } from "../types/prediction";
 
 /**
- * 🔹 PredictInput
- * @param recordId - 증상 기록 ID (사전에 생성 혹은 관리자 페이지에서 추가)
+ * 🔹 예측 요청 (POST)
+ * @route POST /predictions/symptom-records/:recordId/prediction
+ * @param {PredictInput} data - 예측할 증상 기록 ID
+ * @returns {PredictionResult} - 예측된 결과 (Top-3 질병 + 부가 정보)
  */
-export type PredictInput = {
-    recordId: string;
-};
-
-/**
- * 🔹 PredictionResult
- * @property diseases - 예측된 질병 목록 (ex: ["감기", "폐렴"])
- */
-export type PredictionResult = {
-    result: string[];
-    confidence?: number;      // 예: 0.92 (선택 사항)
-    guideline?: string;       // 예: "충분한 수분 섭취"
-};
-
-/**
- * 🔹 requestPrediction
- * @function
- * @param {PredictInput} data - 예측을 요청할 증상 기록 ID
- * @returns {PredictionResult} 예측된 질병 배열
- *
- * POST /predictions/symptom-records/:recordId/prediction
- * 증상 기록 기반으로 AI 모델 예측 결과를 반환받습니다.
- */
-export const requestPrediction = async ({ recordId }: PredictInput): Promise<PredictionResult> => {
+export const requestPrediction = async (
+    { recordId }: PredictInput
+): Promise<PredictionResult> => {
     const res = await axios.post(`/predictions/symptom-records/${recordId}/prediction`);
     return res.data;
 };
 
-// src/services/prediction.api.ts
-
 /**
- * 이미 생성된 예측 결과 조회 (GET)
- * @param recordId 증상 기록 ID
- * @returns PredictionResult
+ * 🔹 예측 결과 조회 (GET)
+ * @route GET /predictions/symptom-records/:recordId/prediction
+ * @param recordId - 증상 기록 ID
+ * @returns {PredictionResult} - 기존에 저장된 예측 결과
  */
-export const getPredictionByRecord = async (recordId: string): Promise<PredictionResult> => {
+export const getPredictionByRecord = async (
+    recordId: string
+): Promise<PredictionResult> => {
     const res = await axios.get(`/predictions/symptom-records/${recordId}/prediction`);
     return res.data;
 };

@@ -34,14 +34,17 @@ export default function LoginScreen() {
 
         if (success) {
             const { user } = useAuthStore.getState(); // ✅ 최신 로그인된 사용자 정보
+            console.log("🔍 로그인 후 user 객체:", user); // 디버깅 로그
 
             if (!user.gender) {
-              router.replace("/(auth)/profile-form"); // 🧾 프로필 미작성 시
+                console.log("⚠️ 성별 없음 → 프로필 작성으로 이동");
+                router.replace("/(auth)/profile-form"); // 🧾 프로필 미작성 시
             } else {
-              router.replace("/(tabs)/home"); // 🏠 홈으로
+                console.log("✅ 성별 있음 → 홈으로 이동");
+                router.replace("/(tabs)/home"); // 🏠 홈으로
             }
             Alert.alert("✅ 로그인 성공", "홈 화면으로 이동합니다.");
-           
+
         }
     };
 

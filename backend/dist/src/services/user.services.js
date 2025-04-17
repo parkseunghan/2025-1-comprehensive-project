@@ -27,6 +27,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.remove = exports.update = exports.findById = void 0;
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
+// ✅ BMI 계산 유틸 함수
+const calculateBMI = (weight, height) => {
+    const h = height / 100;
+    return +(weight / (h * h)).toFixed(2);
+};
 /**
  * 사용자 ID로 전체 정보 조회 (지병 + 약물 + 증상 기록 + 예측 포함)
  */
@@ -84,7 +89,7 @@ const update = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     // ✅ 사용자 정보 업데이트
     return prisma_service_1.default.user.update({
         where: { id },
-        data: Object.assign(Object.assign({}, rest), { 
+        data: Object.assign(Object.assign({}, rest), { bmi: calculateBMI(rest.weight, rest.height), 
             // ✅ 선택 시에만 업데이트
             diseases: diseases
                 ? {

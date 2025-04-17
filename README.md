@@ -61,3 +61,5 @@ DATABASE_URL=postgresql://user:password@localhost:5432/ai_diagnosis
 FRONTEND_ORIGIN=http://localhost:8081
 BACKEND_PORT=5000
 JWT_SECRET=super-secret-key
+```
+

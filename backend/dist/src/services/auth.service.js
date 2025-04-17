@@ -46,6 +46,7 @@ const signup = (data) => __awaiter(void 0, void 0, void 0, function* () {
             age: 0,
             height: 0,
             weight: 0,
+            bmi: 0,
         },
     });
     return {

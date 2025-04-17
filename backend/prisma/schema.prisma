@@ -26,6 +26,7 @@ model User {
   age         Int
   height      Float
   weight      Float
+  bmi         Float
   medications UserMedication[]
   diseases    UserDisease[]  // N:M
   records     SymptomRecord[]
