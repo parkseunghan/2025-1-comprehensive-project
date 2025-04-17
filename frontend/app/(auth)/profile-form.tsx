@@ -1,7 +1,8 @@
 // 📄 app/(auth)/profile-form.tsx
 // 사용자 프로필 입력 + Zod 유효성 검사
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import {
     View,
     Text,
@@ -48,6 +49,11 @@ export default function ProfileForm() {
         queryKey: ["medications"],
         queryFn: fetchAllMedications,
     });
+
+    useEffect(() => {
+        console.log("💊 medicationList in profile-form.tsx:", medicationList);
+      }, [medicationList]);
+      
 
     const [form, setForm] = useState({
         gender: null as "남성" | "여성" | null,

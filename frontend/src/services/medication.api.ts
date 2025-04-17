@@ -6,6 +6,11 @@ import axios from "./axios";
  * @returns string[] 형태의 약물 이름 목록
  */
 export const fetchAllMedications = async (): Promise<string[]> => {
-  const res = await axios.get("/medications");
-  return res.data.map((item: { name: string }) => item.name); // 백엔드에서 [{name}] 반환
+    const res = await axios.get("/medications");
+    console.log("📦 [medication.api.ts] res.data type:", typeof res.data);
+    console.log("📦 [medication.api.ts] res.data value:", res.data);
+
+
+    return res.data.map((item: { name: string }) => item.name); // 백엔드에서 [{name}] 반환
+
 };
