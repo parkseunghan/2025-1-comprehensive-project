@@ -1,5 +1,6 @@
 // 📄 screens/(user)/ProfileDetailScreen.tsx
 
+// (기존 import들은 그대로 유지)
 import {
     View,
     Text,
@@ -21,6 +22,16 @@ import MedicationSelectModal from "@/modals/medication-select.modal";
 import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
 
+type EditableProfile = {
+    name: string;
+    gender: "남성" | "여성" | "";
+    age: string;
+    height: string;
+    weight: string;
+    diseases: string;
+    medications: string;
+};
+
 export default function ProfileDetailScreen() {
     const { user } = useAuthStore();
     const [editField, setEditField] = useState<string | null>(null);
@@ -31,7 +42,7 @@ export default function ProfileDetailScreen() {
         enabled: !!user?.id,
     });
 
-    const [editableProfile, setEditableProfile] = useState({
+    const [editableProfile, setEditableProfile] = useState<EditableProfile>({
         name: "",
         gender: "",
         age: "",
@@ -72,12 +83,7 @@ export default function ProfileDetailScreen() {
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
-                gender:
-                    editableProfile.gender === "남성"
-                        ? "남성"
-                        : editableProfile.gender === "여성"
-                            ? "여성"
-                            : "남성",
+                gender: editableProfile.gender,
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),
                 weight: parseFloat(editableProfile.weight),
@@ -101,11 +107,11 @@ export default function ProfileDetailScreen() {
         },
     });
 
-    const handleChange = (key: keyof typeof editableProfile, value: string) => {
+    const handleChange = (key: keyof EditableProfile, value: string) => {
         setEditableProfile((prev) => ({ ...prev, [key]: value }));
     };
 
-    const handleEdit = (key: keyof typeof editableProfile) => {
+    const handleEdit = (key: keyof EditableProfile) => {
         if (key === "diseases") {
             setDiseaseModalOpen(true);
         } else if (key === "medications") {
@@ -115,18 +121,13 @@ export default function ProfileDetailScreen() {
         }
     };
 
-    const editableItems: {
-        key: keyof typeof editableProfile;
-        label: string;
-        icon?: keyof typeof Ionicons.glyphMap;
-    }[] = [
-        { key: "gender", label: "성별" },
+    const editableItems = [
         { key: "age", label: "나이" },
         { key: "height", label: "키" },
         { key: "weight", label: "몸무게" },
         { key: "diseases", label: "지병", icon: "add" },
         { key: "medications", label: "복용 약물", icon: "add" },
-    ];
+    ] as const;
 
     return (
         <View style={styles.root}>
@@ -156,6 +157,29 @@ export default function ProfileDetailScreen() {
                 </View>
 
                 <View style={styles.infoBox}>
+                    {/* 성별은 항상 표시되도록 */}
+                    <View style={styles.itemRow}>
+                        <Text style={styles.itemLabel}>성별</Text>
+                        <View style={styles.radioGroup}>
+                            {["남성", "여성"].map((item) => (
+                                <TouchableOpacity
+                                    key={item}
+                                    onPress={() => handleChange("gender", item)}
+                                    style={styles.radioItem}
+                                >
+                                    <View
+                                        style={[
+                                            styles.radioCircle,
+                                            editableProfile.gender === item && styles.radioCircleSelected,
+                                        ]}
+                                    />
+                                    <Text style={styles.radioLabel}>{item}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* 나머지 수정 가능한 항목들 */}
                     {editableItems.map((item) => (
                         <EditableText
                             key={item.key}
@@ -174,7 +198,6 @@ export default function ProfileDetailScreen() {
                     <Text style={styles.saveText}>저장</Text>
                 </TouchableOpacity>
 
-                {/* 🔻 모달 영역 */}
                 <DiseaseSelectModal
                     visible={diseaseModalOpen}
                     selected={editableProfile.diseases.split(",").map((d) => d.trim())}
@@ -208,23 +231,8 @@ export default function ProfileDetailScreen() {
     );
 }
 
-function EditableText({
-    label,
-    value,
-    editable,
-    onEdit,
-    onChange,
-    onBlur,
-    iconName = "create-outline",
-}: {
-    label: string;
-    value: string;
-    editable: boolean;
-    onEdit: () => void;
-    onChange: (text: string) => void;
-    onBlur: () => void;
-    iconName?: keyof typeof Ionicons.glyphMap;
-}) {
+// EditableText 컴포넌트 동일 (변경 없음)
+function EditableText({ label, value, editable, onEdit, onChange, onBlur, iconName }: any) {
     return (
         <View style={styles.itemRow}>
             <View style={styles.itemHeader}>
@@ -248,27 +256,12 @@ function EditableText({
     );
 }
 
+// 스타일 정의
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: "#F3F4F6" },
-    backButton: {
-        position: "absolute",
-        top: 20,
-        left: 16,
-        zIndex: 10,
-        padding: 8,
-    },
-    container: {
-        paddingTop: 70,
-        paddingHorizontal: 24,
-        paddingBottom: 60,
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#1E3A8A",
-        marginBottom: 28,
-        textAlign: "center",
-    },
+    backButton: { position: "absolute", top: 20, left: 16, zIndex: 10, padding: 8 },
+    container: { paddingTop: 70, paddingHorizontal: 24, paddingBottom: 60 },
+    title: { fontSize: 22, fontWeight: "bold", color: "#1E3A8A", marginBottom: 28, textAlign: "center" },
     card: {
         backgroundColor: "#ffffff",
         borderRadius: 20,
@@ -289,15 +282,8 @@ const styles = StyleSheet.create({
         gap: 8,
         marginBottom: 6,
     },
-    userName: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#111827",
-    },
-    userEmail: {
-        fontSize: 14,
-        color: "#6B7280",
-    },
+    userName: { fontSize: 20, fontWeight: "bold", color: "#111827" },
+    userEmail: { fontSize: 14, color: "#6B7280" },
     infoBox: {
         backgroundColor: "#ffffff",
         borderRadius: 16,
@@ -321,21 +307,24 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 4,
     },
-    itemLabel: {
-        fontSize: 13,
-        color: "#6B7280",
+    itemLabel: { fontSize: 13, color: "#6B7280" },
+    itemValue: { fontSize: 15, fontWeight: "600", color: "#111827" },
+    itemInput: { fontSize: 15, fontWeight: "600", color: "#111827", paddingVertical: 2 },
+    radioGroup: { flexDirection: "row", gap: 24, marginTop: 4 },
+    radioItem: { flexDirection: "row", alignItems: "center" },
+    radioCircle: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        borderWidth: 1.5,
+        borderColor: "#9CA3AF",
+        marginRight: 8,
     },
-    itemValue: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: "#111827",
+    radioCircleSelected: {
+        backgroundColor: "#111827",
+        borderColor: "#111827",
     },
-    itemInput: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: "#111827",
-        paddingVertical: 2,
-    },
+    radioLabel: { fontSize: 16, color: "#111827" },
     saveButton: {
         backgroundColor: "#D92B4B",
         borderRadius: 10,
