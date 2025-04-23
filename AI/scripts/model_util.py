@@ -7,7 +7,7 @@ import os
 import json
 import joblib
 import numpy as np
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from tensorflow.keras.models import load_model
 from sentence_transformers import SentenceTransformer
@@ -33,7 +33,7 @@ FINE_MODEL_MAP = {
     "cardio": ("model_fine_cardio.h5", "fine_label_encoder_cardio.pkl"),
 }
 
-# ✅ coarse → fine 키워드 매핑
+# ✅ coarse → fine 라벨 매핑
 COARSE_MAP = {
     "감기": "cold",
     "감염": "infection",
@@ -71,7 +71,7 @@ def predict_coarse_fine(
     bmi: float,
     diseases: List[str],
     medications: List[str]
-) -> tuple[str, Optional[str], float]:
+) -> dict:
 
     # 1. SBERT 증상 벡터
     sbert_vector = get_best_matching_vector(symptom_keywords).reshape(1, -1)
@@ -87,22 +87,32 @@ def predict_coarse_fine(
     # 3. 최종 MLP 입력 벡터 구성
     mlp_input = np.hstack([scaled_numeric, gender_vec, chronic_vec, meds_vec])
 
-    # 4. coarse 예측
+    # 4. coarse 예측 (Top-3 추출)
     coarse_probs = model_coarse.predict([mlp_input, sbert_vector])[0]
-    coarse_idx = int(np.argmax(coarse_probs))
-    coarse_label = coarse_encoder.inverse_transform([coarse_idx])[0]
-    risk_score = float(coarse_probs[coarse_idx])
+    top3_indices = np.argsort(coarse_probs)[-3:][::-1]
+    top3_labels = coarse_encoder.inverse_transform(top3_indices)
+    top3_scores = coarse_probs[top3_indices]
 
-    # 5. fine 분기 예측
-    fine_label = None
-    coarse_key = COARSE_MAP.get(coarse_label, coarse_label.lower())  # ✅ 한글 coarse 라벨 매핑
-    if coarse_key in FINE_MODEL_MAP:
-        model_path, encoder_path = FINE_MODEL_MAP[coarse_key]
-        fine_model = load_model(f"{BASE_DIR}/models/fine/{model_path}", compile=False)
-        fine_encoder = joblib.load(f"{BASE_DIR}/models/fine/{encoder_path}")
+    predictions = []
+    for i in range(3):
+        coarse_label = top3_labels[i]
+        risk_score = float(top3_scores[i])
 
-        fine_probs = fine_model.predict([mlp_input, sbert_vector])[0]
-        fine_idx = int(np.argmax(fine_probs))
-        fine_label = fine_encoder.inverse_transform([fine_idx])[0]
+        fine_label = None
+        coarse_key = COARSE_MAP.get(coarse_label, coarse_label.lower())
+        if coarse_key in FINE_MODEL_MAP:
+            model_path, encoder_path = FINE_MODEL_MAP[coarse_key]
+            fine_model = load_model(f"{BASE_DIR}/models/fine/{model_path}", compile=False)
+            fine_encoder = joblib.load(f"{BASE_DIR}/models/fine/{encoder_path}")
 
-    return coarse_label, fine_label, risk_score
+            fine_probs = fine_model.predict([mlp_input, sbert_vector])[0]
+            fine_idx = int(np.argmax(fine_probs))
+            fine_label = fine_encoder.inverse_transform([fine_idx])[0]
+
+        predictions.append({
+            "coarseLabel": coarse_label,
+            "fineLabel": fine_label,
+            "riskScore": risk_score
+        })
+
+    return {"predictions": predictions}

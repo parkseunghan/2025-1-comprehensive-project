@@ -4,36 +4,34 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
+from typing import Optional
 import uvicorn
 
 from scripts.model_util import predict_coarse_fine  # ✅ 예측 함수 import
 
 app = FastAPI()
 
-# ---------------------
 # ✅ 요청 데이터 스키마
-# ---------------------
 class PredictRequest(BaseModel):
-    gender: str                  # "남성" 또는 "여성"
-    age: int                     # 나이
-    height: int                  # cm
-    weight: int                  # kg
-    chronic_diseases: List[str] # 지병
-    medications: List[str]      # 복용약
-    symptom_keywords: List[str] # 증상 키워드
+    gender: str
+    age: int
+    height: int
+    weight: int
+    chronic_diseases: List[str]
+    medications: List[str]
+    symptom_keywords: List[str]
 
-# ---------------------
 # ✅ 응답 데이터 스키마
-# ---------------------
-class PredictResponse(BaseModel):
+class PredictionItem(BaseModel):
     coarseLabel: str
-    fineLabel: Optional[str] = None
+    fineLabel: Optional[str]
     riskScore: float
 
-# ---------------------
-# 🔮 예측 API
-# ---------------------
+class PredictResponse(BaseModel):
+    predictions: List[PredictionItem]
+
+# ✅ 예측 API
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest):
     try:
@@ -41,11 +39,11 @@ def predict(request: PredictRequest):
         height_m = request.height / 100
         bmi = request.weight / (height_m ** 2)
 
-        # 2. 성별 인코딩 (0: 남성, 1: 여성)
+        # 2. 성별 인코딩
         gender = 0 if request.gender == "남성" else 1
 
         # 3. 예측 실행
-        coarse, fine, risk = predict_coarse_fine(
+        result = predict_coarse_fine(
             symptom_keywords=request.symptom_keywords,
             age=request.age,
             gender=gender,
@@ -54,17 +52,11 @@ def predict(request: PredictRequest):
             medications=request.medications
         )
 
-        return PredictResponse(
-            coarseLabel=coarse,
-            fineLabel=fine,
-            riskScore=risk
-        )
+        return result  # {'predictions': [...]} 형태
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------------------
-# 🏁 서버 실행
-# ---------------------
+# ✅ 서버 실행
 if __name__ == "__main__":
     uvicorn.run("ai_server:app", host="0.0.0.0", port=8000, reload=True)
