@@ -31,4 +31,5 @@ router.use("/auth", auth_routes_1.default);
 router.use("/llm", llm_routes_1.default);
 // 약물 관련 라우터 연결 (/api/medications)
 router.use("/medications", medication_routes_1.default);
+router.use("/prediction", prediction_routes_1.default);
 exports.default = router;
