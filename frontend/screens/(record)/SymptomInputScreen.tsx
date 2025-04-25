@@ -29,6 +29,8 @@ export default function SymptomInputScreen() {
       // 1️⃣ LLM 증상 추출
       const extracted: LLMExtractKeyword[] = await extractSymptoms(text);
 
+      console.log("🟩 추출된 증상 키워드:", extracted);
+
       if (extracted.length === 0) {
         Alert.alert("⚠️ 증상 키워드를 추출하지 못했어요.");
         return;
@@ -45,8 +47,14 @@ export default function SymptomInputScreen() {
 
       // 4️⃣ 예측 요청
       await requestPrediction({
-        recordId: record.id,
-        symptoms: extracted,
+        symptomKeywords: extracted.map(item => item.symptom),
+        age: user?.age || 0,
+        gender: user?.gender === "남성" ? "남성" : "여성",
+        height: user?.height || 0,
+        weight: user?.weight || 0,
+        bmi: user?.bmi || 0,
+        diseases: user?.diseases?.map(d => d.name) || [],
+        medications: user?.medications?.map(m => m.name) || []
       });
 
       // 5️⃣ 결과 화면으로 이동

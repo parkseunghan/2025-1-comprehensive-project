@@ -37,6 +37,7 @@ router.use("/llm", llmRoutes);
 // 약물 관련 라우터 연결 (/api/medications)
 router.use("/medications", medicationRoutes);
 
+// 예측 관련 라우터 연결 (/api/predictions)
 router.use("/prediction", predictionRoutes);
 
 export default router;
