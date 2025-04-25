@@ -16,3 +16,5 @@ ai-diagnosis-data
 docker-compose
 frontend/Dockerfile
 backend/Dockerfile
+
+.venv/
