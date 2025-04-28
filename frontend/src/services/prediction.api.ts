@@ -10,24 +10,26 @@ import {
 } from "../types/prediction";
 
 /**
- * 🔹 [1] 기존 증상 기록 기반 예측 요청 → DB 저장
- * @route POST /predictions/symptom-records/:recordId/prediction
+ * 🔹 기존 증상 기록 기반 예측 결과를 DB에 저장
+ * @route POST /api/predictions/symptom-records/:recordId/prediction
  */
 export const requestPredictionToDB = async (
-  { recordId }: PredictInput
-): Promise<PredictionResult> => {
-  const res = await axios.post(`/predictions/symptom-records/${recordId}/prediction`);
+  { recordId, predictions }: { recordId: string; predictions: PredictionResult[] }
+): Promise<any> => {
+  const res = await axios.post(`/prediction/symptom-records/${recordId}/prediction`, {
+    predictions,
+  });
   return res.data;
 };
 
 /**
  * 🔹 [2] 기존 증상 기록 기반 예측 결과 조회
- * @route GET /predictions/symptom-records/:recordId/prediction
+ * @route GET /api/predictions/symptom-records/:recordId/prediction
  */
 export const getPredictionByRecord = async (
   recordId: string
 ): Promise<PredictionResult> => {
-  const res = await axios.get(`/predictions/symptom-records/${recordId}/prediction`);
+  const res = await axios.get(`/prediction/symptom-records/${recordId}/prediction`);
   return res.data;
 };
 
@@ -38,6 +40,6 @@ export const getPredictionByRecord = async (
 export const requestPrediction = async (
   data: PredictRequest
 ): Promise<PredictResponse> => {
-  const res = await axios.post("/api/prediction", data);
+  const res = await axios.post("/prediction", data);
   return res.data;
 };

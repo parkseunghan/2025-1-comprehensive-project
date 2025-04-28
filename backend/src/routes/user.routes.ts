@@ -5,6 +5,7 @@
 import { Router } from "express";
 import * as userController from "../controllers/user.controller"; // 사용자 컨트롤러 로드
 import { authMiddleware } from "../middlewares/auth.middleware";
+import { createSymptomRecord } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -16,5 +17,7 @@ router.patch("/:id", authMiddleware, userController.updateUser);
 
 // [DELETE] /users/:id - 사용자 삭제
 router.delete("/:id", authMiddleware, userController.deleteUser);
+
+router.post("/:userId/symptom-records", createSymptomRecord);
 
 export default router;

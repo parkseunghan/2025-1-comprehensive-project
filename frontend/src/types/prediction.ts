@@ -15,21 +15,21 @@ export interface PredictInput {
 /**
  * 🔹 기존: DB 저장된 예측 결과 구조
  */
-export interface PredictionResult {
+export type PredictionResult = {
   coarseLabel: string;
+  fineLabel: string;
   riskScore: number;
   riskLevel: string;
   guideline: string;
-
+  elapsedSec?: number;
   top1?: string;
   top1Prob?: number;
   top2?: string;
   top2Prob?: number;
   top3?: string;
   top3Prob?: number;
+};
 
-  elapsedSec?: number;
-}
 
 /**
  * ✅ 추가: 실시간 AI 예측 요청용

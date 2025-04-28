@@ -7,8 +7,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuthStore } from "@/store/auth.store";
 import { extractSymptoms } from "@/services/llm.api";
 import { createSymptomRecord } from "@/services/record.api";
-import { requestPrediction } from "@/services/prediction.api";
+import { requestPrediction, requestPredictionToDB } from "@/services/prediction.api";
 import { LLMExtractKeyword } from "@/types/symptom";
+import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils"; 
 
 export default function SymptomInputScreen() {
   const router = useRouter();
@@ -18,35 +19,37 @@ export default function SymptomInputScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleStartDiagnosis = async () => {
+    console.log("✅ [handleStartDiagnosis] 함수 실행됨");
+  
     if (!text.trim()) {
       Alert.alert("⚠️ 증상을 입력해 주세요.");
       return;
     }
-
+  
     try {
       setIsLoading(true);
-
+  
       // 1️⃣ LLM 증상 추출
       const extracted: LLMExtractKeyword[] = await extractSymptoms(text);
-
       console.log("🟩 추출된 증상 키워드:", extracted);
-
+  
       if (extracted.length === 0) {
         Alert.alert("⚠️ 증상 키워드를 추출하지 못했어요.");
         return;
       }
-
-      // 2️⃣ 증상 기록 생성 (빈 symptomIds 전달)
+  
+      // 2️⃣ 증상 기록 생성
       const record = await createSymptomRecord({
         userId: user!.id,
-        symptomIds: [],
+        symptoms: extracted.map(item => item.symptom),
       });
-
+      console.log("📦 [createSymptomRecord] 생성 완료:", record);
+  
       // 3️⃣ 로컬에 기록 ID 저장
       await AsyncStorage.setItem("lastRecordId", record.id);
-
-      // 4️⃣ 예측 요청
-      await requestPrediction({
+  
+      // 4️⃣ AI 예측 요청
+      const aiPrediction = await requestPrediction({
         symptomKeywords: extracted.map(item => item.symptom),
         age: user?.age || 0,
         gender: user?.gender === "남성" ? "남성" : "여성",
@@ -54,11 +57,37 @@ export default function SymptomInputScreen() {
         weight: user?.weight || 0,
         bmi: user?.bmi || 0,
         diseases: user?.diseases?.map(d => d.name) || [],
-        medications: user?.medications?.map(m => m.name) || []
+        medications: user?.medications?.map(m => m.name) || [],
       });
-
-      // 5️⃣ 결과 화면으로 이동
+      console.log("🧠 [AI 예측 결과] 응답:", aiPrediction);
+  
+      // 5️⃣ 예측 결과 저장 (riskLevel, guideline 동적 생성)
+      const predictionResults = aiPrediction.predictions.map((pred) => {
+        const riskLevel = calculateRiskLevel(pred.riskScore);
+        const guideline = generateGuideline(riskLevel);
+  
+        return {
+          coarseLabel: pred.coarseLabel,
+          fineLabel: pred.fineLabel,
+          riskScore: pred.riskScore,
+          riskLevel,
+          guideline,
+        };
+      });
+  
+      console.log("📦 [requestPredictionToDB] 저장 요청:", {
+        recordId: record.id,
+        predictions: predictionResults,
+      });
+  
+      await requestPredictionToDB({
+        recordId: record.id,
+        predictions: predictionResults,
+      });
+  
+      // 6️⃣ 결과 화면 이동
       router.push("/(record)/result");
+  
     } catch (err) {
       console.error("❌ 예측 실패:", err);
       Alert.alert("예측 중 오류가 발생했습니다.");
@@ -66,6 +95,10 @@ export default function SymptomInputScreen() {
       setIsLoading(false);
     }
   };
+  
+  
+  
+  
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
