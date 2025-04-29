@@ -36,10 +36,19 @@
 
 ## ⚙️ 실행 방법
 
+### 0. 가상환경
+
+```sh
+# python 3.9.11 설치 후
+py -3.9 -m venv venv # 가상환경 생성
+
+source venv/Script/activate # 가상환경 실행
+```
+
 ### 1. 라이브러리 설치
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt # 오래걸림
 ```
 ### 2. SBERT 임베딩 생성
 ```
