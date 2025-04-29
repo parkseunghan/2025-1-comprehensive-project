@@ -117,7 +117,8 @@ export default function HomeScreen() {
                     <Text style={[styles.cardLabel, styles.lightLabel]}>건강 통계</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.featureCard, styles.encyclopediaCard]}>
+                <TouchableOpacity style={[styles.featureCard, styles.encyclopediaCard]}
+                onPress={() => router.push("/(dictionary)/disease")}>
                     <View style={styles.iconContainer}>
                         <Feather name="book-open" size={40} color="#ffffff" />
                     </View>
