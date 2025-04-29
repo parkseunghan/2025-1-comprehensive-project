@@ -10,17 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -96,10 +85,33 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const user = yield prisma_service_1.default.user.findUnique({
         where: { id },
+        include: {
+            medications: { include: { medication: true } },
+            diseases: { include: { disease: true } },
+        },
     });
     if (!user)
         return null;
-    const { password } = user, safeUser = __rest(user, ["password"]);
-    return Object.assign(Object.assign({}, safeUser), { name: (_a = user.name) !== null && _a !== void 0 ? _a : undefined });
+    return {
+        id: user.id,
+        email: user.email,
+        name: (_a = user.name) !== null && _a !== void 0 ? _a : undefined,
+        gender: user.gender,
+        age: user.age,
+        height: user.height,
+        weight: user.weight,
+        bmi: user.bmi,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        // 🔥 여기에서 평탄화된 리스트로 변환해줘야 프론트가 받을 수 있음
+        medications: user.medications.map((m) => ({
+            id: m.medication.id,
+            name: m.medication.name,
+        })),
+        diseases: user.diseases.map((d) => ({
+            id: d.disease.id,
+            name: d.disease.name,
+        })),
+    };
 });
 exports.getUserById = getUserById;

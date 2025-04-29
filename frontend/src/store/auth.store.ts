@@ -12,48 +12,48 @@ import { User } from "@/types/user";
 
 // 🔹 Zustand 스토어 타입 정의
 type AuthStore = {
-  token: string | null;   // JWT 액세스 토큰
-  user: User | null;      // 로그인된 사용자 정보
+    token: string | null;   // JWT 액세스 토큰
+    user: User | null;      // 로그인된 사용자 정보
 
-  isLoggedIn: boolean;    // 로그인 여부
-  isAdmin: boolean;       // 관리자 여부
+    isLoggedIn: boolean;    // 로그인 여부
+    isAdmin: boolean;       // 관리자 여부
 
-  setAuth: (token: string, user: User) => void; // 로그인 상태 저장
-  logout: () => void;                           // 로그아웃 → 상태 초기화
+    setAuth: (token: string, user: User) => void; // 로그인 상태 저장
+    logout: () => void;                           // 로그아웃 → 상태 초기화
 };
 
 // ✅ 인증 스토어 구현 (Zustand + AsyncStorage)
 export const useAuthStore = create<AuthStore>()(
-  persist(
-    (set) => ({
-      token: null,
-      user: null,
-      isLoggedIn: false,
-      isAdmin: false,
+    persist(
+        (set) => ({
+            token: null,
+            user: null,
+            isLoggedIn: false,
+            isAdmin: false,
 
-      // 🔸 로그인 시 상태 저장
-      setAuth: (token, user) => {
-        set({
-          token,
-          user,
-          isLoggedIn: true,
-          isAdmin: user.role === "admin",
-        });
-      },
+            // 🔸 로그인 시 상태 저장
+            setAuth: (token, user) => {
+                set({
+                    token,
+                    user,
+                    isLoggedIn: true,
+                    isAdmin: user.role === "admin",
+                });
+            },
 
-      // 🔸 로그아웃 시 상태 초기화
-      logout: () => {
-        set({
-          token: null,
-          user: null,
-          isLoggedIn: false,
-          isAdmin: false,
-        });
-      },
-    }),
-    {
-      name: "auth-storage", // AsyncStorage 키 이름
-      storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+            // 🔸 로그아웃 시 상태 초기화
+            logout: () => {
+                set({
+                    token: null,
+                    user: null,
+                    isLoggedIn: false,
+                    isAdmin: false,
+                });
+            },
+        }),
+        {
+            name: "auth-storage", // AsyncStorage 키 이름
+            storage: createJSONStorage(() => AsyncStorage),
+        }
+    )
 );

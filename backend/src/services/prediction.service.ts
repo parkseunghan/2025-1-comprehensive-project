@@ -13,7 +13,10 @@ const prisma = new PrismaClient();
  */
 export async function requestPrediction(data: PredictRequest): Promise<PredictResponse> {
   try {
+    console.log("🚀 [Axios] 예측 요청 전송 중...");
+    console.log("📡 보낼 데이터:", data); // ✅ 전송 데이터 확인용
     const response = await axios.post<PredictResponse>("/predict", data);
+    console.log("✅ [Axios] 응답 도착:", response.data); // ✅ 응답 데이터 확인용
     return response.data;
   } catch (error: any) {
     console.error("❌ [requestPrediction] AI 서버 요청 실패:", error.message);

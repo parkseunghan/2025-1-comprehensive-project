@@ -27,7 +27,10 @@ const prisma = new client_1.PrismaClient();
 function requestPrediction(data) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            console.log("🚀 [Axios] 예측 요청 전송 중...");
+            console.log("📡 보낼 데이터:", data); // ✅ 전송 데이터 확인용
             const response = yield axios_1.default.post("/predict", data);
+            console.log("✅ [Axios] 응답 도착:", response.data); // ✅ 응답 데이터 확인용
             return response.data;
         }
         catch (error) {

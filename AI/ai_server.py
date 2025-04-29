@@ -12,7 +12,6 @@ from scripts.model_util import predict_coarse_fine
 app = FastAPI()
 
 # ✅ 요청 데이터 스키마
-# ✅ 요청 데이터 모델 (camelCase alias 설정)
 class PredictRequest(BaseModel):
     gender: str = Field(..., alias="gender")
     age: int = Field(..., alias="age")
@@ -24,7 +23,8 @@ class PredictRequest(BaseModel):
     symptom_keywords: List[str] = Field(..., alias="symptomKeywords")
 
     class Config:
-        allow_population_by_field_name = True
+        # allow_population_by_field_name = True
+        validate_by_name = True
         populate_by_name = True
 
 # ✅ 응답 스키마
@@ -40,12 +40,20 @@ class PredictResponse(BaseModel):
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest):
     try:
-        print("🟥 AI 서버 예측 요청 수신:", request.model_dump())
+        print("🟥 [AI 서버] 예측 요청 수신됨")
+        print("📥 요청 데이터:", request.model_dump())
+        print(f"➡️ symptom_keywords: {request.symptom_keywords}")
+        print(f"➡️ age: {request.age}, gender: {request.gender}, height: {request.height}, weight: {request.weight}")
+        print(f"➡️ diseases: {request.chronic_diseases}")
+        print(f"➡️ medications: {request.medications}")
+        print(f"➡️ bmi(from client): {request.bmi:.3f}")
+
 
         # 1. BMI 계산
-        height_m = request.height / 100
-        bmi = request.weight / (height_m ** 2)
+        # height_m = request.height / 100
+        # bmi = request.weight / (height_m ** 2)
         gender = 0 if request.gender == "남성" else 1
+        print(f"👨‍⚕️ gender 변환값: {gender} (0=남성, 1=여성)")
 
         result = predict_coarse_fine(
             symptom_keywords=request.symptom_keywords,
@@ -53,15 +61,17 @@ def predict(request: PredictRequest):
             gender=gender,
             height=request.height,
             weight=request.weight,
-            bmi=bmi,
+            bmi=request.bmi,
             diseases=request.chronic_diseases,
             medications=request.medications
         )
 
-        print("🟩 예측 결과 반환:", result)
+        print("🟩 [AI 서버] 예측 결과 반환:", result)
+
         return result  # {'predictions': [...]} 형태
 
     except Exception as e:
+        print("❌ [AI 서버] 예측 중 오류:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 

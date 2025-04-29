@@ -93,7 +93,7 @@ export const login = async (
  */
 export const getUserById = async (
     id: string
-): Promise<{
+  ): Promise<{
     id: string;
     email: string;
     name?: string;
@@ -102,20 +102,42 @@ export const getUserById = async (
     height: number;
     weight: number;
     bmi: number;
-    medications?: string[];
-    diseases?: string[];
+    medications?: { id: string; name: string }[];
+    diseases?: { id: string; name: string }[];
     createdAt: Date;
     updatedAt: Date;
-} | null> => {
+  } | null> => {
     const user = await prisma.user.findUnique({
-        where: { id },
+      where: { id },
+      include: {
+        medications: { include: { medication: true } },
+        diseases: { include: { disease: true } },
+      },
     });
-
+  
     if (!user) return null;
-
-    const { password, ...safeUser } = user;
+  
     return {
-        ...safeUser,
-        name: user.name ?? undefined,
+      id: user.id,
+      email: user.email,
+      name: user.name ?? undefined,
+      gender: user.gender,
+      age: user.age,
+      height: user.height,
+      weight: user.weight,
+      bmi: user.bmi,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+  
+      // 🔥 여기에서 평탄화된 리스트로 변환해줘야 프론트가 받을 수 있음
+      medications: user.medications.map((m) => ({
+        id: m.medication.id,
+        name: m.medication.name,
+      })),
+      diseases: user.diseases.map((d) => ({
+        id: d.disease.id,
+        name: d.disease.name,
+      })),
     };
-};
+  };
+  

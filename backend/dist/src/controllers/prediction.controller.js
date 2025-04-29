@@ -118,10 +118,12 @@ const savePredictions = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { recordId } = req.params;
         const { predictions } = req.body;
         if (!predictions || !Array.isArray(predictions)) {
-            return res.status(400).json({ message: "predictions 배열이 필요합니다." });
+            res.status(400).json({ message: "predictions 배열이 필요합니다." });
+            return;
         }
         if (predictions.length === 0) {
-            return res.status(400).json({ message: "predictions 배열이 비어 있습니다." });
+            res.status(400).json({ message: "predictions 배열이 비어 있습니다." });
+            return;
         }
         // ✨ riskScore 기준 정렬
         const sorted = [...predictions].sort((a, b) => b.riskScore - a.riskScore);
