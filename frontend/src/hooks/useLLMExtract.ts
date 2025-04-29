@@ -23,12 +23,9 @@ export const useLLMExtract = () => {
         setIsLoading(true);
         setHasError(false);
         try {
-
-            const res = await extractSymptoms(input);
-            setSymptoms(res.symptoms); // 추출된 증상 키워드 저장
-            // useLLMExtract.ts
-            console.log('추출 결과:', res.symptoms);
-
+            const res = await extractSymptoms(input); // res는 LLMExtractKeyword[]
+            setSymptoms(res.map(item => item.symptom)); // 배열에서 symptom만 추출해서 저장
+            console.log('✅ 추출된 증상 키워드:', res.map(item => item.symptom));
         } catch (err) {
             console.error('❌ 증상 추출 실패:', err);
             setHasError(true);
@@ -36,6 +33,7 @@ export const useLLMExtract = () => {
             setIsLoading(false);
         }
     };
+
 
     return {
         symptoms,

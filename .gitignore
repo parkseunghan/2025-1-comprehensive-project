@@ -16,7 +16,10 @@ docker-compose
 frontend/Dockerfile
 backend/Dockerfile
 
-# AU
-ai/__pycache__
-ai/scripts/__pycache__
-ai/venv
+# AI
+ai/__pycache__/
+ai/scripts/__pycache__/
+ai/venv/
+
+# 백엔드
+backend/dist/
