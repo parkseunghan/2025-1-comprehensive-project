@@ -16,8 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.findByRecord = exports.save = void 0;
 exports.requestPrediction = requestPrediction;
 const axios_1 = __importDefault(require("../utils/axios")); // 공통 axios 인스턴스
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_service_1 = __importDefault(require("../config/prisma.service")); // ✅ 수정됨: 기존 new PrismaClient() 제거
 /**
  * AI 서버에 증상 데이터를 보내고 예측 결과를 받아옵니다.
  * @param data 예측 요청 데이터
@@ -43,15 +42,26 @@ function requestPrediction(data) {
  * 🔹 예측 결과 저장
  */
 const save = (recordId, predictions) => __awaiter(void 0, void 0, void 0, function* () {
-    const prediction = predictions[0]; // 가장 높은 확률의 예측 사용
-    return yield prisma.prediction.create({
+    var _a, _b, _c, _d;
+    const top1 = predictions[0];
+    const top2 = (_a = predictions[1]) !== null && _a !== void 0 ? _a : {};
+    const top3 = (_b = predictions[2]) !== null && _b !== void 0 ? _b : {};
+    console.log("📝 [Prediction 저장] recordId:", recordId);
+    console.log("📝 top1:", top1);
+    return yield prisma_service_1.default.prediction.create({
         data: {
             recordId,
-            coarseLabel: prediction.coarseLabel,
-            fineLabel: prediction.fineLabel || prediction.coarseLabel,
-            riskScore: prediction.riskScore,
-            riskLevel: prediction.riskLevel,
-            guideline: prediction.guideline,
+            coarseLabel: top1.coarseLabel,
+            fineLabel: top1.fineLabel || top1.coarseLabel,
+            riskScore: top1.riskScore,
+            riskLevel: top1.riskLevel,
+            guideline: top1.guideline,
+            top1: top1.fineLabel || top1.coarseLabel,
+            top1Prob: top1.riskScore,
+            top2: top2.fineLabel || top2.coarseLabel || "",
+            top2Prob: (_c = top2.riskScore) !== null && _c !== void 0 ? _c : 0,
+            top3: top3.fineLabel || top3.coarseLabel || "",
+            top3Prob: (_d = top3.riskScore) !== null && _d !== void 0 ? _d : 0,
         },
     });
 });
@@ -60,7 +70,7 @@ exports.save = save;
  * 🔹 예측 결과 조회
  */
 const findByRecord = (recordId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.prediction.findFirst({
+    return yield prisma_service_1.default.prediction.findFirst({
         where: { recordId },
     });
 });

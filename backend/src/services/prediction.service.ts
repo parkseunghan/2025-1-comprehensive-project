@@ -2,8 +2,7 @@
 
 import axios from "../utils/axios"; // 공통 axios 인스턴스
 import { PredictRequest, PredictResponse } from "@/types/prediction";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import prisma from "../config/prisma.service"; // ✅ 수정됨: 기존 new PrismaClient() 제거
 
 /**
  * AI 서버에 증상 데이터를 보내고 예측 결과를 받아옵니다.
@@ -28,16 +27,28 @@ export async function requestPrediction(data: PredictRequest): Promise<PredictRe
  * 🔹 예측 결과 저장
  */
 export const save = async (recordId: string, predictions: any[]) => {
-  const prediction = predictions[0]; // 가장 높은 확률의 예측 사용
-  
+  const top1 = predictions[0];
+  const top2 = predictions[1] ?? {};
+  const top3 = predictions[2] ?? {};
+
+  console.log("📝 [Prediction 저장] recordId:", recordId);
+  console.log("📝 top1:", top1);
+
   return await prisma.prediction.create({
     data: {
       recordId,
-      coarseLabel: prediction.coarseLabel,
-      fineLabel: prediction.fineLabel || prediction.coarseLabel,
-      riskScore: prediction.riskScore,
-      riskLevel: prediction.riskLevel,
-      guideline: prediction.guideline,
+      coarseLabel: top1.coarseLabel,
+      fineLabel: top1.fineLabel || top1.coarseLabel,
+      riskScore: top1.riskScore,
+      riskLevel: top1.riskLevel,
+      guideline: top1.guideline,
+
+      top1: top1.fineLabel || top1.coarseLabel,
+      top1Prob: top1.riskScore,
+      top2: top2.fineLabel || top2.coarseLabel || "",
+      top2Prob: top2.riskScore ?? 0,
+      top3: top3.fineLabel || top3.coarseLabel || "",
+      top3Prob: top3.riskScore ?? 0,
     },
   });
 };

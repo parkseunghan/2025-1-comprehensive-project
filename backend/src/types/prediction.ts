@@ -1,8 +1,20 @@
-export interface PredictRequest {
-  symptoms: string[];
-}
+// 📄 src/types/prediction.ts
 
-export interface PredictResponse {
-  diagnosis: string;
-  confidence: number;
-} 
+export type PredictRequest = {
+    gender: string;
+    age: number;
+    height: number;
+    weight: number;
+    chronic_diseases: string[];
+    medications: string[];
+    symptom_keywords: string[];
+  };
+  
+  export type PredictResponse = {
+    predictions: {
+      coarseLabel: string;
+      fineLabel: string | null;
+      riskScore: number;
+    }[];
+  };
+  
