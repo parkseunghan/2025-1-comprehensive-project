@@ -42,7 +42,7 @@
 # python 3.9.11 설치 후
 py -3.9 -m venv venv # 가상환경 생성
 
-source venv/Script/activate # 가상환경 실행
+source venv/Scripts/activate # 가상환경 실행
 ```
 
 ### 1. 라이브러리 설치
