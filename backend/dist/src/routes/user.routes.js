@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const userController = __importStar(require("../controllers/user.controller")); // 사용자 컨트롤러 로드
 const auth_middleware_1 = require("../middlewares/auth.middleware");
+const user_controller_1 = require("../controllers/user.controller");
 const router = (0, express_1.Router)();
 // [GET] /users/:id - 특정 사용자 정보 조회
 router.get("/:id", auth_middleware_1.authMiddleware, userController.getUserById);
@@ -46,4 +47,5 @@ router.get("/:id", auth_middleware_1.authMiddleware, userController.getUserById)
 router.patch("/:id", auth_middleware_1.authMiddleware, userController.updateUser);
 // [DELETE] /users/:id - 사용자 삭제
 router.delete("/:id", auth_middleware_1.authMiddleware, userController.deleteUser);
+router.post("/:userId/symptom-records", user_controller_1.createSymptomRecord);
 exports.default = router;

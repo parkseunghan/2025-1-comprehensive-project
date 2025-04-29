@@ -15,6 +15,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.saveSymptomsToRecord = exports.savePredictionResult = exports.remove = exports.findById = exports.findByUserId = exports.create = void 0;
+exports.calculateRiskLevel = calculateRiskLevel;
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
 /**
  * 진단 기록 생성
@@ -79,24 +80,50 @@ const remove = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.remove = remove;
 /**
+ * 위험 점수(riskScore)를 기반으로 위험도 등급(riskLevel)을 계산합니다.
+ * @param riskScore 위험 점수 (0.0 ~ 1.0 사이 값)
+ * @returns 위험도 등급 ("낮음", "보통", "높음", "응급")
+ */
+function calculateRiskLevel(riskScore) {
+    if (riskScore >= 0.8)
+        return "응급";
+    if (riskScore >= 0.6)
+        return "높음";
+    if (riskScore >= 0.4)
+        return "보통";
+    return "낮음";
+}
+/**
+ * 위험도 등급에 따라 기본 대응 가이드를 생성합니다.
+ */
+function generateGuideline(riskLevel) {
+    if (riskLevel === "응급")
+        return "즉시 응급실 방문이 필요합니다.";
+    if (riskLevel === "높음")
+        return "가까운 병원 방문을 권장합니다.";
+    if (riskLevel === "보통")
+        return "증상을 경과 관찰하고 심화 시 병원을 방문하세요.";
+    return "생활 관리를 통해 주의하세요.";
+}
+/**
  * 예측 결과 저장
  */
-const savePredictionResult = (recordId, result) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+const savePredictionResult = (recordId, top1, top2, top3) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     yield prisma_service_1.default.prediction.create({
         data: {
-            recordId: recordId,
-            coarseLabel: result.coarse_label,
-            riskScore: result.risk_score,
-            riskLevel: result.risk_level,
-            guideline: result.recommendation,
-            elapsedSec: result.elapsed,
-            top1: (_b = (_a = result.top_predictions[0]) === null || _a === void 0 ? void 0 : _a.label) !== null && _b !== void 0 ? _b : null,
-            top1Prob: (_d = (_c = result.top_predictions[0]) === null || _c === void 0 ? void 0 : _c.prob) !== null && _d !== void 0 ? _d : null,
-            top2: (_f = (_e = result.top_predictions[1]) === null || _e === void 0 ? void 0 : _e.label) !== null && _f !== void 0 ? _f : null,
-            top2Prob: (_h = (_g = result.top_predictions[1]) === null || _g === void 0 ? void 0 : _g.prob) !== null && _h !== void 0 ? _h : null,
-            top3: (_k = (_j = result.top_predictions[2]) === null || _j === void 0 ? void 0 : _j.label) !== null && _k !== void 0 ? _k : null,
-            top3Prob: (_m = (_l = result.top_predictions[2]) === null || _l === void 0 ? void 0 : _l.prob) !== null && _m !== void 0 ? _m : null,
+            recordId,
+            coarseLabel: top1.coarseLabel,
+            fineLabel: top1.fineLabel,
+            riskScore: top1.riskScore,
+            riskLevel: top1.riskLevel,
+            guideline: top1.guideline,
+            top1: top1.fineLabel,
+            top1Prob: top1.riskScore,
+            top2: (_a = top2 === null || top2 === void 0 ? void 0 : top2.fineLabel) !== null && _a !== void 0 ? _a : null,
+            top2Prob: (_b = top2 === null || top2 === void 0 ? void 0 : top2.riskScore) !== null && _b !== void 0 ? _b : null,
+            top3: (_c = top3 === null || top3 === void 0 ? void 0 : top3.fineLabel) !== null && _c !== void 0 ? _c : null,
+            top3Prob: (_d = top3 === null || top3 === void 0 ? void 0 : top3.riskScore) !== null && _d !== void 0 ? _d : null,
         },
     });
 });

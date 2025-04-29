@@ -1,120 +1,112 @@
 // 📄 prediction.controller.ts
-// AI 예측 전체 흐름 컨트롤러 (LLM 증상 추출 → 모델 실행 → DB 저장 → 응답)
-
 import { Request, Response } from "express";
-import { extractSymptoms } from "../services/llm.service";
-import { runPredictionModel } from "../services/prediction.service";
-import { savePredictionResult, saveSymptomsToRecord } from "../services/record.service";
-import prisma from "../config/prisma.service";
+import axios from "axios";
+import { config } from "dotenv";
+import * as predictionService from "../services/prediction.service";
+import * as recordService from "../services/record.service";
+config(); // .env 환경변수 로드
 
 /**
- * 예측 생성 - 자연어 입력 기반으로 AI 예측 수행
- * POST /symptom-records/:recordId/prediction
+ * POST /api/prediction
+ * AI 서버에 증상 데이터를 보내고 예측 결과를 반환합니다.
  */
-export const createPrediction = async (req: Request, res: Response) => {
+export const predictFromAI = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { symptomText } = req.body; // ✅ camelCase로 수정
-    const { recordId } = req.params;
+    const {
+      symptomKeywords,
+      age,
+      gender,
+      height,
+      weight,
+      bmi,
+      diseases,
+      medications,
+    } = req.body;
 
-    if (!req.user?.id) {
-      res.status(401).json({ message: "인증된 사용자가 없습니다." });
+    // ✅ 디버깅 로그
+    console.log("📦 [predictFromAI] 요청 수신:");
+    console.log("  - gender:", gender);
+    console.log("  - age:", age);
+    console.log("  - height:", height);
+    console.log("  - weight:", weight);
+    console.log("  - bmi:", bmi);
+    console.log("  - symptomKeywords:", symptomKeywords);
+    console.log("  - diseases:", diseases);
+    console.log("  - medications:", medications);
+    console.log("  - raw req.body:", req.body);
+
+    // 필수 입력 검증
+    if (!symptomKeywords || !Array.isArray(symptomKeywords)) {
+      res.status(400).json({ message: "symptomKeywords가 필요합니다." });
       return;
     }
 
-    // 1️⃣ 증상 + 시간 정보 추출
-    const extracted = await extractSymptoms(symptomText);
-
-    // 2️⃣ DB에 증상 기록 저장
-    await saveSymptomsToRecord(recordId, extracted);
-
-    // 3️⃣ 예측 실행
-    const symptomKeywords = extracted.map((item) => item.symptom);
-    const predictionResult = await runPredictionModel({
-      userId: req.user.id,
-      symptomKeywords,
+    // AI 서버에 요청 보내기
+    const aiRes = await axios.post(`${process.env.AI_API_URL}/predict`, {
+      symptom_keywords: symptomKeywords,
+      age,
+      gender,
+      height,
+      weight,
+      bmi,
+      chronic_diseases: diseases, // ✅ AI 서버는 chronic_diseases로 받음
+      medications,
     });
 
-    // 4️⃣ 예측 결과 저장
-    await savePredictionResult(recordId, predictionResult);
-    res.status(200).json(predictionResult);
-  } catch (error) {
-    console.error("[createPrediction] 예측 생성 오류:", error);
-    res.status(500).json({ message: "예측 생성 중 오류 발생" });
+    res.status(200).json(aiRes.data);
+  } catch (error: any) {
+    console.error("❌ AI 예측 오류:", error.message);
+    res.status(500).json({ message: "AI 예측 실패", error: error.message });
   }
 };
 
-/**
- * 예측 조회 - 특정 기록의 예측 결과 반환
- * GET /symptom-records/:recordId/prediction
- */
 export const getPredictionByRecord = async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
+    const result = await predictionService.findByRecord(recordId);
 
-    const prediction = await prisma.prediction.findUnique({
-      where: { recordId },
-    });
-
-    if (!prediction) {
-      res.status(404).json({ message: "예측 결과가 존재하지 않습니다." });
+    if (!result) {
+      res.status(404).json({ message: "예측 결과를 찾을 수 없습니다." });
       return;
     }
 
-    res.status(200).json(prediction);
-  } catch (error) {
-    console.error("[getPredictionByRecord] 오류:", error);
-    res.status(500).json({ message: "예측 결과 조회 실패" });
+    res.json(result);
+  } catch (err) {
+    console.error("❌ 예측 결과 조회 오류:", err);
+    res.status(500).json({ message: "예측 결과 조회 중 오류가 발생했습니다." });
   }
 };
 
 /**
- * 예측 삭제
- * DELETE /symptom-records/:recordId/prediction
+ * 증상 기록 기반 예측 결과 저장
+ * POST /api/prediction/symptom-records/:recordId/prediction
  */
-export const deletePrediction = async (req: Request, res: Response) => {
+export const savePredictions = async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
+    const { predictions } = req.body;
 
-    await prisma.prediction.delete({
-      where: { recordId },
-    });
-
-    res.status(204).send();
-  } catch (error) {
-    console.error("[deletePrediction] 삭제 오류:", error);
-    res.status(500).json({ message: "예측 삭제 실패" });
-  }
-};
-
-/**
- * 예측 재요청 - 기존 예측 삭제 후 다시 생성
- * POST /symptom-records/:recordId/prediction/retry
- */
-export const recreatePrediction = async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    const { symptomText } = req.body; // ✅ camelCase로 수정
-
-    if (!req.user?.id) {
-      res.status(401).json({ message: "인증된 사용자가 없습니다." });
-      return;
+    if (!predictions || !Array.isArray(predictions)) {
+      return res.status(400).json({ message: "predictions 배열이 필요합니다." });
     }
 
-    await prisma.prediction.deleteMany({ where: { recordId } });
+    if (predictions.length === 0) {
+      return res.status(400).json({ message: "predictions 배열이 비어 있습니다." });
+    }
 
-    const extracted = await extractSymptoms(symptomText);
-    await saveSymptomsToRecord(recordId, extracted);
+    // ✨ riskScore 기준 정렬
+    const sorted = [...predictions].sort((a, b) => b.riskScore - a.riskScore);
 
-    const symptomKeywords = extracted.map((item) => item.symptom);
-    const predictionResult = await runPredictionModel({
-      userId: req.user.id,
-      symptomKeywords,
-    });
+    await recordService.savePredictionResult(
+      recordId,
+      sorted[0],
+      sorted[1],
+      sorted[2]
+    );
 
-    await savePredictionResult(recordId, predictionResult);
-    res.status(200).json(predictionResult);
-  } catch (error) {
-    console.error("[recreatePrediction] 오류:", error);
-    res.status(500).json({ message: "예측 재요청 실패" });
+    res.status(201).json({ message: "예측 결과 저장 완료" });
+  } catch (err) {
+    console.error("❌ 예측 결과 저장 실패:", (err as any)?.message || err);
+    res.status(500).json({ message: "서버 에러" });
   }
 };

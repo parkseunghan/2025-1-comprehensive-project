@@ -1,4 +1,4 @@
-# main.py
+# 📄 main.py
 """
 🚀 전체 실행 워크플로우 엔트리 포인트
 - SBERT 임베딩 생성
@@ -9,7 +9,13 @@
 
 import os
 import subprocess
+import joblib
+from sentence_transformers import SentenceTransformer
+from tensorflow.keras.models import load_model
 
+from scripts.predict_disease import predict_disease
+
+# Step 1~3: 실행 파이프라인
 print("Step 1: SBERT 임베딩 생성")
 subprocess.run(["python", "scripts/embed_sbert_features.py"])
 
@@ -19,18 +25,17 @@ subprocess.run(["python", "scripts/train_coarse_model.py"])
 print("\nStep 3: fine 모델 학습")
 subprocess.run(["python", "scripts/train_fine_models.py"])
 
+# Step 4: 추론 테스트
 print("\nStep 4: 예측 테스트")
-from scripts.predict_disease import predict_disease
-from tensorflow.keras.models import load_model
-import joblib
-from sentence_transformers import SentenceTransformer
 
-# 모델 로드
+# coarse + fine 모델 로딩
 groups = ["감기", "감염", "소화기", "호흡기", "심혈관"]
 coarse_model = load_model("models/model_coarse.h5")
-fine_models = {g: load_model(f"models/fine/{g}.h5") for g in groups}
+fine_models = {g: load_model(f"models/fine/model_fine_{g}.h5") for g in groups}
 coarse_le = joblib.load("models/coarse_label_encoder.pkl")
-fine_label_encoders = {g: joblib.load(f"models/fine_label_encoder_{g}.pkl") for g in groups}
+fine_label_encoders = {
+    g: joblib.load(f"models/fine/fine_label_encoder_{g}.pkl") for g in groups
+}
 scaler = joblib.load("models/scaler.pkl")
 mlb_chronic = joblib.load("models/mlb_chronic.pkl")
 mlb_meds = joblib.load("models/mlb_meds.pkl")
@@ -39,8 +44,11 @@ sbert_model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 # 샘플 입력
 sample = {
     "symptom_keywords": "기침, 가래, 가슴 답답함",
-    "Age": 50, "Gender": "남성",
-    "Height_cm": 175, "Weight_kg": 80, "BMI": 26.1,
+    "Age": 50,
+    "Gender": "남성",
+    "Height_cm": 175,
+    "Weight_kg": 80,
+    "BMI": 26.1,
     "chronic_diseases": ["고혈압"],
     "medications": ["항생제"]
 }

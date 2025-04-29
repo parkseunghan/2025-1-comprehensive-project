@@ -17,6 +17,10 @@ docker-compose
 frontend/Dockerfile
 backend/Dockerfile
 
+<<<<<<< HEAD
 # AU
 ai/__pycache__
 ai/scripts/__pycache__
+=======
+.venv/
+>>>>>>> restore-gender-camel

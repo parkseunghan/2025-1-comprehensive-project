@@ -68,6 +68,8 @@ def predict_coarse_fine(
     symptom_keywords: List[str],
     age: int,
     gender: int,  # 0: 남성, 1: 여성
+    height: float,
+    weight: float,
     bmi: float,
     diseases: List[str],
     medications: List[str]
@@ -77,7 +79,7 @@ def predict_coarse_fine(
     sbert_vector = get_best_matching_vector(symptom_keywords).reshape(1, -1)
 
     # 2. 입력 피처 분리 (scaler는 4개 피처로 학습됨)
-    numeric_input = pd.DataFrame([[age, height := 170, weight := 65, bmi]], columns=["Age", "Height_cm", "Weight_kg", "BMI"])
+    numeric_input = pd.DataFrame([[age, height, weight, bmi]], columns=["Age", "Height_cm", "Weight_kg", "BMI"])
     scaled_numeric = scaler.transform(numeric_input)
 
     gender_vec = np.array([[gender]])
