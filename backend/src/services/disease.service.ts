@@ -3,6 +3,17 @@
 
 import prisma from "../config/prisma.service";
 
+/**
+ * 전체 질병 리스트 조회
+ */
+export const getAllDiseases = async () => {
+  return await prisma.disease.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
+};
+
 /** 전체 지병 목록 조회 */
 export const findAll = async () => {
   return await prisma.disease.findMany();

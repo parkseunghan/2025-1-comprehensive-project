@@ -5,14 +5,13 @@ import { Request, Response } from "express";
 import * as diseaseService from "../services/disease.service";
 
 /**
- * 전체 지병 목록을 조회합니다.
- * GET /diseases
+ * 전체 질병 조회 API
+ * GET /api/diseases
  */
 export const getAllDiseases = async (req: Request, res: Response) => {
-  const result = await diseaseService.findAll();
-  res.json(result);
+  const diseases = await diseaseService.getAllDiseases();
+  res.status(200).json(diseases);
 };
-
 /**
  * 특정 ID로 지병을 조회합니다.
  * GET /diseases/:id

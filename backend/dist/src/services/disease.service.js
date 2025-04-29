@@ -14,8 +14,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeDiseaseFromUser = exports.addDiseaseToUser = exports.findByUserId = exports.findById = exports.findAll = void 0;
+exports.removeDiseaseFromUser = exports.addDiseaseToUser = exports.findByUserId = exports.findById = exports.findAll = exports.getAllDiseases = void 0;
 const prisma_service_1 = __importDefault(require("../config/prisma.service"));
+/**
+ * 전체 질병 리스트 조회
+ */
+const getAllDiseases = () => __awaiter(void 0, void 0, void 0, function* () {
+    return yield prisma_service_1.default.disease.findMany({
+        orderBy: {
+            name: "asc",
+        },
+    });
+});
+exports.getAllDiseases = getAllDiseases;
 /** 전체 지병 목록 조회 */
 const findAll = () => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma_service_1.default.disease.findMany();

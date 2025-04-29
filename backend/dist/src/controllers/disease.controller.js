@@ -47,12 +47,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUserDisease = exports.addUserDisease = exports.getUserDiseases = exports.getDiseaseById = exports.getAllDiseases = void 0;
 const diseaseService = __importStar(require("../services/disease.service"));
 /**
- * 전체 지병 목록을 조회합니다.
- * GET /diseases
+ * 전체 질병 조회 API
+ * GET /api/diseases
  */
 const getAllDiseases = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield diseaseService.findAll();
-    res.json(result);
+    const diseases = yield diseaseService.getAllDiseases();
+    res.status(200).json(diseases);
 });
 exports.getAllDiseases = getAllDiseases;
 /**

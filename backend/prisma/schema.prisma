@@ -35,9 +35,12 @@ model User {
 }
 
 model Disease {
-  id     String        @id @default(uuid())
-  name   String        @unique
-  users  UserDisease[]
+  id   String @id @default(uuid())
+  name String @unique
+  description String?  // 질병 설명
+  tips        String?  // 관리 팁
+
+  users       UserDisease[]
 }
 
 model UserDisease {
