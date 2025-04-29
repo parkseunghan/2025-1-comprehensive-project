@@ -110,7 +110,9 @@ export default function HomeScreen() {
                     <Text style={styles.cardLabel}>자가진단</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.featureCard, styles.statsCard]}>
+                <TouchableOpacity style={[styles.featureCard, styles.statsCard]}
+
+                >
                     <View style={styles.iconContainer}>
                         <Feather name="bar-chart-2" size={40} color="#ffffff" />
                     </View>
@@ -118,7 +120,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.featureCard, styles.encyclopediaCard]}
-                onPress={() => router.push("/(dictionary)/disease")}>
+                    onPress={() => router.push("/(dictionary)/disease")}>
                     <View style={styles.iconContainer}>
                         <Feather name="book-open" size={40} color="#ffffff" />
                     </View>

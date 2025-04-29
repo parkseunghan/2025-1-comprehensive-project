@@ -81,3 +81,20 @@ export const deleteUserMedication = async (req: Request, res: Response) => {
         res.status(500).json({ message: "약물 삭제 중 오류가 발생했습니다." });
     }
 };
+
+export const getMedicationDetail = async (req: Request, res: Response) => {
+    const { itemSeq } = req.params;
+    if (!itemSeq) {
+        res.status(400).json({ message: "품목기준코드가 필요합니다." });
+        return;
+    }
+
+    const result = await medicationService.fetchAndSaveMedicationDetail(itemSeq);
+    if (!result) {
+        res.status(404).json({ message: "의약품 정보를 찾을 수 없습니다." });
+        return;
+    }
+
+    res.status(200).json(result);
+    return;
+};

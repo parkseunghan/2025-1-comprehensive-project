@@ -54,10 +54,24 @@ model UserDisease {
 }
 
 model Medication {
-  id     String   @id @default(uuid())
-  name   String   @unique
-  users  UserMedication[]  // 연결된 사용자들
+  id           String   @id @default(uuid())
+  name         String   @unique       // 제품명 (itemName)
+  itemSeq      String   @unique       // 품목기준코드
+  entpName     String?                // 업체명
+  efcy         String?                // 효능
+  useMethod    String?                // 사용법
+  atpnWarn     String?                // 주의사항(경고)
+  atpn         String?                // 주의사항
+  intrc        String?                // 상호작용
+  se           String?                // 부작용
+  depositMethod String?               // 보관법
+  openDate     String?                // 공개일자
+  updateDate   String?                // 수정일자
+  imageUrl     String?                // 낱알 이미지 URL
+
+  users        UserMedication[]       // 연결된 사용자들
 }
+
 
 model UserMedication {
   id           String     @id @default(uuid())

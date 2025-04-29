@@ -38,6 +38,18 @@ CREATE TABLE "UserDisease" (
 CREATE TABLE "Medication" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "itemSeq" TEXT NOT NULL,
+    "entpName" TEXT,
+    "efcy" TEXT,
+    "useMethod" TEXT,
+    "atpnWarn" TEXT,
+    "atpn" TEXT,
+    "intrc" TEXT,
+    "se" TEXT,
+    "depositMethod" TEXT,
+    "openDate" TEXT,
+    "updateDate" TEXT,
+    "imageUrl" TEXT,
 
     CONSTRAINT "Medication_pkey" PRIMARY KEY ("id")
 );
@@ -109,6 +121,9 @@ CREATE UNIQUE INDEX "UserDisease_userId_diseaseId_key" ON "UserDisease"("userId"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Medication_name_key" ON "Medication"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Medication_itemSeq_key" ON "Medication"("itemSeq");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserMedication_userId_medicationId_key" ON "UserMedication"("userId", "medicationId");
