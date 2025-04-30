@@ -1,6 +1,6 @@
 // 📄 src/services/prediction.service.ts
 
-import axios from "../utils/axios"; // 공통 axios 인스턴스
+import axios from "../utils/ai-api"; // 공통 axios 인스턴스
 import { PredictRequest, PredictResponse } from "@/types/prediction";
 import prisma from "../config/prisma.service"; // ✅ 수정됨: 기존 new PrismaClient() 제거
 
@@ -38,7 +38,7 @@ export const save = async (recordId: string, predictions: any[]) => {
     data: {
       recordId,
       coarseLabel: top1.coarseLabel,
-      fineLabel: top1.fineLabel || top1.coarseLabel,
+      // fineLabel: top1.fineLabel || top1.coarseLabel,
       riskScore: top1.riskScore,
       riskLevel: top1.riskLevel,
       guideline: top1.guideline,
