@@ -137,6 +137,7 @@ async function main() {
                 tips: "충분한 수면, 수분 보충, 감기약 복용이 필요할 수 있습니다.",
             },
         ],
+        skipDuplicates: true,
     });
 
 
@@ -191,6 +192,7 @@ async function main() {
                 imageUrl: "https://example.com/images/ibuprofen.png",
             },
         ],
+        skipDuplicates: true,
     });
 
 
@@ -201,6 +203,7 @@ async function main() {
             { id: "user-disease-002", userId: user.id, diseaseId: "disease-005" },
             { id: "user-disease-003", userId: user.id, diseaseId: "disease-009" },
         ],
+        skipDuplicates: true,
     });
 
     // 3-1. 사용자-약물 연결
@@ -209,6 +212,7 @@ async function main() {
             { id: "user-med-001", userId: user.id, medicationId: "med-001" },
             { id: "user-med-002", userId: user.id, medicationId: "med-002" },
         ],
+        skipDuplicates: true,
     });
 
     // 4. 증상 등록
@@ -218,6 +222,7 @@ async function main() {
             { id: "symptom-002", name: "기침" },
             { id: "symptom-003", name: "발열" },
         ],
+        skipDuplicates: true,
     });
 
     // 5. 증상 기록 생성
@@ -236,6 +241,7 @@ async function main() {
             { id: "sor-002", recordId: record.id, symptomId: "symptom-002", timeOfDay: "night" },   // 기침
             { id: "sor-003", recordId: record.id, symptomId: "symptom-003", timeOfDay: null },      // 발열
         ],
+        skipDuplicates: true,
     });
 
 
