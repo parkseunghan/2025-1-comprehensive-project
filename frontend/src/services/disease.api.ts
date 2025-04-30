@@ -1,13 +1,9 @@
-// 📄 src/services/disease.api.ts
-// 질병 리스트를 가져오는 API
+// 📄 services/disease.api.ts
 
 import axios from "./axios";
+import { Disease } from "@/types/disease.types"; // 필요하다면 정의
 
-/**
- * GET /diseases
- * 전체 질병 목록을 불러옵니다.
- */
-// 전체 질병 조회
-export const fetchAllDiseases = () => {
-  return axios.get("/diseases");
+export const fetchAllDiseases = async (): Promise<Disease[]> => {
+  const res = await axios.get("/diseases");
+  return res.data; // 🔥 요 부분이 핵심!
 };

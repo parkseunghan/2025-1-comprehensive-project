@@ -1,6 +1,6 @@
 // 📄 controllers/user.controller.ts
 import { Request, Response } from "express";
-import * as userService from "../services/user.services";
+import * as userService from "../services/user.service";
 import { userUpdateSchema } from "../schemas/user.schema";
 import { ZodError } from "zod";
 import * as recordService from "../services/record.service";

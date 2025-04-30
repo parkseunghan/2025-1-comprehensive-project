@@ -1,6 +1,5 @@
 // 📄 screens/(user)/ProfileDetailScreen.tsx
 
-// (기존 import들은 그대로 유지)
 import {
     View,
     Text,
@@ -21,39 +20,16 @@ import DiseaseSelectModal from "@/modals/disease-select.modal";
 import MedicationSelectModal from "@/modals/medication-select.modal";
 import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
-
-type EditableProfile = {
-    name: string;
-    gender: "남성" | "여성" | "";
-    age: string;
-    height: string;
-    weight: string;
-    diseases: string;
-    medications: string;
-};
+import { Disease } from "@/types/disease.types";
+import { Medication } from "@/types/medication.types";
 
 export default function ProfileDetailScreen() {
     const { user } = useAuthStore();
-    const [editField, setEditField] = useState<string | null>(null);
-
     const { data: profile, refetch } = useQuery({
         queryKey: ["user", user?.id],
         queryFn: () => fetchCurrentUser(user!.id),
         enabled: !!user?.id,
     });
-
-    const [editableProfile, setEditableProfile] = useState<EditableProfile>({
-        name: "",
-        gender: "",
-        age: "",
-        height: "",
-        weight: "",
-        diseases: "",
-        medications: "",
-    });
-
-    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
-    const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
     const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery({
         queryKey: ["diseases"],
@@ -65,6 +41,20 @@ export default function ProfileDetailScreen() {
         queryFn: fetchAllMedications,
     });
 
+    const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
+    const [selectedMedicationIds, setSelectedMedicationIds] = useState<string[]>([]);
+
+    const [editableProfile, setEditableProfile] = useState({
+        name: "",
+        gender: "",
+        age: "",
+        height: "",
+        weight: "",
+    });
+
+    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+    const [medicationModalOpen, setMedicationModalOpen] = useState(false);
+
     useEffect(() => {
         if (profile) {
             setEditableProfile({
@@ -73,9 +63,9 @@ export default function ProfileDetailScreen() {
                 age: String(profile.age ?? ""),
                 height: String(profile.height ?? ""),
                 weight: String(profile.weight ?? ""),
-                diseases: profile.diseases?.map((d: any) => d.name).join(", ") ?? "",
-                medications: profile.medications?.map((m: any) => m.name).join(", ") ?? "",
             });
+            setSelectedDiseaseIds(profile.diseases.map((d: Disease) => d.id));
+            setSelectedMedicationIds(profile.medications.map((m: Medication) => m.id));
         }
     }, [profile]);
 
@@ -83,18 +73,12 @@ export default function ProfileDetailScreen() {
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
-                gender: editableProfile.gender,
+                gender: editableProfile.gender as "남성" | "여성",
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),
                 weight: parseFloat(editableProfile.weight),
-                diseases: editableProfile.diseases
-                    .split(",")
-                    .map((d) => d.trim())
-                    .filter(Boolean),
-                medications: editableProfile.medications
-                    .split(",")
-                    .map((m) => m.trim())
-                    .filter(Boolean),
+                diseases: selectedDiseaseIds,
+                medications: selectedMedicationIds,
             });
         },
         onSuccess: () => {
@@ -107,27 +91,8 @@ export default function ProfileDetailScreen() {
         },
     });
 
-    const handleChange = (key: keyof EditableProfile, value: string) => {
-        setEditableProfile((prev) => ({ ...prev, [key]: value }));
-    };
-
-    const handleEdit = (key: keyof EditableProfile) => {
-        if (key === "diseases") {
-            setDiseaseModalOpen(true);
-        } else if (key === "medications") {
-            setMedicationModalOpen(true);
-        } else {
-            setEditField(key);
-        }
-    };
-
-    const editableItems = [
-        { key: "age", label: "나이" },
-        { key: "height", label: "키" },
-        { key: "weight", label: "몸무게" },
-        { key: "diseases", label: "지병", icon: "add" },
-        { key: "medications", label: "복용 약물", icon: "add" },
-    ] as const;
+    const getNames = (ids: string[], list: { id: string; name: string }[]) =>
+        ids.map((id) => list.find((item) => item.id === id)?.name).filter(Boolean).join(", ");
 
     return (
         <View style={styles.root}>
@@ -137,34 +102,18 @@ export default function ProfileDetailScreen() {
                 <Text style={styles.title}>프로필 정보</Text>
 
                 <View style={styles.card}>
-                    <View style={styles.rowWithEdit}>
-                        {editField === "name" ? (
-                            <TextInput
-                                style={styles.userName}
-                                value={editableProfile.name}
-                                onChangeText={(v) => handleChange("name", v)}
-                                onBlur={() => setEditField(null)}
-                                autoFocus
-                            />
-                        ) : (
-                            <Text style={styles.userName}>{editableProfile.name}</Text>
-                        )}
-                        <TouchableOpacity onPress={() => setEditField("name")}>
-                            <Ionicons name="create-outline" size={16} color="#6B7280" />
-                        </TouchableOpacity>
-                    </View>
+                    <Text style={styles.userName}>{editableProfile.name}</Text>
                     <Text style={styles.userEmail}>{user?.email}</Text>
                 </View>
 
                 <View style={styles.infoBox}>
-                    {/* 성별은 항상 표시되도록 */}
                     <View style={styles.itemRow}>
                         <Text style={styles.itemLabel}>성별</Text>
                         <View style={styles.radioGroup}>
                             {["남성", "여성"].map((item) => (
                                 <TouchableOpacity
                                     key={item}
-                                    onPress={() => handleChange("gender", item)}
+                                    onPress={() => setEditableProfile((prev) => ({ ...prev, gender: item }))}
                                     style={styles.radioItem}
                                 >
                                     <View
@@ -179,19 +128,20 @@ export default function ProfileDetailScreen() {
                         </View>
                     </View>
 
-                    {/* 나머지 수정 가능한 항목들 */}
-                    {editableItems.map((item) => (
-                        <EditableText
-                            key={item.key}
-                            label={item.label}
-                            value={editableProfile[item.key]}
-                            editable={editField === item.key}
-                            onEdit={() => handleEdit(item.key)}
-                            onChange={(v) => handleChange(item.key, v)}
-                            onBlur={() => setEditField(null)}
-                            iconName={item.icon ?? "create-outline"}
-                        />
-                    ))}
+                    <EditableField label="나이" value={editableProfile.age} onChange={(v) => setEditableProfile((prev) => ({ ...prev, age: v }))} />
+                    <EditableField label="키" value={editableProfile.height} onChange={(v) => setEditableProfile((prev) => ({ ...prev, height: v }))} />
+                    <EditableField label="몸무게" value={editableProfile.weight} onChange={(v) => setEditableProfile((prev) => ({ ...prev, weight: v }))} />
+
+                    <EditableTextWithButton
+                        label="지병"
+                        value={getNames(selectedDiseaseIds, diseaseList)}
+                        onPress={() => setDiseaseModalOpen(true)}
+                    />
+                    <EditableTextWithButton
+                        label="복용 약물"
+                        value={getNames(selectedMedicationIds, medicationList)}
+                        onPress={() => setMedicationModalOpen(true)}
+                    />
                 </View>
 
                 <TouchableOpacity style={styles.saveButton} onPress={() => mutation.mutate()}>
@@ -200,29 +150,23 @@ export default function ProfileDetailScreen() {
 
                 <DiseaseSelectModal
                     visible={diseaseModalOpen}
-                    selected={editableProfile.diseases.split(",").map((d) => d.trim())}
+                    selected={selectedDiseaseIds}
                     diseaseList={diseaseList}
                     isLoading={isDiseaseLoading}
                     onClose={() => setDiseaseModalOpen(false)}
                     onSave={(items) => {
-                        setEditableProfile((prev) => ({
-                            ...prev,
-                            diseases: items.join(", "),
-                        }));
+                        setSelectedDiseaseIds(items);
                         setDiseaseModalOpen(false);
                     }}
                 />
                 <MedicationSelectModal
                     visible={medicationModalOpen}
-                    selected={editableProfile.medications.split(",").map((m) => m.trim())}
+                    selected={selectedMedicationIds}
                     medicationList={medicationList}
                     isLoading={isMedicationLoading}
                     onClose={() => setMedicationModalOpen(false)}
                     onSave={(items) => {
-                        setEditableProfile((prev) => ({
-                            ...prev,
-                            medications: items.join(", "),
-                        }));
+                        setSelectedMedicationIds(items);
                         setMedicationModalOpen(false);
                     }}
                 />
@@ -231,30 +175,34 @@ export default function ProfileDetailScreen() {
     );
 }
 
-// EditableText 컴포넌트 동일 (변경 없음)
-function EditableText({ label, value, editable, onEdit, onChange, onBlur, iconName }: any) {
+function EditableField({ label, value, onChange }: any) {
+    return (
+        <View style={styles.itemRow}>
+            <Text style={styles.itemLabel}>{label}</Text>
+            <TextInput
+                style={styles.itemInput}
+                value={value}
+                onChangeText={onChange}
+                keyboardType="numeric"
+            />
+        </View>
+    );
+}
+
+function EditableTextWithButton({ label, value, onPress }: any) {
     return (
         <View style={styles.itemRow}>
             <View style={styles.itemHeader}>
                 <Text style={styles.itemLabel}>{label}</Text>
-                <TouchableOpacity onPress={onEdit}>
-                    <Ionicons name={iconName} size={16} color="#6B7280" />
+                <TouchableOpacity onPress={onPress}>
+                    <Ionicons name="add" size={16} color="#6B7280" />
                 </TouchableOpacity>
             </View>
-            {editable ? (
-                <TextInput
-                    style={styles.itemInput}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    autoFocus
-                />
-            ) : (
-                <Text style={styles.itemValue}>{value}</Text>
-            )}
+            <Text style={styles.itemValue}>{value}</Text>
         </View>
     );
 }
+
 
 // 스타일 정의
 const styles = StyleSheet.create({

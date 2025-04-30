@@ -1,6 +1,6 @@
-// 📄 src/components/modals/disease-select.modal.tsx
+// 🔹 src/components/modals/disease-select.modal.tsx
 
-// 🔹 지병 선택 모달 컴포넌트
+// 🔹 지병 선택 모달 콘텐츠
 // 사용자가 다중 선택 방식으로 지병을 선택할 수 있도록 보여주는 팝업 창입니다.
 
 import React, { useState, useEffect } from "react";
@@ -12,18 +12,18 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
-    Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Disease } from "@/types/disease.types";
 
-// 🔸 컴포넌트에 전달받는 props 타입 정의
+
 interface Props {
-    visible: boolean; // 모달 창 열림 여부
-    selected: string[]; // 현재 선택된 지병 배열
-    diseaseList: string[]; // 전체 지병 목록
+    visible: boolean; // 모달 창 열림 유무
+    selected: string[]; // 현재 선택된 지병 ID 배열
+    diseaseList: Disease[]; // 전체 지병 목록
     isLoading?: boolean; // 로딩 상태 (fetch 중)
-    onClose: () => void; // 모달 닫기 핸들러
-    onSave: (items: string[]) => void; // 선택된 값 저장 핸들러
+    onClose: () => void; // 모달 닫기 핸드러
+    onSave: (items: string[]) => void; // 선택된 값 저장 핸드러
 }
 
 export default function DiseaseSelectModal({
@@ -34,18 +34,21 @@ export default function DiseaseSelectModal({
     onClose,
     onSave,
 }: Props) {
-    // ✅ 선택된 아이템을 로컬 상태로 저장
+    // ✅ 선택된 아이템을 로컴 상태로 저장
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-    // ✅ 모달이 열릴 때마다 외부 selected 값으로 초기화
+    // ✅ 모달이 열리는 해당 외부 selected 값으로 초기화
     useEffect(() => {
-        setSelectedItems(selected);
+        const validIds = selected.filter((id) =>
+            diseaseList.some((d) => d.id === id)
+        );
+        setSelectedItems(validIds);
     }, [visible]);
 
     // ✅ 선택/해제 로직
-    const toggleItem = (item: string) => {
+    const toggleItem = (id: string) => {
         setSelectedItems((prev) =>
-            prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
     };
 
@@ -60,17 +63,17 @@ export default function DiseaseSelectModal({
                     ) : (
                         <FlatList
                             data={diseaseList}
-                            keyExtractor={(item) => item}
+                            keyExtractor={(item) => item.id}
                             style={styles.list}
                             contentContainerStyle={{ paddingBottom: 12 }}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.itemRow}
-                                    onPress={() => toggleItem(item)}
+                                    onPress={() => toggleItem(item.id)}
                                 >
                                     <Ionicons
                                         name={
-                                            selectedItems.includes(item)
+                                            selectedItems.includes(item.id)
                                                 ? "checkbox"
                                                 : "square-outline"
                                         }
@@ -78,7 +81,7 @@ export default function DiseaseSelectModal({
                                         color="#111827"
                                         style={{ marginRight: 8 }}
                                     />
-                                    <Text>{item}</Text>
+                                    <Text>{item.name}</Text>
                                 </TouchableOpacity>
                             )}
                         />
@@ -88,7 +91,15 @@ export default function DiseaseSelectModal({
                         <TouchableOpacity onPress={onClose}>
                             <Text style={styles.closeText}>닫기</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => onSave(selectedItems)}>
+                        <TouchableOpacity
+                            onPress={() => {
+                                const confirmedIds = selectedItems.filter((id) =>
+                                    diseaseList.some((d) => d.id === id)
+                                );
+                                console.log("✅ 저장할 disease ID 배열 (필터링됨):", confirmedIds);
+                                onSave(confirmedIds);
+                            }}
+                        >
                             <Text style={styles.saveText}>저장</Text>
                         </TouchableOpacity>
                     </View>
@@ -98,7 +109,7 @@ export default function DiseaseSelectModal({
     );
 }
 
-// 🔸 스타일 정의
+// 🔸 스킬 정의
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
@@ -108,7 +119,7 @@ const styles = StyleSheet.create({
     },
     container: {
         width: "85%",
-        maxHeight: "80%", // ✅ 최대 높이 제한
+        maxHeight: "80%",
         backgroundColor: "#fff",
         borderRadius: 12,
         padding: 20,
@@ -119,7 +130,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     list: {
-        maxHeight: 300, // ✅ FlatList 높이 제한 (scroll 가능하게)
+        maxHeight: 300,
     },
     itemRow: {
         flexDirection: "row",

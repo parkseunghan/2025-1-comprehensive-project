@@ -5,21 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAllDiseases } from "@/services/disease.api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BackButton from "@/common/BackButton";
-
-interface Disease {
-  id: string;
-  name: string;
-  description?: string;
-  tips?: string;
-}
+import { Disease } from "@/types/disease.types"; // ✅ 타입 import
 
 export default function DiseaseScreen() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<Disease[]>({
     queryKey: ["diseases"],
-    queryFn: async () => {
-      const res = await fetchAllDiseases();
-      return res.data as Disease[];
-    },
+    queryFn: fetchAllDiseases, // ✅ data만 리턴하는 구조로 변경
   });
 
   const insets = useSafeAreaInsets();
@@ -29,7 +20,6 @@ export default function DiseaseScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* 🔙 뒤로가기 버튼 */}
       <BackButton />
       <Text style={styles.title}>🩺 질병 도감</Text>
       <FlatList
@@ -51,13 +41,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
   card: {
-    backgroundColor: "#f3f4f6", // gray-100
+    backgroundColor: "#f3f4f6",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
   },
   name: { fontSize: 18, fontWeight: "bold", marginBottom: 4 },
-  desc: { fontSize: 14, color: "#4b5563", marginBottom: 6 }, // gray-700
-  tip: { fontSize: 13, color: "#10b981" }, // green-500
+  desc: { fontSize: 14, color: "#4b5563", marginBottom: 6 },
+  tip: { fontSize: 13, color: "#10b981" },
   center: { textAlign: "center", marginTop: 30 },
 });

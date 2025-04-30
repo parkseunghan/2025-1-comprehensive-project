@@ -106,20 +106,22 @@ export const savePredictionResult = async (
 ) => {
   const top1 = predictions[0];
 
-  // Prediction 생성 (Top-1 기준)
+  // 🔥 값이 없을 경우 직접 계산해서 채워줌
+  const riskLevel = top1.riskLevel ?? calculateRiskLevel(top1.riskScore);
+  const guideline = top1.guideline ?? generateGuideline(riskLevel);
+
   const prediction = await prisma.prediction.create({
     data: {
       recordId,
       coarseLabel: top1.coarseLabel,
       fineLabel: top1.fineLabel,
       riskScore: top1.riskScore,
-      riskLevel: top1.riskLevel,
-      guideline: top1.guideline,
-      elapsedSec,
+      riskLevel,  // ✅ 보장된 값
+      guideline,  // ✅ 보장된 값
+      elapsedSec: elapsedSec ?? null,
     },
   });
 
-  // PredictionRank 생성 (Top-N 모두 저장)
   const ranks = predictions.map((item, index) => ({
     predictionId: prediction.id,
     rank: index + 1,
@@ -135,6 +137,7 @@ export const savePredictionResult = async (
 
   return prediction;
 };
+
 
 /**
  * 🔹 증상 + 시간대 정보 저장
