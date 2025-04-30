@@ -4,6 +4,7 @@ import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllDiseases } from "@/services/disease.api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import BackButton from "@/common/BackButton";
 
 interface Disease {
   id: string;
@@ -28,6 +29,8 @@ export default function DiseaseScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* 🔙 뒤로가기 버튼 */}
+      <BackButton />
       <Text style={styles.title}>🩺 질병 도감</Text>
       <FlatList
         data={data}

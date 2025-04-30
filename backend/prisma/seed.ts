@@ -247,32 +247,48 @@ async function main() {
 
     // 7. 예측 생성
     // 🔹 7. 예측 생성 (업데이트된 구조)
-    await prisma.prediction.create({
+    const prediction = await prisma.prediction.create({
         data: {
             id: "prediction-001",
             recordId: record.id,
-
-            // coarse/fine 예측 관련
             coarseLabel: "감기",
-            riskScore: 3.2,
+            fineLabel: "급성 비인두염", // 가장 높은 fine
+            riskScore: 0.6212,
             riskLevel: "보통",
-
-            // 상위 예측 질병
-            top1: "급성 비인두염",
-            top1Prob: 0.6212,
-            top2: "급성 인두염",
-            top2Prob: 0.2211,
-            top3: "상기도 감염",
-            top3Prob: 0.1034,
-
-            // 가이드 및 시간
             guideline: "전문가 상담을 권장합니다.",
             elapsedSec: 1.47,
-
             createdAt: new Date("2025-03-30T10:05:00Z"),
         },
     });
-
+    await prisma.predictionRank.createMany({
+        data: [
+            {
+                id: "rank-001",
+                predictionId: prediction.id,
+                rank: 1,
+                coarseLabel: "감기",
+                fineLabel: "급성 비인두염",
+                riskScore: 0.6212,
+            },
+            {
+                id: "rank-002",
+                predictionId: prediction.id,
+                rank: 2,
+                coarseLabel: "감기",
+                fineLabel: "급성 인두염",
+                riskScore: 0.2211,
+            },
+            {
+                id: "rank-003",
+                predictionId: prediction.id,
+                rank: 3,
+                coarseLabel: "감기",
+                fineLabel: "상기도 감염",
+                riskScore: 0.1034,
+            },
+        ],
+        skipDuplicates: true,
+    });
 
     console.log("✅ Seed completed.");
 }

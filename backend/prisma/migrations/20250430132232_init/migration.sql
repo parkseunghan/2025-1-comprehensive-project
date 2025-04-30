@@ -95,19 +95,26 @@ CREATE TABLE "Prediction" (
     "id" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
     "coarseLabel" TEXT NOT NULL,
+    "fineLabel" TEXT NOT NULL,
     "riskScore" DOUBLE PRECISION NOT NULL,
     "riskLevel" TEXT NOT NULL,
     "guideline" TEXT NOT NULL,
     "elapsedSec" DOUBLE PRECISION,
-    "top1" TEXT,
-    "top1Prob" DOUBLE PRECISION,
-    "top2" TEXT,
-    "top2Prob" DOUBLE PRECISION,
-    "top3" TEXT,
-    "top3Prob" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Prediction_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PredictionRank" (
+    "id" TEXT NOT NULL,
+    "predictionId" TEXT NOT NULL,
+    "rank" INTEGER NOT NULL,
+    "coarseLabel" TEXT NOT NULL,
+    "fineLabel" TEXT NOT NULL,
+    "riskScore" DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT "PredictionRank_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -137,6 +144,9 @@ CREATE UNIQUE INDEX "SymptomOnRecord_symptomId_recordId_key" ON "SymptomOnRecord
 -- CreateIndex
 CREATE UNIQUE INDEX "Prediction_recordId_key" ON "Prediction"("recordId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "PredictionRank_predictionId_rank_key" ON "PredictionRank"("predictionId", "rank");
+
 -- AddForeignKey
 ALTER TABLE "UserDisease" ADD CONSTRAINT "UserDisease_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -160,3 +170,6 @@ ALTER TABLE "SymptomOnRecord" ADD CONSTRAINT "SymptomOnRecord_recordId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "Prediction" ADD CONSTRAINT "Prediction_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "SymptomRecord"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PredictionRank" ADD CONSTRAINT "PredictionRank_predictionId_fkey" FOREIGN KEY ("predictionId") REFERENCES "Prediction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

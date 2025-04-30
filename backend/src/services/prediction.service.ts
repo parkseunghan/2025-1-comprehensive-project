@@ -1,8 +1,9 @@
 // 📄 src/services/prediction.service.ts
+// AI 서버와의 통신 및 예측 결과 저장 로직 정의
 
 import axios from "../utils/ai-api"; // 공통 axios 인스턴스
-import { PredictRequest, PredictResponse } from "@/types/prediction";
-import prisma from "../config/prisma.service"; // ✅ 수정됨: 기존 new PrismaClient() 제거
+import { PredictRequest, PredictResponse, PredictionCandidate } from "@/types/prediction.types";
+import prisma from "../config/prisma.service";
 
 /**
  * AI 서버에 증상 데이터를 보내고 예측 결과를 받아옵니다.
@@ -13,51 +14,55 @@ import prisma from "../config/prisma.service"; // ✅ 수정됨: 기존 new Pris
 export async function requestPrediction(data: PredictRequest): Promise<PredictResponse> {
   try {
     console.log("🚀 [Axios] 예측 요청 전송 중...");
-    console.log("📡 보낼 데이터:", data); // ✅ 전송 데이터 확인용
+    console.log("📡 보낼 데이터:", data);
     const response = await axios.post<PredictResponse>("/predict", data);
-    console.log("✅ [Axios] 응답 도착:", response.data); // ✅ 응답 데이터 확인용
+    console.log("✅ [Axios] 응답 도착:", response.data);
     return response.data;
   } catch (error: any) {
     console.error("❌ [requestPrediction] AI 서버 요청 실패:", error.message);
-    throw new Error("AI 예측 요청 중 오류가 발생했습니다."); // 프론트에서 에러 핸들링할 수 있게 throw
+    throw new Error("AI 예측 요청 중 오류가 발생했습니다.");
   }
 }
 
 /**
- * 🔹 예측 결과 저장
+ * 예측 결과를 DB에 저장합니다. (Prediction + PredictionRank)
+ * @param recordId 해당 예측이 연결된 증상 기록 ID
+ * @param predictions Top-N 예측 결과 배열
  */
-export const save = async (recordId: string, predictions: any[]) => {
+export async function save(recordId: string, predictions: PredictionCandidate[]) {
   const top1 = predictions[0];
-  const top2 = predictions[1] ?? {};
-  const top3 = predictions[2] ?? {};
 
   console.log("📝 [Prediction 저장] recordId:", recordId);
   console.log("📝 top1:", top1);
 
+  // Prediction + 연결된 PredictionRank 생성
   return await prisma.prediction.create({
     data: {
       recordId,
       coarseLabel: top1.coarseLabel,
-      // fineLabel: top1.fineLabel || top1.coarseLabel,
+      fineLabel: top1.fineLabel,
       riskScore: top1.riskScore,
       riskLevel: top1.riskLevel,
       guideline: top1.guideline,
-
-      top1: top1.fineLabel || top1.coarseLabel,
-      top1Prob: top1.riskScore,
-      top2: top2.fineLabel || top2.coarseLabel || "",
-      top2Prob: top2.riskScore ?? 0,
-      top3: top3.fineLabel || top3.coarseLabel || "",
-      top3Prob: top3.riskScore ?? 0,
+      ranks: {
+        create: predictions.map((p, i) => ({
+          rank: i + 1,
+          coarseLabel: p.coarseLabel,
+          fineLabel: p.fineLabel,
+          riskScore: p.riskScore,
+        })),
+      },
     },
   });
-};
+}
 
 /**
- * 🔹 예측 결과 조회
+ * 예측 결과를 증상 기록 기준으로 조회합니다.
+ * @param recordId 연결된 증상 기록 ID
  */
 export const findByRecord = async (recordId: string) => {
-  return await prisma.prediction.findFirst({
+  return await prisma.prediction.findUnique({
     where: { recordId },
+    include: { ranks: true },
   });
 };

@@ -8,8 +8,10 @@ import { useAuthStore } from "@/store/auth.store";
 import { extractSymptoms } from "@/services/llm.api";
 import { createSymptomRecord } from "@/services/record.api";
 import { requestPrediction, requestPredictionToDB } from "@/services/prediction.api";
-import { LLMExtractKeyword } from "@/types/symptom";
+import { LLMExtractKeyword } from "@/types/symptom.types";
 import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
+import BackButton from "@/common/BackButton";
+
 
 export default function SymptomInputScreen() {
     const router = useRouter();
@@ -62,32 +64,32 @@ export default function SymptomInputScreen() {
                 medications: user?.medications?.map(m => m.name) || [],
             });
 
-            
+
             console.log("🧠 [AI 예측 결과] 응답:", aiPrediction);
 
-            // 5️⃣ 예측 결과 저장 (riskLevel, guideline 동적 생성)
-            const predictionResults = aiPrediction.predictions.map((pred) => {
-                const riskLevel = calculateRiskLevel(pred.riskScore);
-                const guideline = generateGuideline(riskLevel);
+            // 5️⃣ 예측 결과 저장
+            const top1 = aiPrediction.predictions[0];
+            const riskLevel = calculateRiskLevel(top1.riskScore);
+            const guideline = generateGuideline(riskLevel);
 
-                return {
-                    coarseLabel: pred.coarseLabel,
-                    fineLabel: pred.fineLabel,
-                    riskScore: pred.riskScore,
-                    riskLevel,
-                    guideline,
-                };
-            });
+            // 🔹 PredictionRank[]만 서버에 전달
+            const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
+                rank: i + 1,
+                coarseLabel: pred.coarseLabel,
+                fineLabel: pred.fineLabel,
+                riskScore: pred.riskScore,
+            }));
 
             console.log("📦 [requestPredictionToDB] 저장 요청:", {
                 recordId: record.id,
-                predictions: predictionResults,
+                predictions: predictionRanks,
             });
 
             await requestPredictionToDB({
                 recordId: record.id,
-                predictions: predictionResults,
+                predictions: predictionRanks,
             });
+
 
             // 6️⃣ 결과 화면 이동
             router.push("/(record)/result");
@@ -106,6 +108,8 @@ export default function SymptomInputScreen() {
 
     return (
         <View style={{ flex: 1, padding: 20 }}>
+            {/* 🔙 뒤로가기 버튼 */}
+            <BackButton />
             {/* ✅ 사용자 안내 */}
             <Text style={{ fontSize: 16, marginBottom: 8 }}>
                 👤 {user?.name}님, 현재 프로필이 반영됩니다.

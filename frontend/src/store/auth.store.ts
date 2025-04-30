@@ -8,7 +8,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User } from "@/types/user";
+import { User } from "@/types/user.types";
 
 // 🔹 Zustand 스토어 타입 정의
 type AuthStore = {

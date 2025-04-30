@@ -5,7 +5,7 @@
  */
 
 import axios from "./axios";
-import { User } from "@/types/user";
+import { User } from "@/types/user.types";
 import { userProfileSchema } from "@/schemas/user.schema";
 
 // 🔸 Zod 기반 사용자 프로필 입력 타입
