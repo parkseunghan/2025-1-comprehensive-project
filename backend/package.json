@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "type": "commonjs",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
     "reset": "dotenv -e ../.env -- prisma migrate reset --schema=./prisma/schema.prisma",
     "migrate": "dotenv -e ../.env -- prisma migrate dev --name init --schema=./prisma/schema.prisma",
