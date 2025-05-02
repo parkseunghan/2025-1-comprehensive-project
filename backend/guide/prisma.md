@@ -19,6 +19,8 @@ npm run migrate
 seed.ts 작성 후
 
 ```sh
+npx ts-node scripts/fetchInternalDiseases.ts
+
 npm run seed
 ```
 

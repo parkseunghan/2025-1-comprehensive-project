@@ -35,11 +35,10 @@ model User {
 }
 
 model Disease {
-  id   String @id @default(uuid())
-  name String @unique
-  description String?  // 질병 설명
-  tips        String?  // 관리 팁
-
+  sickCode    String @id @map("id") // <= Prisma의 ID 역할
+  name        String @unique
+  description String?
+  tips        String?
   users       UserDisease[]
 }
 
@@ -47,7 +46,7 @@ model UserDisease {
   id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
-  disease   Disease  @relation(fields: [diseaseId], references: [id])
+  disease   Disease  @relation(fields: [diseaseId], references: [sickCode])
   diseaseId String
 
   @@unique([userId, diseaseId])
