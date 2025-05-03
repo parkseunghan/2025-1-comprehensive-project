@@ -54,6 +54,7 @@ export default function ProfileDetailScreen() {
         weight: "",
     });
 
+    const [editField, setEditField] = useState<"age" | "height" | "weight" | null>(null);
     const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
     const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
@@ -154,9 +155,32 @@ export default function ProfileDetailScreen() {
                         </View>
                     </View>
 
-                    <EditableField label="나이" value={editableProfile.age} onChange={(v) => setEditableProfile((prev) => ({ ...prev, age: v }))} />
-                    <EditableField label="키" value={editableProfile.height} onChange={(v) => setEditableProfile((prev) => ({ ...prev, height: v }))} />
-                    <EditableField label="몸무게" value={editableProfile.weight} onChange={(v) => setEditableProfile((prev) => ({ ...prev, weight: v }))} />
+                    <EditableField
+                        label="나이"
+                        value={editableProfile.age}
+                        editing={editField === "age"}
+                        onPressEdit={() => setEditField("age")}
+                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, age: v }))}
+                        onBlur={() => setEditField(null)}
+                    />
+
+                    <EditableField
+                        label="키"
+                        value={editableProfile.height}
+                        editing={editField === "height"}
+                        onPressEdit={() => setEditField("height")}
+                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, height: v }))}
+                        onBlur={() => setEditField(null)}
+                    />
+
+                    <EditableField
+                        label="몸무게"
+                        value={editableProfile.weight}
+                        editing={editField === "weight"}
+                        onPressEdit={() => setEditField("weight")}
+                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, weight: v }))}
+                        onBlur={() => setEditField(null)}
+                    />
 
                     <EditableTextWithButton
                         label="지병"
@@ -170,9 +194,11 @@ export default function ProfileDetailScreen() {
                     />
                 </View>
 
-                <TouchableOpacity style={styles.saveButton} onPress={() => mutation.mutate()}>
-                    <Text style={styles.saveText}>저장</Text>
-                </TouchableOpacity>
+                <View style={styles.saveButtonWrapper}>
+                    <TouchableOpacity style={styles.saveButton} onPress={() => mutation.mutate()}>
+                        <Text style={styles.saveText}>저장</Text>
+                    </TouchableOpacity>
+                </View>
 
                 <DiseaseSelectModal
                     visible={diseaseModalOpen}
@@ -201,16 +227,27 @@ export default function ProfileDetailScreen() {
     );
 }
 
-function EditableField({ label, value, onChange }: any) {
+function EditableField({ label, value, editing, onPressEdit, onChange, onBlur }: any) {
     return (
         <View style={styles.itemRow}>
-            <Text style={styles.itemLabel}>{label}</Text>
-            <TextInput
-                style={styles.itemInput}
-                value={value}
-                onChangeText={onChange}
-                keyboardType="numeric"
-            />
+            <View style={styles.itemHeader}>
+                <Text style={styles.itemLabel}>{label}</Text>
+                <TouchableOpacity onPress={onPressEdit}>
+                    <Ionicons name="create-outline" size={16} color="#6B7280" />
+                </TouchableOpacity>
+            </View>
+            {editing ? (
+                <TextInput
+                    style={styles.itemInput}
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="numeric"
+                    autoFocus
+                    onBlur={onBlur}
+                />
+            ) : (
+                <Text style={styles.itemValue}>{value}</Text>
+            )}
         </View>
     );
 }
@@ -230,7 +267,7 @@ function EditableTextWithButton({ label, value, onPress }: any) {
 }
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#F3F4F6" },
+    root: { flex: 1, backgroundColor: "#F4F1FF" }, // ✅ 배경색 통일
     backButton: { position: "absolute", top: 20, left: 16, zIndex: 10, padding: 8 },
     container: { paddingTop: 70, paddingHorizontal: 24, paddingBottom: 60 },
     title: { fontSize: 22, fontWeight: "bold", color: "#1E3A8A", marginBottom: 28, textAlign: "center" },
@@ -241,6 +278,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         marginBottom: 24,
         alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -255,11 +294,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 10,
         marginBottom: 28,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 2,
+        shadowRadius: 2,
+        elevation: 1,
     },
     itemRow: {
         paddingVertical: 14,
@@ -290,6 +331,10 @@ const styles = StyleSheet.create({
         borderColor: "#111827",
     },
     radioLabel: { fontSize: 16, color: "#111827" },
+    saveButtonWrapper: {
+        backgroundColor: "#F4F1FF", // ✅ 배경 통일
+        paddingHorizontal: 20,
+    },
     saveButton: {
         backgroundColor: "#D92B4B",
         borderRadius: 10,

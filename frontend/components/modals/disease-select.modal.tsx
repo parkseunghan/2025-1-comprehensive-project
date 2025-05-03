@@ -1,8 +1,5 @@
 // 🔹 src/components/modals/disease-select.modal.tsx
 
-// 🔹 지병 선택 모달 콘텐츠
-// 사용자가 다중 선택 방식으로 지병을 선택할 수 있도록 보여주는 팝업 창입니다.
-
 import React, { useState, useEffect } from "react";
 import {
     Modal,
@@ -12,18 +9,18 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Disease } from "@/types/disease.types";
 
-
 interface Props {
-    visible: boolean; // 모달 창 열림 유무
-    selected: string[]; // 현재 선택된 지병 ID 배열
-    diseaseList: Disease[]; // 전체 지병 목록
-    isLoading?: boolean; // 로딩 상태 (fetch 중)
-    onClose: () => void; // 모달 닫기 핸드러
-    onSave: (items: string[]) => void; // 선택된 값 저장 핸드러
+    visible: boolean;
+    selected: string[];
+    diseaseList: Disease[];
+    isLoading?: boolean;
+    onClose: () => void;
+    onSave: (items: string[]) => void;
 }
 
 export default function DiseaseSelectModal({
@@ -34,29 +31,39 @@ export default function DiseaseSelectModal({
     onClose,
     onSave,
 }: Props) {
-    // ✅ 선택된 아이템을 로컴 상태로 저장
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
-    // ✅ 모달이 열리는 해당 외부 selected 값으로 초기화
     useEffect(() => {
         const validIds = selected.filter((id) =>
             diseaseList.some((d) => d.sickCode === id)
         );
         setSelectedItems(validIds);
+        setSearchTerm(""); // 모달 열릴 때 검색어 초기화
     }, [visible]);
 
-    // ✅ 선택/해제 로직
     const toggleItem = (id: string) => {
         setSelectedItems((prev) =>
             prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
     };
 
+    const filteredList = diseaseList.filter((d) =>
+        d.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <Modal visible={visible} transparent animationType="none">
             <View style={styles.overlay}>
                 <View style={styles.container}>
                     <Text style={styles.title}>지병 선택</Text>
+
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="검색어를 입력하세요"
+                        value={searchTerm}
+                        onChangeText={setSearchTerm}
+                    />
 
                     {isLoading ? (
                         <ActivityIndicator size="small" color="#D92B4B" />
@@ -103,7 +110,6 @@ export default function DiseaseSelectModal({
     );
 }
 
-// 🔸 스킬 정의
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
@@ -121,6 +127,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: "bold",
+        marginBottom: 12,
+    },
+    searchInput: {
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        borderRadius: 8,
+        padding: 8,
         marginBottom: 12,
     },
     list: {
