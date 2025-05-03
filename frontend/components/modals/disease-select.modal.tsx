@@ -40,7 +40,7 @@ export default function DiseaseSelectModal({
     // ✅ 모달이 열리는 해당 외부 selected 값으로 초기화
     useEffect(() => {
         const validIds = selected.filter((id) =>
-            diseaseList.some((d) => d.id === id)
+            diseaseList.some((d) => d.sickCode === id)
         );
         setSelectedItems(validIds);
     }, [visible]);
@@ -62,28 +62,22 @@ export default function DiseaseSelectModal({
                         <ActivityIndicator size="small" color="#D92B4B" />
                     ) : (
                         <FlatList
-                            data={diseaseList}
-                            keyExtractor={(item) => item.id}
-                            style={styles.list}
-                            contentContainerStyle={{ paddingBottom: 12 }}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.itemRow}
-                                    onPress={() => toggleItem(item.id)}
-                                >
-                                    <Ionicons
-                                        name={
-                                            selectedItems.includes(item.id)
-                                                ? "checkbox"
-                                                : "square-outline"
-                                        }
-                                        size={20}
-                                        color="#111827"
-                                        style={{ marginRight: 8 }}
-                                    />
-                                    <Text>{item.name}</Text>
-                                </TouchableOpacity>
-                            )}
+                        data={diseaseList}
+                        keyExtractor={(item) => item.sickCode}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                            style={styles.itemRow}
+                            onPress={() => toggleItem(item.sickCode)}
+                            >
+                            <Ionicons
+                                name={selectedItems.includes(item.sickCode) ? "checkbox" : "square-outline"}
+                                size={20}
+                                color="#111827"
+                                style={{ marginRight: 8 }}
+                            />
+                            <Text>{item.name}</Text>
+                            </TouchableOpacity>
+                        )}
                         />
                     )}
 
@@ -94,7 +88,7 @@ export default function DiseaseSelectModal({
                         <TouchableOpacity
                             onPress={() => {
                                 const confirmedIds = selectedItems.filter((id) =>
-                                    diseaseList.some((d) => d.id === id)
+                                    diseaseList.some((d) => d.sickCode === id)
                                 );
                                 console.log("✅ 저장할 disease ID 배열 (필터링됨):", confirmedIds);
                                 onSave(confirmedIds);

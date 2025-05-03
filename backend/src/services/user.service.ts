@@ -51,9 +51,9 @@ export const update = async (id: string, data: UserUpdateInput) => {
 
     // 🔍 유효한 지병 ID 확인
     const validDiseases = await prisma.disease.findMany({
-        where: { id: { in: diseases ?? [] } },
+        where: { sickCode: { in: diseases ?? [] } },
     });
-    const invalidDiseases = diseases?.filter((id) => !validDiseases.some((d) => d.id === id));
+    const invalidDiseases = diseases?.filter((id) => !validDiseases.some((d) => d.sickCode === id));
     if (invalidDiseases?.length) {
         throw new Error(`유효하지 않은 지병이 포함되어 있습니다: ${invalidDiseases.join(", ")}`);
     }
@@ -78,7 +78,7 @@ export const update = async (id: string, data: UserUpdateInput) => {
                     ? {
                         deleteMany: {},
                         create: validDiseases.map((d) => ({
-                            disease: { connect: { id: d.id } },
+                            disease: { connect: { sickCode: d.sickCode } },
                         })),
                     }
                     : { deleteMany: {} }

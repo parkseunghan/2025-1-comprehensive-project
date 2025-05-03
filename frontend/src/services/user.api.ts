@@ -7,6 +7,21 @@
 import axios from "./axios";
 import { User } from "@/types/user.types";
 import { userProfileSchema } from "@/schemas/user.schema";
+import { Disease } from "@/types/disease.types";
+import { Medication } from "@/types/medication.types";
+
+export interface UserProfileResponse {
+  id: string;
+  email: string;
+  name: string;
+  gender: "남성" | "여성";
+  age: number;
+  height: number;
+  weight: number;
+  diseases: Disease[];         // ← 이 부분이 중요!
+  medications: Medication[];
+}
+
 
 // 🔸 Zod 기반 사용자 프로필 입력 타입
 export type UpdateUserInput = typeof userProfileSchema._type;
@@ -38,7 +53,7 @@ export const updateUserProfile = async (
  * @param userId - 사용자 ID
  * @returns 사용자 전체 프로필 (지병/약물 포함)
  */
-export const fetchCurrentUser = async (userId: string): Promise<User> => {
+export const fetchCurrentUser = async (userId: string): Promise<UserProfileResponse> => {
   const res = await axios.get(`/users/${userId}`);
   return res.data;
 };

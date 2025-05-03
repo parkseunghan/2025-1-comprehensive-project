@@ -23,3 +23,17 @@ export type User = {
     createdAt?: string;
     updatedAt?: string;
 };
+
+export type UserProfileResponse = {
+    id: string;
+    email: string;
+    name: string;
+    gender: "남성" | "여성";
+    age: number;
+    height: number;
+    weight: number;
+    bmi: number; // ✅ 이 줄 꼭 필요!
+    role: "user" | "admin";
+    diseases: { sickCode: string; name: string }[];
+    medications: { id: string; name: string }[];
+};

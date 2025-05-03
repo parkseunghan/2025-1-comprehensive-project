@@ -22,16 +22,18 @@ import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
 import { Disease } from "@/types/disease.types";
 import { Medication } from "@/types/medication.types";
+import type { UserProfileResponse } from "@/types/user.types";
 
 export default function ProfileDetailScreen() {
-    const { user } = useAuthStore();
+    const { user, token, setAuth } = useAuthStore();
+
     const { data: profile, refetch } = useQuery({
         queryKey: ["user", user?.id],
         queryFn: () => fetchCurrentUser(user!.id),
         enabled: !!user?.id,
     });
 
-    const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery({
+    const { data: diseaseList = [] } = useQuery<Disease[]>({
         queryKey: ["diseases"],
         queryFn: fetchAllDiseases,
     });
@@ -64,8 +66,8 @@ export default function ProfileDetailScreen() {
                 height: String(profile.height ?? ""),
                 weight: String(profile.weight ?? ""),
             });
-            setSelectedDiseaseIds(profile.diseases.map((d: Disease) => d.id));
-            setSelectedMedicationIds(profile.medications.map((m: Medication) => m.id));
+            setSelectedDiseaseIds(profile.diseases.map((d) => d.sickCode));
+            setSelectedMedicationIds(profile.medications.map((m) => m.id));
         }
     }, [profile]);
 
@@ -81,9 +83,30 @@ export default function ProfileDetailScreen() {
                 medications: selectedMedicationIds,
             });
         },
-        onSuccess: () => {
+        onSuccess: async () => {
+            const updatedUser = await fetchCurrentUser(user!.id);
+            // ✅ 타입 변환 후 상태 저장
+            const mappedUser = {
+                id: updatedUser.id,
+                email: updatedUser.email,
+                name: updatedUser.name,
+                gender: updatedUser.gender,
+                age: updatedUser.age,
+                height: updatedUser.height,
+                weight: updatedUser.weight,
+                bmi: updatedUser.height > 0 ? (updatedUser.weight / Math.pow(updatedUser.height / 100, 2)) : 0,
+                role: updatedUser.role,
+                diseases: updatedUser.diseases.map((d) => ({
+                    id: d.sickCode,
+                    name: d.name,
+                })),
+                medications: updatedUser.medications.map((m) => ({
+                    id: m.id,
+                    name: m.name,
+                })),
+            };
+            setAuth(token!, mappedUser);
             Alert.alert("저장 완료", "프로필 정보가 저장되었습니다.");
-            refetch();
             router.replace("/(tabs)/home");
         },
         onError: () => {
@@ -91,8 +114,11 @@ export default function ProfileDetailScreen() {
         },
     });
 
-    const getNames = (ids: string[], list: { id: string; name: string }[]) =>
-        ids.map((id) => list.find((item) => item.id === id)?.name).filter(Boolean).join(", ");
+    const getDiseaseNames = (ids: string[], list: Disease[]) =>
+        ids.map((id) => list.find((d) => d.sickCode === id)?.name).filter(Boolean).join(", ");
+
+    const getMedicationNames = (ids: string[], list: Medication[]) =>
+        ids.map((id) => list.find((m) => m.id === id)?.name).filter(Boolean).join(", ");
 
     return (
         <View style={styles.root}>
@@ -134,12 +160,12 @@ export default function ProfileDetailScreen() {
 
                     <EditableTextWithButton
                         label="지병"
-                        value={getNames(selectedDiseaseIds, diseaseList)}
+                        value={getDiseaseNames(selectedDiseaseIds, diseaseList)}
                         onPress={() => setDiseaseModalOpen(true)}
                     />
                     <EditableTextWithButton
                         label="복용 약물"
-                        value={getNames(selectedMedicationIds, medicationList)}
+                        value={getMedicationNames(selectedMedicationIds, medicationList)}
                         onPress={() => setMedicationModalOpen(true)}
                     />
                 </View>
@@ -152,7 +178,7 @@ export default function ProfileDetailScreen() {
                     visible={diseaseModalOpen}
                     selected={selectedDiseaseIds}
                     diseaseList={diseaseList}
-                    isLoading={isDiseaseLoading}
+                    isLoading={false}
                     onClose={() => setDiseaseModalOpen(false)}
                     onSave={(items) => {
                         setSelectedDiseaseIds(items);
@@ -203,8 +229,6 @@ function EditableTextWithButton({ label, value, onPress }: any) {
     );
 }
 
-
-// 스타일 정의
 const styles = StyleSheet.create({
     root: { flex: 1, backgroundColor: "#F3F4F6" },
     backButton: { position: "absolute", top: 20, left: 16, zIndex: 10, padding: 8 },
@@ -222,13 +246,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 3,
-    },
-    rowWithEdit: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        marginBottom: 6,
     },
     userName: { fontSize: 20, fontWeight: "bold", color: "#111827" },
     userEmail: { fontSize: 14, color: "#6B7280" },

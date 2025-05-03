@@ -146,7 +146,7 @@ export default function ProfileFormScreen() {
                     style={styles.flexInput}
                     placeholder="선택된 지병 없음"
                     value={diseases
-                        .map((id) => diseaseList.find((d) => d.id === id)?.name)
+                        .map((id) => diseaseList.find((d) => d.sickCode === id)?.name)
                         .filter(Boolean)
                         .join(", ")}
                     editable={false}
