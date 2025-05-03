@@ -100,7 +100,7 @@ export default function HomeScreen() {
             <View style={styles.cardGrid}>
                 <TouchableOpacity
                     style={[styles.featureCard, styles.diagnosisCard]}
-                    onPress={() => router.push("/(record)/symptom")}
+                    onPress={() => router.push("/(record)/symptominput")}
                 >
                     <View style={styles.iconContainer}>
                         <View style={[styles.iconCircle, styles.diagnosisIconCircle]}>

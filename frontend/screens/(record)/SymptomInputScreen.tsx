@@ -1,154 +1,415 @@
-// 📄 screens/(record)/SymptomInputScreen.tsx
-import { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import { useAuthStore } from "@/store/auth.store";
-import { extractSymptoms } from "@/services/llm.api";
-import { createSymptomRecord } from "@/services/record.api";
-import { requestPrediction, requestPredictionToDB } from "@/services/prediction.api";
-import { LLMExtractKeyword } from "@/types/symptom.types";
-import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
+import { useEffect, useRef, useState } from "react";
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    Animated,
+    ScrollView,
+    NativeSyntheticEvent,
+    NativeScrollEvent,
+} from "react-native";
+import { router } from "expo-router";
 import BackButton from "@/common/BackButton";
+import { Ionicons } from "@expo/vector-icons";
+import DiseaseSelectModal from "@/modals/disease-select.modal";
+import MedicationSelectModal from "@/modals/medication-select.modal";
+import { fetchAllDiseases } from "@/services/disease.api";
+import { fetchAllMedications } from "@/services/medication.api";
+import { useQuery } from "@tanstack/react-query";
 
+type EditableProfile = {
+    name: string;
+    gender: "남성" | "여성" | "";
+    age: string;
+    height: string;
+    weight: string;
+    diseases: string;
+    medications: string;
+};
 
 export default function SymptomInputScreen() {
-    const router = useRouter();
-    const { user } = useAuthStore();
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(20)).current;
+    const scrollViewRef = useRef<ScrollView>(null);
 
-    const [text, setText] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [profile, setProfile] = useState<EditableProfile>({
+        name: "홍길동",
+        gender: "남성",
+        age: "29",
+        height: "175",
+        weight: "68",
+        diseases: "",
+        medications: "",
+    });
 
-    const handleStartDiagnosis = async () => {
-        console.log("✅ [handleStartDiagnosis] 함수 실행됨");
+    const [editField, setEditField] = useState<keyof EditableProfile | null>(null);
+    const [buttonState, setButtonState] = useState<"scroll" | "next">("scroll");
+    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+    const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
-        if (!text.trim()) {
-            Alert.alert("⚠️ 증상을 입력해 주세요.");
-            return;
-        }
+    const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery({
+        queryKey: ["diseases"],
+        queryFn: fetchAllDiseases,
+    });
 
-        try {
-            setIsLoading(true);
+    const { data: medicationList = [], isLoading: isMedicationLoading } = useQuery({
+        queryKey: ["medications"],
+        queryFn: fetchAllMedications,
+    });
 
-            // 1️⃣ LLM 증상 추출
-            const extracted: LLMExtractKeyword[] = await extractSymptoms(text);
-            console.log("🟩 추출된 증상 키워드:", extracted);
+    const calculateBMI = (heightCm: string, weightKg: string) => {
+        const height = parseFloat(heightCm) / 100;
+        const weight = parseFloat(weightKg);
+        if (!height || !weight) return "";
+        const bmi = weight / (height * height);
+        return bmi.toFixed(1);
+    };
 
-            if (extracted.length === 0) {
-                Alert.alert("⚠️ 증상 키워드를 추출하지 못했어요.");
-                return;
-            }
+    const bmi = calculateBMI(profile.height, profile.weight);
 
-            // 2️⃣ 증상 기록 생성
-            const record = await createSymptomRecord({
-                userId: user!.id,
-                symptoms: extracted.map(item => item.symptom),
-            });
-            console.log("📦 [createSymptomRecord] 생성 완료:", record);
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+                toValue: 0,
+                duration: 500,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
 
-            // 3️⃣ 로컬에 기록 ID 저장
-            await AsyncStorage.setItem("lastRecordId", record.id);
-            const checkStored = await AsyncStorage.getItem("lastRecordId");
-            console.log("📦 로컬에 저장된 기록 ID 확인:", checkStored); // 🐞 정상: "record-1234"
-
-            // 4️⃣ AI 예측 요청
-            const aiPrediction = await requestPrediction({
-                symptomKeywords: extracted.map(item => item.symptom),
-                age: user?.age || 0,
-                gender: user?.gender === "남성" ? "남성" : "여성",
-                height: user?.height || 0,
-                weight: user?.weight || 0,
-                bmi: user?.bmi || 0,
-                diseases: user?.diseases?.map(d => d.name) || [],
-                medications: user?.medications?.map(m => m.name) || [],
-            });
-
-
-            console.log("🧠 [AI 예측 결과] 응답:", aiPrediction);
-
-            // 5️⃣ 예측 결과 저장
-            const top1 = aiPrediction.predictions[0];
-            const riskLevel = calculateRiskLevel(top1.riskScore);
-            const guideline = generateGuideline(riskLevel);
-
-            // 🔹 PredictionRank[]만 서버에 전달
-            const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
-                rank: i + 1,
-                coarseLabel: pred.coarseLabel,
-                fineLabel: pred.fineLabel,
-                riskScore: pred.riskScore,
-            }));
-
-            console.log("📦 [requestPredictionToDB] 저장 요청:", {
-                recordId: record.id,
-                predictions: predictionRanks,
-            });
-
-            await requestPredictionToDB({
-                recordId: record.id,
-                predictions: predictionRanks,
-            });
-
-
-            // 6️⃣ 결과 화면 이동
-            router.push("/(record)/result");
-
-        } catch (err) {
-            console.error("❌ 예측 실패:", err);
-            Alert.alert("예측 중 오류가 발생했습니다.");
-        } finally {
-            setIsLoading(false);
+    const handleButtonClick = () => {
+        if (buttonState === "scroll") {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+            setButtonState("next");
+        } else if (buttonState === "next") {
+            router.push("/(record)/symptomchoice");
         }
     };
 
+    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+        const isScrolledToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 10;
+        if (isScrolledToBottom && buttonState === "scroll") {
+            setButtonState("next");
+        }
+    };
 
+    const handleChange = (key: keyof EditableProfile, value: string) => {
+        setProfile((prev) => ({ ...prev, [key]: value }));
+    };
 
-
+    const handleEdit = (key: keyof EditableProfile) => {
+        if (key === "diseases") {
+            setDiseaseModalOpen(true);
+        } else if (key === "medications") {
+            setMedicationModalOpen(true);
+        } else {
+            setEditField(key);
+        }
+    };
 
     return (
-        <View style={{ flex: 1, padding: 20 }}>
-            {/* 🔙 뒤로가기 버튼 */}
-            <BackButton />
-            {/* ✅ 사용자 안내 */}
-            <Text style={{ fontSize: 16, marginBottom: 8 }}>
-                👤 {user?.name}님, 현재 프로필이 반영됩니다.
-            </Text>
+        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+            <View style={styles.header}>
+                <BackButton />
+            </View>
 
-            {/* ✅ 증상 입력 */}
-            <Text style={{ fontSize: 14, marginBottom: 4 }}>현재 증상을 입력해 주세요:</Text>
-            <TextInput
-                placeholder="예: 기침이 심하고 열이 나요. 배도 아파요"
-                multiline
-                numberOfLines={3}
-                value={text}
-                onChangeText={setText}
-                style={{
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 8,
-                    padding: 12,
-                    marginBottom: 16,
+            <ScrollView
+                ref={scrollViewRef}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+            >
+                <View style={styles.titleWrapper}>
+                    <Text style={styles.title}>기본정보를 확인해주세요</Text>
+                </View>
+
+                {/* 이름 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>이름</Text>
+                        <TouchableOpacity onPress={() => setEditField("name")}>
+                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    {editField === "name" ? (
+                        <TextInput
+                            style={styles.inputValue}
+                            value={profile.name}
+                            onChangeText={(text) => handleChange("name", text)}
+                            onBlur={() => setEditField(null)}
+                            autoFocus
+                        />
+                    ) : (
+                        <Text style={styles.inputValue}>{profile.name}</Text>
+                    )}
+                </View>
+
+                {/* 성별 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>성별</Text>
+                        <TouchableOpacity onPress={() => setEditField("gender")}>
+                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    {editField === "gender" ? (
+                        <View style={styles.radioGroup}>
+                            {["남성", "여성"].map((item) => (
+                                <TouchableOpacity
+                                    key={item}
+                                    style={styles.radioItem}
+                                    onPress={() => {
+                                        handleChange("gender", item);
+                                        setEditField(null);
+                                    }}
+                                >
+                                    <View
+                                        style={[
+                                            styles.radioCircle,
+                                            profile.gender === item && styles.radioCircleSelected,
+                                        ]}
+                                    />
+                                    <Text style={styles.radioLabel}>{item}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : (
+                        <Text style={styles.inputValue}>{profile.gender}</Text>
+                    )}
+                </View>
+
+                {/* 나이 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>나이</Text>
+                        <TouchableOpacity onPress={() => setEditField("age")}>
+                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    {editField === "age" ? (
+                        <TextInput
+                            style={styles.inputValue}
+                            value={profile.age}
+                            onChangeText={(text) => handleChange("age", text)}
+                            onBlur={() => setEditField(null)}
+                            autoFocus
+                            keyboardType="numeric"
+                        />
+                    ) : (
+                        <Text style={styles.inputValue}>{profile.age}</Text>
+                    )}
+                </View>
+
+                {/* 키 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>키(cm)</Text>
+                        <TouchableOpacity onPress={() => setEditField("height")}>
+                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    {editField === "height" ? (
+                        <TextInput
+                            style={styles.inputValue}
+                            value={profile.height}
+                            onChangeText={(text) => handleChange("height", text)}
+                            onBlur={() => setEditField(null)}
+                            autoFocus
+                            keyboardType="numeric"
+                        />
+                    ) : (
+                        <Text style={styles.inputValue}>{profile.height}</Text>
+                    )}
+                </View>
+
+                {/* 몸무게 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>몸무게(kg)</Text>
+                        <TouchableOpacity onPress={() => setEditField("weight")}>
+                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    {editField === "weight" ? (
+                        <TextInput
+                            style={styles.inputValue}
+                            value={profile.weight}
+                            onChangeText={(text) => handleChange("weight", text)}
+                            onBlur={() => setEditField(null)}
+                            autoFocus
+                            keyboardType="numeric"
+                        />
+                    ) : (
+                        <Text style={styles.inputValue}>{profile.weight}</Text>
+                    )}
+                </View>
+
+                {/* BMI */}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>BMI</Text>
+                    <Text style={styles.inputValue}>{bmi}</Text>
+                </View>
+
+                {/* 지병 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>지병</Text>
+                        <TouchableOpacity onPress={() => handleEdit("diseases")}>
+                            <Ionicons name="add" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.inputValue}>{profile.diseases || "-"}</Text>
+                </View>
+
+                {/* 복용 약물 */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.inputHeader}>
+                        <Text style={styles.inputLabel}>복용 약물</Text>
+                        <TouchableOpacity onPress={() => handleEdit("medications")}>
+                            <Ionicons name="add" size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.inputValue}>{profile.medications || "-"}</Text>
+                </View>
+            </ScrollView>
+
+            <Animated.View
+                style={[
+                    styles.buttonWrapper,
+                    {
+                        opacity: fadeAnim,
+                        transform: [{ translateY }],
+                    },
+                ]}
+            >
+                <TouchableOpacity style={styles.button} onPress={handleButtonClick}>
+                    <Text style={styles.buttonText}>
+                        {buttonState === "scroll" ? "화면 스크롤" : "다음"}
+                    </Text>
+                </TouchableOpacity>
+            </Animated.View>
+
+            <DiseaseSelectModal
+                visible={diseaseModalOpen}
+                selected={profile.diseases.split(",").map((d) => d.trim())}
+                diseaseList={diseaseList}
+                isLoading={isDiseaseLoading}
+                onClose={() => setDiseaseModalOpen(false)}
+                onSave={(items) => {
+                    handleChange("diseases", items.join(", "));
+                    setDiseaseModalOpen(false);
                 }}
             />
 
-            {/* ✅ 버튼 */}
-            <TouchableOpacity
-                onPress={handleStartDiagnosis}
-                style={{
-                    backgroundColor: "#2563eb",
-                    paddingVertical: 12,
-                    borderRadius: 8,
-                    alignItems: "center",
+            <MedicationSelectModal
+                visible={medicationModalOpen}
+                selected={profile.medications.split(",").map((m) => m.trim())}
+                medicationList={medicationList}
+                isLoading={isMedicationLoading}
+                onClose={() => setMedicationModalOpen(false)}
+                onSave={(items) => {
+                    handleChange("medications", items.join(", "));
+                    setMedicationModalOpen(false);
                 }}
-                disabled={isLoading}
-            >
-                {isLoading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>예측 시작</Text>
-                )}
-            </TouchableOpacity>
-        </View>
+            />
+        </Animated.View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#ffffff",
+    },
+    header: {
+        paddingTop: 24,
+        height: 60,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+    },
+    scrollContent: {
+        paddingTop: 24,
+    },
+    titleWrapper: {
+        marginBottom: 32,
+        paddingHorizontal: 32,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#111827",
+    },
+    inputGroup: {
+        marginBottom: 24,
+        paddingHorizontal: 32,
+    },
+    inputHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4,
+    },
+    inputLabel: {
+        fontSize: 14,
+        color: "#6b7280",
+    },
+    inputValue: {
+        fontSize: 17,
+        color: "#000000",
+        fontWeight: "500",
+        borderBottomWidth: 1,
+        borderBottomColor: "#e5e7eb",
+        paddingVertical: 4,
+    },
+    radioGroup: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 20,
+        marginTop: 8,
+    },
+    radioItem: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    radioCircle: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        borderWidth: 1.5,
+        borderColor: "#9CA3AF",
+        marginRight: 6,
+    },
+    radioCircleSelected: {
+        backgroundColor: "#111827",
+        borderColor: "#111827",
+    },
+    radioLabel: {
+        fontSize: 16,
+        color: "#111827",
+    },
+    buttonWrapper: {
+        padding: 16,
+        backgroundColor: "#ffffff",
+    },
+    button: {
+        backgroundColor: "#D92B4B",
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: "center",
+    },
+    buttonText: {
+        color: "#ffffff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+});
