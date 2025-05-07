@@ -22,5 +22,13 @@ ai/__pycache__/
 ai/scripts/__pycache__/
 ai/venv/
 
+# extract
+extract/__pycache__/
+extract/utils/__pycache__/
+extract/models/__pycache__/
+extract/services/__pycache__/
+
+extract/venv/
+
 # 백엔드
 backend/dist/

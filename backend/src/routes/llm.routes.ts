@@ -14,3 +14,19 @@ router.post("/extract", extractSymptomsHandler);
 
 
 export default router;
+
+
+// // 📄 llm.routes.ts
+
+// import express from "express";
+// import { cleanSymptomTextHandler } from "../controllers/llm.controller";
+
+// const router = express.Router();
+
+// /**
+//  * @route POST /api/llm/clean
+//  * @desc 사용자 입력 문장 정제
+//  */
+// router.post("/clean", cleanSymptomTextHandler);
+
+// export default router;
