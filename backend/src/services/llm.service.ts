@@ -110,3 +110,62 @@ Now extract symptoms from this sentence:
     console.log(`[extractSymptoms] 🧪 최종 정제 결과:`, JSON.stringify(final, null, 2));
     return final;
 };
+
+
+// // 📄 llm.service.ts
+// // LLM 기반 문장 정제 (증상 추출 X)
+
+// import axios from "axios";
+
+// /**
+//  * LLM을 사용해 사용자 입력 문장을 자연스럽게 정제합니다.
+//  * - 띄어쓰기, 맞춤법, 비속어, 이모지, 영어혼용 등을 처리
+//  * - 결과는 "정제된 한글 문장" 1개 반환
+//  */
+// export const cleanSymptomText = async (symptomText: string): Promise<string> => {
+//     const prompt = `
+//     당신은 사용자의 증상 문장을 자연스럽고 명확한 한국어로 정제하는 AI입니다.
+    
+//     다음은 사용자가 입력한 문장입니다.  
+//     오탈자, 이모지(ㅠㅠ 등), 감정 표현, 반복 표현, 영어 단어 등을 제거하고  
+//     입력된 모든 증상 정보를 보존하면서 자연스럽고 명확한 한국어 문장으로 정제해주세요.
+    
+//     📌 출력 조건:
+//     - 반드시 한국어 문장만 출력하세요.
+//     - 영어 단어나 번역, 주석, 설명은 절대 포함하지 마세요.
+//     - 출력은 정제된 한국어 문장만 한 줄 또는 여러 줄로 구성되며, 그 외 어떤 내용도 포함하지 마세요.
+    
+//     예시:
+//     입력: 기치믈 하고, 베가 너무 아파오ㅠㅠㅠ 밤에 열도 나고 몸쌀기운도 이써오..
+//     → 정제: 기침이 나고 배가 너무 아파요. 밤에 열도 나고 몸살 기운도 있어요.
+    
+//     입력 문장:
+//     ${symptomText}
+    
+//     정제된 문장:
+//     `;
+    
+    
+
+
+
+
+
+//     try {
+//         const res = await axios.post("http://localhost:11434/api/generate", {
+//             model: "llama3",
+//             stream: false,
+//             prompt,
+//             options: {
+//                 temperature: 0.2
+//             }
+//         });
+
+//         const cleaned = res.data.response.trim();
+//         console.log(`[cleanSymptomText] ✅ 정제된 문장: ${cleaned}`);
+//         return cleaned;
+//     } catch (e) {
+//         console.error(`[cleanSymptomText] ❌ LLM 요청 실패`, e);
+//         throw new Error("LLM 문장 정제 실패");
+//     }
+// };

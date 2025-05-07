@@ -1,8 +1,8 @@
-// 🔹 medication.service.ts
+// 📄 src/services/medication.service.ts
 // 이 파일은 '약물(Medication)' 관련 데이터 처리 및 사용자와의 관계를 다루는 서비스 계층입니다.
 
 import prisma from "../config/prisma.service";
-import { publicAPI } from "../utils/public-api";
+import publicAPI from "../utils/public-api";
 
 /** 전체 약물 목록 조회 */
 export const findAll = async () => {
@@ -19,7 +19,7 @@ export const findByUserId = async (userId: string) => {
   const userMedications = await prisma.userMedication.findMany({
     where: { userId },
     include: {
-      medication: true, // ✅ 약물 정보 포함해서 반환
+      medication: true,
     },
   });
 
@@ -30,13 +30,11 @@ export const findByUserId = async (userId: string) => {
 export const addMedicationToUser = async (userId: string, medicationId: string) => {
   const exists = await prisma.userMedication.findUnique({
     where: {
-      userId_medicationId: { userId, medicationId }, // 복합 unique index
+      userId_medicationId: { userId, medicationId },
     },
   });
 
-  if (exists) {
-    return { message: "Already added" };
-  }
+  if (exists) return { message: "Already added" };
 
   return await prisma.userMedication.create({
     data: {
@@ -59,15 +57,29 @@ export const removeMedicationFromUser = async (userId: string, medicationId: str
   }
 };
 
-
+/** 공공 API에서 약물 상세정보 가져와 DB에 저장 */
 export const fetchAndSaveMedicationDetail = async (itemSeq: string) => {
-    const res = await publicAPI.get("/getDrbEasyDrugList", {
-      params: { itemSeq, type: "json" },
+  try {
+    const response = await publicAPI.get("/getDrbEasyDrugList", {
+      params: {
+        serviceKey: process.env.MEDICATION_API_KEY,
+        itemSeq,
+        returnType: "json",
+      },
     });
-  
-    const item = res.data.body?.items?.[0];
-    if (!item) return null;
-  
+
+    // ✅ 디버깅 로그
+    console.log("▶️ 요청 itemSeq:", itemSeq);
+    console.log("🔐 인증키 앞 8자리:", process.env.MEDICATION_API_KEY?.slice(0, 8));
+    console.log("📡 요청 URL:", response.request?.path);
+    console.log("📦 응답 결과:", JSON.stringify(response.data, null, 2));
+
+    const item = response.data.body?.items?.[0];
+    if (!item) {
+      console.warn("❌ 공공 API 응답에 항목이 없습니다.");
+      return null;
+    }
+
     const medication = await prisma.medication.upsert({
       where: { itemSeq },
       update: {
@@ -100,6 +112,10 @@ export const fetchAndSaveMedicationDetail = async (itemSeq: string) => {
         imageUrl: item.itemImage,
       },
     });
-  
+
     return medication;
-  };
+  } catch (error) {
+    console.error("💥 공공 API 요청 실패:", (error as any).response?.data || (error as any).message);
+  }
+  
+};

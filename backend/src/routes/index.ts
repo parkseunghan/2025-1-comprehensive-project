@@ -10,6 +10,7 @@ import predictionRoutes from "./prediction.routes";
 import authRoutes from "./auth.routes"
 import llmRoutes from "./llm.routes"
 import medicationRoutes from "./medication.routes";
+import extractRoutes from "./extract.routes";
 
 const router = Router();
 
@@ -36,5 +37,8 @@ router.use("/llm", llmRoutes);
 
 // 약물 관련 라우터 연결 (/api/medications)
 router.use("/medications", medicationRoutes);
+
+// 추출 관련 라우터 연결 (/api/extract)
+router.use("/extract", extractRoutes);
 
 export default router;
