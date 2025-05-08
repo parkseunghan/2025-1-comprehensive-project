@@ -63,8 +63,9 @@ python scripts/train_fine_models.py
 
 ### 4. 예측 실행
 ```
-python predict_demo.py
+python ai_server.py
 ```
+
 
 ---
 
