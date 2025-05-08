@@ -35,11 +35,12 @@ model User {
 }
 
 model Disease {
-  sickCode    String @id @map("id") // <= Prisma의 ID 역할
-  name        String @unique
-  description String?
-  tips        String?
-  users       UserDisease[]
+  sickCode     String @id @map("id")  // 질병 코드
+  name         String @unique         // 한글명
+  englishName  String?                // 영문명
+  description  String?
+  tips         String?
+  users        UserDisease[]
 }
 
 model UserDisease {

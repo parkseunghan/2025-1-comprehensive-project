@@ -1,20 +1,11 @@
 // 📄 backend/prisma/seed.ts
-// disease_descriptions.json 기반으로 DB에 upsert 방식으로 초기 데이터 삽입
 
+import fs from "fs";
+import path from "path";
 import prisma from "../src/config/prisma.service";
 import dotenv from "dotenv";
-import path from "path";
-import fs from "fs";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-
-type DiseaseMap = {
-  [code: string]: {
-    name: string;
-    description: string;
-    tips: string;
-  };
-};
 
 async function main() {
   console.log("🌱 Seeding database...");
@@ -36,71 +27,7 @@ async function main() {
     },
   });
 
-  // 2. disease_descriptions.json 로드
-  const filePath = path.join(__dirname, "disease_descriptions.json");
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const data = JSON.parse(raw) as DiseaseMap;
-
-  // 3. 질병 데이터 upsert
-  for (const [sickCode, val] of Object.entries(data)) {
-    if (!sickCode || !val.name) continue;
-
-    await prisma.disease.upsert({
-      where: { sickCode },
-      update: {
-        name: val.name,
-        description: val.description,
-        tips: val.tips,
-      },
-      create: {
-        sickCode,
-        name: val.name,
-        description: val.description,
-        tips: val.tips,
-      },
-    });
-  }
-
-  // 4. 약물 데이터
-  await prisma.medication.createMany({
-    data: [
-      {
-        id: "med-001",
-        name: "아스피린",
-        itemSeq: "200003092",
-        entpName: "한미약품(주)",
-        efcy: "혈전 생성 억제",
-        useMethod: "1일 1회, 식전에 복용",
-        atpnWarn: "정기적 음주자 주의",
-        atpn: "임신 3기 여성 금지",
-        intrc: "이부프로펜 등과 병용 시 출혈 증가",
-        se: "위장 출혈, 알레르기",
-        depositMethod: "실온 보관",
-        openDate: "20200901",
-        updateDate: "20200905",
-        imageUrl: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426411393800107",
-      },
-      {
-        id: "med-002",
-        name: "타이레놀",
-        itemSeq: "200004321",
-        entpName: "존슨앤드존슨",
-        efcy: "해열, 진통",
-        useMethod: "1회 1~2정, 1일 3~4회",
-        atpnWarn: "간 질환자 주의",
-        atpn: "해열진통제 병용 금지",
-        intrc: "술과 병용 시 간손상 위험",
-        se: "간손상, 피부발진",
-        depositMethod: "건조한 곳",
-        openDate: "20200810",
-        updateDate: "20210101",
-        imageUrl: "https://example.com/images/tylenol.png",
-      },
-    ],
-    skipDuplicates: true,
-  });
-
-  // 5. 사용자 ↔ 지병 연결
+  // 2. 사용자 ↔ 지병 연결 (질병은 insertDiseases.ts에서 미리 삽입됨)
   await prisma.userDisease.createMany({
     data: [
       { id: "user-disease-001", userId: user.id, diseaseId: "E00" },
@@ -110,26 +37,30 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // 6. 사용자 ↔ 약물 연결
+  // 3. 사용자 ↔ 약물 연결 (💡 itemSeq 기반으로 ID 지정됨: med-195700020 등)
   await prisma.userMedication.createMany({
     data: [
-      { id: "user-med-001", userId: user.id, medicationId: "med-001" },
-      { id: "user-med-002", userId: user.id, medicationId: "med-002" },
+      { id: "user-med-001", userId: user.id, medicationId: "med-195700020" },
+      { id: "user-med-002", userId: user.id, medicationId: "med-195900034" },
     ],
     skipDuplicates: true,
   });
 
-  // 7. 증상 데이터
+  // 4. 증상 등록 (📦 symptoms.json 기반)
+  const symptomFilePath = path.resolve(__dirname, "../data/symptoms.json");
+  const symptomList = JSON.parse(fs.readFileSync(symptomFilePath, "utf-8")) as string[];
+
+  const symptomData = symptomList.map((name, idx) => ({
+    id: `symptom-${String(idx + 1).padStart(3, "0")}`,
+    name,
+  }));
+
   await prisma.symptom.createMany({
-    data: [
-      { id: "symptom-001", name: "두통" },
-      { id: "symptom-002", name: "기침" },
-      { id: "symptom-003", name: "발열" },
-    ],
+    data: symptomData,
     skipDuplicates: true,
   });
 
-  // 8. 증상 기록
+  // 5. 증상 기록 생성
   const record = await prisma.symptomRecord.create({
     data: {
       id: "record-001",
@@ -138,17 +69,17 @@ async function main() {
     },
   });
 
-  // 9. 증상 ↔ 기록 연결
+  // 6. 증상 ↔ 기록 연결 (ID 기준)
   await prisma.symptomOnRecord.createMany({
     data: [
-      { id: "sor-001", recordId: record.id, symptomId: "symptom-001", timeOfDay: "morning" },
-      { id: "sor-002", recordId: record.id, symptomId: "symptom-002", timeOfDay: "night" },
-      { id: "sor-003", recordId: record.id, symptomId: "symptom-003", timeOfDay: null },
+      { id: "sor-001", recordId: record.id, symptomId: "symptom-020", timeOfDay: "morning" }, // 두통
+      { id: "sor-002", recordId: record.id, symptomId: "symptom-002", timeOfDay: "night" },   // 기침
+      { id: "sor-003", recordId: record.id, symptomId: "symptom-028", timeOfDay: null },      // 발열
     ],
     skipDuplicates: true,
   });
 
-  // 10. 예측 결과 저장
+  // 7. 예측 결과 저장
   const prediction = await prisma.prediction.create({
     data: {
       id: "prediction-001",
@@ -163,6 +94,7 @@ async function main() {
     },
   });
 
+  // 8. 예측 결과 Top-N 저장
   await prisma.predictionRank.createMany({
     data: [
       {
