@@ -86,6 +86,7 @@ model Symptom {
   id       String           @id @default(uuid())
   name     String           @unique
   records  SymptomOnRecord[]
+  category String
 }
 
 model SymptomRecord {

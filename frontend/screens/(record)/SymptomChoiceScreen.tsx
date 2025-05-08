@@ -1,3 +1,5 @@
+// 📄 screens/(record)/SymptomChoiceScreen.tsx
+
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import { useEffect, useRef } from "react";
 import { router } from "expo-router";
@@ -6,9 +8,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // ⚙️ 경로 상수화 관리
 const ROUTES = {
-    symptomTextInput: "/(record)/symptomtextinput",  // 텍스트 입력 화면
-    symptomListSelect: "/(record)/symptomlistselect",  // 리스트 선택 화면
-};
+    symptomTextInput: "/(record)/symptomtextinput",
+    CategorySelectScreen: "/(record)/categoryselect", // 대분류
+    SymptomSelectScreen: "/(record)/symptomselectscreen", // 소분류 ✅
+  };
 
 export default function SymptomChoiceScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -33,7 +36,7 @@ export default function SymptomChoiceScreen() {
         if (type === "text") {
             router.push(ROUTES.symptomTextInput);  // 텍스트 입력 화면으로 이동
         } else if (type === "list") {
-            router.push(ROUTES.symptomListSelect);  // 리스트 선택 화면으로 이동
+            router.push(ROUTES.CategorySelectScreen);  // 리스트 선택 화면으로 이동
         }
     };
 

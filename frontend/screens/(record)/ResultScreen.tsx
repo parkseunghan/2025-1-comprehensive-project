@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { getPredictionByRecord } from "@/services/prediction.api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Prediction, PredictionRank } from "@/types/prediction.types";
-import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
+import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils"; 
 import BackButton from "@/common/BackButton";
 
 export default function ResultScreen() {
@@ -55,12 +55,12 @@ export default function ResultScreen() {
       {/* 위험도 */}
       <Text style={styles.sectionTitle}>🔹 위험도</Text>
       <Text style={styles.risk}>
-        {result.riskScore.toFixed(2)} / {calculateRiskLevel(result.riskScore)}
+        {Number(result.riskScore).toFixed(2)} / {result.riskLevel}
       </Text>
 
       {/* 대응 가이드라인 */}
       <Text style={styles.sectionTitle}>💡 대응 가이드라인</Text>
-      <Text style={styles.guideline}>{generateGuideline(calculateRiskLevel(result.riskScore))}</Text>
+      <Text style={styles.guideline}>{result.guideline}</Text>
     </ScrollView>
   );
 }

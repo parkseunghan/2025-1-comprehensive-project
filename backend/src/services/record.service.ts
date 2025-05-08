@@ -1,11 +1,8 @@
-// 📄 record.service.ts
-// 예측 결과와 증상 + 시간 정보를 Prisma를 통해 DB에 저장하는 서비스 (PredictionRank 구조 적용)
-
 import prisma from "../config/prisma.service";
 import { PredictionCandidate } from "@/types/prediction.types";
 
 /**
- * 🔹 진단 기록 생성 (기본 증상 ID 리스트 기반)
+ * 🔹 진단 기록 생성
  */
 export const create = async (userId: string, symptomIds: string[]) => {
   const record = await prisma.symptomRecord.create({
@@ -29,7 +26,7 @@ export const create = async (userId: string, symptomIds: string[]) => {
 };
 
 /**
- * 🔹 사용자별 진단 기록 전체 조회
+ * 🔹 사용자별 진단 기록 조회
  */
 export const findByUserId = async (userId: string) => {
   return prisma.symptomRecord.findMany({
@@ -37,9 +34,7 @@ export const findByUserId = async (userId: string) => {
     orderBy: { createdAt: "desc" },
     include: {
       prediction: {
-        include: {
-          ranks: true,
-        },
+        include: { ranks: true },
       },
       symptoms: {
         include: { symptom: true },
@@ -56,9 +51,7 @@ export const findById = async (id: string) => {
     where: { id },
     include: {
       prediction: {
-        include: {
-          ranks: true,
-        },
+        include: { ranks: true },
       },
       symptoms: {
         include: { symptom: true },
@@ -71,29 +64,66 @@ export const findById = async (id: string) => {
  * 🔹 진단 기록 삭제
  */
 export const remove = async (id: string) => {
-  return prisma.symptomRecord.delete({
-    where: { id },
-  });
+  return prisma.symptomRecord.delete({ where: { id } });
 };
 
 /**
- * 🔹 위험 점수 → 위험 등급 변환 유틸
+ * 🔹 응급 진단명 리스트 (이것들만 "응급" 허용)
  */
-export function calculateRiskLevel(riskScore: number): string {
-  if (riskScore >= 0.8) return "응급";
-  if (riskScore >= 0.6) return "높음";
-  if (riskScore >= 0.4) return "보통";
+const EMERGENCY_DISEASES = ["심근경색", "뇌출혈", "급성 폐렴"];
+
+/**
+ * 🔹 위험 점수 → 위험 등급
+ */
+function calculateRiskLevel(score: number, fineLabel: string): string {
+  if (score >= 6.0 && EMERGENCY_DISEASES.includes(fineLabel)) return "응급";
+  if (score >= 4.5) return "높음";
+  if (score >= 2.5) return "보통";
   return "낮음";
 }
 
 /**
- * 🔹 위험 등급 → 대응 가이드라인 생성
+ * 🔹 위험 등급 → 가이드라인 텍스트
  */
 function generateGuideline(riskLevel: string): string {
   if (riskLevel === "응급") return "즉시 응급실 방문이 필요합니다.";
   if (riskLevel === "높음") return "가까운 병원 방문을 권장합니다.";
   if (riskLevel === "보통") return "증상을 경과 관찰하고 심화 시 병원을 방문하세요.";
   return "생활 관리를 통해 주의하세요.";
+}
+
+/**
+ * 🔹 위험도 계산 (P(D) × [가중합])
+ */
+function calculateRiskScore({
+  predictionProb,
+  symptomWeight,
+  chronicWeight,
+  ageWeight,
+  genderWeight,
+  bmiWeight,
+  medicationWeight,
+}: {
+  predictionProb: number;
+  symptomWeight: number;
+  chronicWeight: number;
+  ageWeight: number;
+  genderWeight: number;
+  bmiWeight: number;
+  medicationWeight: number;
+}): number {
+  const W1 = 1.0, W2 = 1.0, W3 = 1.0, W4 = 1.0, W5 = 1.0, W6 = 1.0;
+
+  const riskScore =
+    predictionProb *
+    (W1 * symptomWeight +
+      W2 * chronicWeight +
+      W3 * ageWeight +
+      W4 * genderWeight +
+      W5 * bmiWeight +
+      W6 * medicationWeight);
+
+  return Number(riskScore.toFixed(2));
 }
 
 /**
@@ -106,18 +136,36 @@ export const savePredictionResult = async (
 ) => {
   const top1 = predictions[0];
 
-  // 🔥 값이 없을 경우 직접 계산해서 채워줌
-  const riskLevel = top1.riskLevel ?? calculateRiskLevel(top1.riskScore);
+  // ✅ 실제 사용자 데이터 기반으로 추후 대입 예정
+  const riskScore = calculateRiskScore({
+    predictionProb: top1.riskScore, // top1.riskScore는 예측 확률
+    symptomWeight: 0.9,
+    chronicWeight: 1.2,
+    ageWeight: 1.1,
+    genderWeight: 1.0,
+    bmiWeight: 1.3,
+    medicationWeight: 1.1,
+  });
+
+  const riskLevel = top1.riskLevel ?? calculateRiskLevel(riskScore, top1.fineLabel);
   const guideline = top1.guideline ?? generateGuideline(riskLevel);
+
+  // ✅ 디버깅 로그로 확인
+  console.log("🧠 위험도 계산", {
+    fineLabel: top1.fineLabel,
+    riskScore,
+    riskLevel,
+    isEmergency: EMERGENCY_DISEASES.includes(top1.fineLabel),
+  });
 
   const prediction = await prisma.prediction.create({
     data: {
       recordId,
       coarseLabel: top1.coarseLabel,
       fineLabel: top1.fineLabel,
-      riskScore: top1.riskScore,
-      riskLevel,  // ✅ 보장된 값
-      guideline,  // ✅ 보장된 값
+      riskScore,
+      riskLevel,
+      guideline,
       elapsedSec: elapsedSec ?? null,
     },
   });
@@ -127,7 +175,7 @@ export const savePredictionResult = async (
     rank: index + 1,
     coarseLabel: item.coarseLabel,
     fineLabel: item.fineLabel,
-    riskScore: item.riskScore,
+    riskScore: item.riskScore, // raw 확률 그대로 저장
   }));
 
   await prisma.predictionRank.createMany({
@@ -138,19 +186,19 @@ export const savePredictionResult = async (
   return prediction;
 };
 
-
 /**
- * 🔹 증상 + 시간대 정보 저장
+ * 🔹 증상 + 시간대 저장
  */
 export const saveSymptomsToRecord = async (
   recordId: string,
   symptoms: { symptom: string; time: string | null }[]
 ) => {
-  // 기존 연결 삭제 후 다시 추가 (완전 덮어쓰기 방식)
   await prisma.symptomOnRecord.deleteMany({ where: { recordId } });
 
   for (const item of symptoms) {
-    const symptom = await prisma.symptom.findUnique({ where: { name: item.symptom } });
+    const symptom = await prisma.symptom.findUnique({
+      where: { name: item.symptom },
+    });
 
     if (symptom) {
       await prisma.symptomOnRecord.create({

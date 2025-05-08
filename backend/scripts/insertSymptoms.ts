@@ -1,5 +1,3 @@
-// 📄 scripts/insertSymptoms.ts
-
 import fs from "fs";
 import path from "path";
 import prisma from "../src/config/prisma.service";
@@ -10,21 +8,19 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 async function insertSymptoms() {
   try {
     const filePath = path.resolve(__dirname, "../data/symptoms.json");
-    const symptomList = JSON.parse(fs.readFileSync(filePath, "utf-8")) as string[];
+    const symptomList = JSON.parse(fs.readFileSync(filePath, "utf-8")) as { name: string; category: string }[];
 
-    const data = symptomList.map((name, idx) => ({
-      id: `symptom-${String(idx + 1).padStart(3, "0")}`,
-      name,
-    }));
+    for (const symptom of symptomList) {
+      await prisma.symptom.upsert({
+        where: { name: symptom.name },
+        update: { category: symptom.category },
+        create: symptom,
+      });
+    }
 
-    await prisma.symptom.createMany({
-      data,
-      skipDuplicates: true,
-    });
-
-    console.log(`✅ 총 ${data.length}개의 증상 데이터가 저장되었습니다.`);
+    console.log("✅ 모든 증상이 DB에 성공적으로 저장되었습니다.");
   } catch (error) {
-    console.error("❌ 증상 삽입 중 오류 발생:", error);
+    console.error("❌ 증상 저장 중 오류 발생:", error);
   } finally {
     await prisma.$disconnect();
   }
