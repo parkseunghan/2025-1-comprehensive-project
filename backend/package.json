@@ -4,13 +4,16 @@
   "type": "commonjs",
   "main": "dist/server.js",
   "scripts": {
+    "rm": "rm -rf ./prisma/migrations",
     "reset": "dotenv -e ../.env -- prisma migrate reset --schema=./prisma/schema.prisma",
     "migrate": "dotenv -e ../.env -- prisma migrate dev --name init --schema=./prisma/schema.prisma",
     "generate": "dotenv -e ../.env -- prisma generate --schema=./prisma/schema.prisma",
     "seed": "dotenv -e ../.env -- ts-node prisma/seed.ts",
     "studio": "dotenv -e ../.env -- prisma studio",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently \"tsc -w\" \"nodemon ./dist/server.js\""
+    "start": "concurrently \"tsc -w\" \"nodemon ./dist/server.js\"",
+    "insert": "ts-node scripts/insertDiseases.ts && ts-node scripts/insertMedications.ts && ts-node scripts/insertSymptoms.ts",
+    "setup": "npm run rm && npm run reset && npm run migrate && npm run generate && npm run insert && npm run seed"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +35,7 @@
     "sequelize": "^6.37.6",
     "sequelize-cli": "^6.6.2",
     "uuid": "^11.1.0",
+    "xml2js": "^0.6.2",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -39,6 +43,7 @@
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
     "@types/uuid": "^10.0.0",
+    "@types/xml2js": "^0.4.14",
     "concurrently": "^9.1.2",
     "dotenv-cli": "^8.0.0",
     "nodemon": "^3.1.9",

@@ -343,7 +343,7 @@ SYMPTOM_MAPPING = {
         "en": ["radiating pain to back", "pain that spreads to the back"],
         "token_sets": [
             {
-                "part1": ["복통", "배", "복부"],
+                "part1": ["복통", "배", "복부", "등"],
                 "part2": ["등으로 퍼지", "등까지 아프", "번져", "아픈", "아프", "아파"],
             }
         ],

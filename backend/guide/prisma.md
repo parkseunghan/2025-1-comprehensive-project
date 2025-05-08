@@ -1,10 +1,20 @@
 
 (db 수정 후)
 migrations 폴더 삭제
+
+# 올인원
 ```sh
-npm run reset
+cd backend
+
+npm run setup
 ```
 
+# 수동 
+```sh
+cd backend
+
+npm run reset
+```
 
 ```sh
 npm run generate
@@ -19,7 +29,9 @@ npm run migrate
 seed.ts 작성 후
 
 ```sh
-npx ts-node scripts/fetchInternalDiseases.ts
+npx ts-node scripts/insertDiseases.ts
+npx ts-node scripts/insertMedications.ts
+npx ts-node scripts/insertSymptoms.ts
 
 npm run seed
 ```
