@@ -19,6 +19,7 @@ CREATE TABLE "User" (
 CREATE TABLE "Disease" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "englishName" TEXT,
     "description" TEXT,
     "tips" TEXT,
 
@@ -67,6 +68,7 @@ CREATE TABLE "UserMedication" (
 CREATE TABLE "Symptom" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
 
     CONSTRAINT "Symptom_pkey" PRIMARY KEY ("id")
 );

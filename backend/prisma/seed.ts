@@ -1,5 +1,3 @@
-// 📄 backend/prisma/seed.ts
-
 import fs from "fs";
 import path from "path";
 import prisma from "../src/config/prisma.service";
@@ -27,7 +25,7 @@ async function main() {
     },
   });
 
-  // 2. 사용자 ↔ 지병 연결 (질병은 insertDiseases.ts에서 미리 삽입됨)
+  // 2. 사용자 ↔ 지병 연결 (질병은 미리 삽입됨)
   await prisma.userDisease.createMany({
     data: [
       { id: "user-disease-001", userId: user.id, diseaseId: "E00" },
@@ -37,7 +35,7 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // 3. 사용자 ↔ 약물 연결 (💡 itemSeq 기반으로 ID 지정됨: med-195700020 등)
+  // 3. 사용자 ↔ 약물 연결
   await prisma.userMedication.createMany({
     data: [
       { id: "user-med-001", userId: user.id, medicationId: "med-195700020" },
@@ -46,13 +44,14 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // 4. 증상 등록 (📦 symptoms.json 기반)
+  // 4. 증상 등록 (symptoms.json 기반)
   const symptomFilePath = path.resolve(__dirname, "../data/symptoms.json");
-  const symptomList = JSON.parse(fs.readFileSync(symptomFilePath, "utf-8")) as string[];
+  const symptomList = JSON.parse(fs.readFileSync(symptomFilePath, "utf-8")) as { name: string; category: string }[];
 
-  const symptomData = symptomList.map((name, idx) => ({
+  const symptomData = symptomList.map((symptom, idx) => ({
     id: `symptom-${String(idx + 1).padStart(3, "0")}`,
-    name,
+    name: symptom.name,
+    category: symptom.category,
   }));
 
   await prisma.symptom.createMany({
@@ -69,15 +68,15 @@ async function main() {
     },
   });
 
-  // 6. 증상 ↔ 기록 연결 (ID 기준)
-  await prisma.symptomOnRecord.createMany({
-    data: [
-      { id: "sor-001", recordId: record.id, symptomId: "symptom-020", timeOfDay: "morning" }, // 두통
-      { id: "sor-002", recordId: record.id, symptomId: "symptom-002", timeOfDay: "night" },   // 기침
-      { id: "sor-003", recordId: record.id, symptomId: "symptom-028", timeOfDay: null },      // 발열
-    ],
-    skipDuplicates: true,
-  });
+  // // 6. 증상 ↔ 기록 연결
+  // await prisma.symptomOnRecord.createMany({
+  //   data: [
+  //     { id: "sor-001", recordId: record.id, symptomId: "symptom-020", timeOfDay: "morning" },
+  //     { id: "sor-002", recordId: record.id, symptomId: "symptom-002", timeOfDay: "night" },
+  //     { id: "sor-003", recordId: record.id, symptomId: "symptom-028", timeOfDay: null },
+  //   ],
+  //   skipDuplicates: true,
+  // });
 
   // 7. 예측 결과 저장
   const prediction = await prisma.prediction.create({
@@ -133,6 +132,6 @@ main()
     console.error("❌ Seed error:", err);
     process.exit(1);
   })
-  .finally(() => {
-    prisma.$disconnect();
+  .finally(async () => {
+    await prisma.$disconnect();
   });
