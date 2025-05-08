@@ -3,4 +3,4 @@
 # 실행: ./start.sh
 
 source venv/Scripts/activate
-python app.py
+python server.py

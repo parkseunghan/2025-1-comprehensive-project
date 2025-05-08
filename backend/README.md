@@ -53,3 +53,118 @@ cd backend
 npx ts-node scripts/fetchAllMedications.ts
 npx ts-node scripts/fetchAllDiseases.ts
 ```
+
+
+
+```
+backend/
+├── Dockerfile
+├── package.json
+├── package-lock.json
+├── README.md
+├── server.ts
+├── tsconfig.json
+
+├── data/
+│   ├── diseases.json
+│   ├── medications.json
+│   └── symptoms.json
+
+├── dist/
+
+├── guide/
+
+├── node_modules/
+
+├── prisma/
+│   ├── migrations/
+│   ├── disease_descriptions.json
+│   ├── schema.prisma
+│   └── seed.ts
+
+├── scripts/
+│   ├── fetchAllDiseases.ts
+│   ├── fetchAllMedications.ts
+│   ├── insertDiseases.ts
+│   ├── insertMedications.ts
+│   └── insertSymptoms.ts
+
+├── src/
+│   ├── config/
+│   │   ├── cors.config.ts
+│   │   └── prisma.service.ts
+
+│   ├── controllers/
+│   │   ├── auth.controller.ts
+│   │   ├── disease.controller.ts
+│   │   ├── extract.controller.ts
+│   │   ├── llm.controller.ts
+│   │   ├── medication.controller.ts
+│   │   ├── prediction.controller.ts
+│   │   ├── record.controller.ts
+│   │   ├── symptom.controller.ts
+│   │   └── user.controller.ts
+
+│   ├── middlewares/
+│   │   └── auth.middleware.ts
+
+│   ├── routes/
+│   │   ├── auth.routes.ts
+│   │   ├── disease.routes.ts
+│   │   ├── extract.routes.ts
+│   │   ├── index.ts
+│   │   ├── llm.routes.ts
+│   │   ├── medication.routes.ts
+│   │   ├── prediction.routes.ts
+│   │   ├── record.routes.ts
+│   │   ├── symptom.routes.ts
+│   │   └── user.routes.ts
+
+│   ├── schemas/
+│   │   └── user.schema.ts
+
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── disease.service.ts
+│   │   ├── extract.service.ts
+│   │   ├── llm.service.ts
+│   │   ├── medication.service.ts
+│   │   ├── prediction.service.ts
+│   │   ├── record.service.ts
+│   │   ├── symptom.service.ts
+│   │   └── user.service.ts
+
+│   ├── types/
+│   │   └── prediction.types.ts
+│   └── utils/
+│       ├── ai-api.ts
+│       ├── extract-api.ts
+│       ├── getKoreanLabels.ts
+│       ├── jwt.util.ts
+│       ├── normalizeSymptoms.ts
+│       ├── public-api.ts
+│       ├── symptomLabel.ko.ts
+│       └── symptomMap.ts
+
+├── types/
+│   └── express/
+│       └── index.d.ts
+```
+
+- `/src/config`: Prisma 및 CORS 관련 설정 파일
+- `/src/controllers`: 각 API 요청에 대한 컨트롤러 레이어 (라우터에서 호출)
+- `/src/middlewares`: JWT 인증 처리 미들웨어
+- `/src/routes`: RESTful API 라우팅 정의
+- `/src/schemas`: zod 기반 입력 유효성 검사 스키마
+- `/src/services`: 비즈니스 로직 처리 레이어 (DB 처리 포함)
+- `/src/utils`: 공통 유틸리티 함수 모음
+- `/src/types`: TypeScript 타입 정의 모음
+- `/scripts`: 공공 API 수집 및 DB 삽입 스크립트
+- `/prisma`: Prisma 모델 및 초기 데이터 관리
+
+예시:
+
+- `controllers/prediction.controller.ts`: 예측 결과 저장, 조회를 담당
+- `services/llm.service.ts`: LLM 정제 API 연동 및 처리 로직
+- `routes/record.routes.ts`: /records 엔드포인트 라우팅
+```

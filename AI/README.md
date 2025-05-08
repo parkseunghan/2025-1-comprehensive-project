@@ -63,7 +63,7 @@ python scripts/train_fine_models.py
 
 ### 4. 예측 실행
 ```
-python ai_server.py
+python app.py
 ```
 
 
@@ -97,3 +97,41 @@ python ai_server.py
 ## ⚠️ 주의사항
 - 본 모델은 의학적 참고용으로, 실제 진단을 대체하지 않습니다.
 - 지속적이거나 심각한 증상이 있는 경우 반드시 의료 전문가의 진료를 받으세요.
+
+
+```
+ai/
+├── ai_server.py                  # FastAPI 기반 AI 예측 서버 진입점
+├── main.py                       # 로컬 예측 테스트용 실행 파일
+├── predict_demo.py              # 예측 결과 시각화 데모 실행용
+├── README.md
+├── requirements.txt             # Python 의존성 목록
+├── start.sh                     # 서버 실행 쉘 스크립트
+├── __pycache__/
+├── venv/
+
+├── data/
+│   ├── processed/
+│   │   ├── leaned_sbert_text_features_final.npy  # 전처리된 SBERT 임베딩 벡터
+│   │   └── symptom_map.json                      # 증상 맵핑 테이블 (ID ↔ 텍스트)
+│   └── raw/
+│       ├── leaned_train_dataset.csv              # 원본 학습 데이터셋
+│       └── fine_config.json                      # fine 모델 구성 정보 (coarse별 분류 세트)
+
+├── models/
+│   └── fine/
+│       ├── coarse_label_encoder.pkl              # coarse 라벨 인코더
+│       ├── mlb_chronic.pkl / mlb_meds.pkl        # 다중 라벨 바이너리 인코더 (지병, 약물)
+│       ├── model_coarse.h5                       # coarse 분류 모델 파일 (Keras)
+│       └── scaler.pkl                            # 입력 피처 정규화용 스케일러
+
+├── scripts/
+│   ├── embed_sbert_features.py                  # SBERT 임베딩 추출
+│   ├── extract_symptom_keywords.py              # 증상 키워드 정제 스크립트
+│   ├── model_util.py                            # 모델 공통 유틸 함수들
+│   ├── predict_disease.py                       # 모델 추론 테스트용 스크립트
+│   ├── save_artifacts.py                        # 모델 및 인코더 저장
+│   ├── train_coarse_model.py                    # coarse 모델 학습
+│   └── train_fine_models.py                     # coarse 그룹별 fine 모델 학습
+```
+

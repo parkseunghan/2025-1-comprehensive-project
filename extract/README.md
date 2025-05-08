@@ -80,3 +80,27 @@ services/symptom_service.py에서:
 }
 ```
 
+
+```
+extract/
+├── server.py                         # FastAPI 기반 증상 추출 서버 진입점
+├── start.sh                          # 서버 실행용 쉘 스크립트
+├── requirements.txt                  # Python 의존성 목록
+├── README.md
+├── __pycache__/
+├── venv/
+
+├── models/
+│   └── request_model.py              # 입력 요청(Request)용 pydantic 모델 정의
+
+├── services/
+│   ├── symptom_service.py            # 증상 추출 핵심 로직 (토큰 기반 추출 포함)
+│   └── translator_service.py         # Googletrans 기반 한↔영 번역 서비스
+
+├── utils/
+│   ├── korean_rules.py               # 한국어 특수 규칙 정의 (예: 조사 제거)
+│   ├── symptom_mapping.py            # 증상 매핑 테이블 (영문/한글 표현 대응)
+│   └── text_cleaner.py               # 텍스트 전처리 함수 모음 (이모지 제거 등)
+```
+
+

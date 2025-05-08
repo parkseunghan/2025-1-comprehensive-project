@@ -3,4 +3,4 @@
 # 실행: ./start.sh
 
 source venv/Scripts/activate
-python ai-server.py
+python ai_server.py
