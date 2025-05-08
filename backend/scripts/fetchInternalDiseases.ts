@@ -1,5 +1,4 @@
 // 📄 scripts/fetchInternalDiseases.ts
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -10,11 +9,12 @@ import prisma from "../src/config/prisma.service";
 
 const SERVICE_KEY = process.env.DISEASE_API_KEY;
 const API_URL = "https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1";
-const MAX_RESULTS = 300;
+const DELAY_MS = 300; // 요청 간 딜레이 (ms)
 
 const generateDescription = (name: string) => `${name}은(는) 대표적인 내과 질병 중 하나입니다.`;
 const generateTips = (name: string) => `${name} 예방을 위해 식습관 개선과 정기 검진이 필요합니다.`;
 
+// 질병 코드 생성기
 function generateInternalDiseaseCodes(): string[] {
   const validPrefixes = ["E", "I", "J", "K", "N", "D"];
   const codes: string[] = [];
@@ -27,6 +27,10 @@ function generateInternalDiseaseCodes(): string[] {
   return codes;
 }
 
+// 0.3초 지연
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// API 요청 함수
 async function fetchDisease(code: string) {
   try {
     const response = await axios.get(API_URL, {
@@ -60,52 +64,56 @@ async function fetchDisease(code: string) {
   }
 }
 
+// 메인 실행 함수
 async function main() {
-  const diseaseCodes = generateInternalDiseaseCodes();
+  const allCodes = generateInternalDiseaseCodes();
+
+  // 1. DB에 이미 저장된 코드 확인
+  const existing = await prisma.disease.findMany({ select: { sickCode: true } });
+  const existingSet = new Set(existing.map((d) => d.sickCode));
+
   const results: any[] = [];
   const failedCodes: string[] = [];
 
-  const BATCH_SIZE = 20;
+  // 2. 새 코드만 API 요청
+  for (const code of allCodes) {
+    if (existingSet.has(code)) {
+      console.log(`⏩ ${code} 건너뜀`);
+      continue;
+    }
 
-  for (let i = 0; i < diseaseCodes.length && results.length < MAX_RESULTS; i += BATCH_SIZE) {
-    const batch = diseaseCodes.slice(i, i + BATCH_SIZE);
-    const responses = await Promise.allSettled(batch.map(fetchDisease));
+    const data = await fetchDisease(code);
+    if (data) {
+      results.push(data);
+      console.log(`✅ ${code} → ${data.name}`);
+    } else {
+      failedCodes.push(code);
+    }
 
-    for (let j = 0; j < responses.length; j++) {
-      const result = responses[j];
-      const code = batch[j];
+    await delay(DELAY_MS);
+  }
 
-      if (result.status === "fulfilled" && result.value && results.length < MAX_RESULTS) {
-        results.push(result.value);
-        console.log(`✅ ${code} → ${result.value.name}`);
-      } else {
-        failedCodes.push(code);
-        console.error(`❌ ${code} 요청 실패`);
-      }
+  // 3. 실패 코드 저장
+  fs.writeFileSync("scripts/failed_codes.json", JSON.stringify(failedCodes, null, 2));
+  console.log(`\n📊 수집 완료: ${results.length}개 | 실패: ${failedCodes.length}개`);
+
+  // 4. DB에 삽입
+  for (const data of results) {
+    try {
+      await prisma.disease.create({ data });
+    } catch (e: any) {
+      console.error(`❌ DB 삽입 실패 (${data.sickCode}):`, e.message);
     }
   }
 
-  console.log(`\n📊 최종 수집된 내과 질병 수: ${results.length}`);
-  fs.writeFileSync("scripts/failed_codes.json", JSON.stringify(failedCodes, null, 2));
-
-  for (const data of results) {
-    await prisma.disease.upsert({
-      where: { sickCode: data.sickCode },
-      update: {
-        name: data.name,
-        description: data.description,
-        tips: data.tips,
-      },
-      create: data,
-    });
-  }
-
-  console.log("✅ 내과 질병 DB 저장 완료");
+  console.log("✅ DB 저장 완료");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("❌ 전체 오류:", e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -11,6 +11,7 @@ import { Disease } from "@/types/disease.types";
 import { Medication } from "@/types/medication.types";
 
 export interface UserProfileResponse {
+  role: any;
   id: string;
   email: string;
   name: string;

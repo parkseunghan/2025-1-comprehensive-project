@@ -1,4 +1,5 @@
 // 📄 scripts/retry_failed_codes.ts
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -7,7 +8,7 @@ import fs from "fs";
 import { parseStringPromise } from "xml2js";
 import prisma from "../src/config/prisma.service";
 
-const SERVICE_KEY = process.env.DISEASE_API_KEY;;
+const SERVICE_KEY = process.env.DISEASE_API_KEY!;
 const API_URL = "https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1";
 
 const generateDescription = (name: string) => `${name}은(는) 대표적인 내과 질병 중 하나입니다.`;
@@ -25,9 +26,7 @@ async function fetchDisease(code: string) {
         sickType: 1,
         medTp: 1,
       },
-      headers: {
-        Accept: "application/xml",
-      },
+      headers: { Accept: "application/xml" },
       responseType: "text",
     });
 
@@ -43,31 +42,44 @@ async function fetchDisease(code: string) {
       tips: generateTips(item.sickNm),
     };
   } catch (err) {
-    console.error(`❌ ${code} 요청 실패:`, (err as Error).message);
-    return null;
+    return { error: (err as Error).message };
   }
 }
 
 async function main() {
-  const failedCodes: string[] = JSON.parse(fs.readFileSync("scripts/failed_codes.json", "utf-8"));
-  console.log(`📄 재요청할 코드 수: ${failedCodes.length}`);
+  const failedList: { code: string; reason: string }[] = JSON.parse(
+    fs.readFileSync("scripts/failed_codes.json", "utf-8")
+  );
 
-  for (const code of failedCodes) {
-    const data = await fetchDisease(code);
-    if (!data) continue;
+  console.log(`📄 재요청할 코드 수: ${failedList.length}`);
+
+  const newFailedList: { code: string; reason: string }[] = [];
+
+  for (const { code } of failedList) {
+    const result = await fetchDisease(code);
+
+    if (!result || "error" in result) {
+      const reason = result?.error || "Unknown error";
+      console.error(`❌ ${code} 실패: ${reason}`);
+      newFailedList.push({ code, reason });
+      continue;
+    }
 
     await prisma.disease.upsert({
-      where: { sickCode: data.sickCode },
+      where: { sickCode: result.sickCode },
       update: {
-        name: data.name,
-        description: data.description,
-        tips: data.tips,
+        name: result.name,
+        description: result.description,
+        tips: result.tips,
       },
-      create: data,
+      create: result,
     });
 
-    console.log(`✅ ${code} → ${data.name}`);
+    console.log(`✅ ${code} → ${result.name}`);
   }
+
+  // 실패한 항목만 다시 저장
+  fs.writeFileSync("scripts/failed_codes.json", JSON.stringify(newFailedList, null, 2));
 
   console.log("🚀 재시도 완료");
 }

@@ -55,12 +55,12 @@ export default function ResultScreen() {
       {/* 위험도 */}
       <Text style={styles.sectionTitle}>🔹 위험도</Text>
       <Text style={styles.risk}>
-        {result.riskScore.toFixed(2)} / {calculateRiskLevel(result.riskScore)}
-      </Text>
+  {Number(result.riskScore).toFixed(2)} / {result.riskLevel}
+</Text>
 
       {/* 대응 가이드라인 */}
       <Text style={styles.sectionTitle}>💡 대응 가이드라인</Text>
-      <Text style={styles.guideline}>{generateGuideline(calculateRiskLevel(result.riskScore))}</Text>
+      <Text style={styles.guideline}>{result.guideline}</Text>
     </ScrollView>
   );
 }

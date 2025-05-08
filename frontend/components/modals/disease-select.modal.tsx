@@ -69,22 +69,26 @@ export default function DiseaseSelectModal({
                         <ActivityIndicator size="small" color="#D92B4B" />
                     ) : (
                         <FlatList
-                        data={diseaseList}
-                        keyExtractor={(item) => item.sickCode}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                            style={styles.itemRow}
-                            onPress={() => toggleItem(item.sickCode)}
-                            >
-                            <Ionicons
-                                name={selectedItems.includes(item.sickCode) ? "checkbox" : "square-outline"}
-                                size={20}
-                                color="#111827"
-                                style={{ marginRight: 8 }}
-                            />
-                            <Text>{item.name}</Text>
-                            </TouchableOpacity>
-                        )}
+                            data={filteredList} // ✅ 수정된 부분
+                            keyExtractor={(item) => item.sickCode}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.itemRow}
+                                    onPress={() => toggleItem(item.sickCode)}
+                                >
+                                    <Ionicons
+                                        name={
+                                            selectedItems.includes(item.sickCode)
+                                                ? "checkbox"
+                                                : "square-outline"
+                                        }
+                                        size={20}
+                                        color="#111827"
+                                        style={{ marginRight: 8 }}
+                                    />
+                                    <Text>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
                         />
                     )}
 
@@ -135,9 +139,6 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 8,
         marginBottom: 12,
-    },
-    list: {
-        maxHeight: 300,
     },
     itemRow: {
         flexDirection: "row",

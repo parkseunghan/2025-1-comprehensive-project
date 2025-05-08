@@ -9,67 +9,73 @@ import {
     ScrollView,
     NativeSyntheticEvent,
     NativeScrollEvent,
+    Alert,
 } from "react-native";
 import { router } from "expo-router";
-import BackButton from "@/common/BackButton";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery, useMutation } from "@tanstack/react-query";
+
+import BackButton from "@/common/BackButton";
 import DiseaseSelectModal from "@/modals/disease-select.modal";
 import MedicationSelectModal from "@/modals/medication-select.modal";
+
 import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
-import { useQuery } from "@tanstack/react-query";
-
-type EditableProfile = {
-    name: string;
-    gender: "남성" | "여성" | "";
-    age: string;
-    height: string;
-    weight: string;
-    diseases: string;
-    medications: string;
-};
+import { fetchCurrentUser, updateUserProfile } from "@/services/user.api";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function SymptomInputScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(20)).current;
     const scrollViewRef = useRef<ScrollView>(null);
 
-    const [profile, setProfile] = useState<EditableProfile>({
-        name: "홍길동",
-        gender: "남성",
-        age: "29",
-        height: "175",
-        weight: "68",
-        diseases: "",
-        medications: "",
-    });
+    const { user, token, setAuth } = useAuthStore();
 
-    const [editField, setEditField] = useState<keyof EditableProfile | null>(null);
-    const [buttonState, setButtonState] = useState<"scroll" | "next">("scroll");
-    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
-    const [medicationModalOpen, setMedicationModalOpen] = useState(false);
-
-    const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery({
+    const { data: diseaseList = [] } = useQuery({
         queryKey: ["diseases"],
         queryFn: fetchAllDiseases,
     });
 
-    const { data: medicationList = [], isLoading: isMedicationLoading } = useQuery({
+    const { data: medicationList = [] } = useQuery({
         queryKey: ["medications"],
         queryFn: fetchAllMedications,
     });
 
-    const calculateBMI = (heightCm: string, weightKg: string) => {
-        const height = parseFloat(heightCm) / 100;
-        const weight = parseFloat(weightKg);
-        if (!height || !weight) return "";
-        const bmi = weight / (height * height);
-        return bmi.toFixed(1);
-    };
+    const { data: profile } = useQuery({
+        queryKey: ["user", user?.id],
+        queryFn: () => fetchCurrentUser(user!.id),
+        enabled: !!user?.id,
+    });
 
-    const bmi = calculateBMI(profile.height, profile.weight);
+    const [profileState, setProfileState] = useState({
+        name: "",
+        gender: "",
+        age: "",
+        height: "",
+        weight: "",
+    });
+
+    const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
+    const [selectedMedicationIds, setSelectedMedicationIds] = useState<string[]>([]);
+
+    const [editField, setEditField] = useState<keyof typeof profileState | null>(null);
+    const [buttonState, setButtonState] = useState<"scroll" | "next">("scroll");
+    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+    const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
     useEffect(() => {
+        if (profile) {
+            setProfileState({
+                name: profile.name ?? "",
+                gender: profile.gender ?? "",
+                age: String(profile.age ?? ""),
+                height: String(profile.height ?? ""),
+                weight: String(profile.weight ?? ""),
+            });
+            setSelectedDiseaseIds(profile.diseases.map((d) => d.sickCode));
+            setSelectedMedicationIds(profile.medications.map((m) => m.id));
+        }
+
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -82,14 +88,74 @@ export default function SymptomInputScreen() {
                 useNativeDriver: true,
             }),
         ]).start();
-    }, []);
+    }, [profile]);
+
+    const mutation = useMutation({
+        mutationFn: async () => {
+            return updateUserProfile({
+                id: user!.id,
+                gender: profileState.gender as "남성" | "여성",
+                age: Number(profileState.age),
+                height: parseFloat(profileState.height),
+                weight: parseFloat(profileState.weight),
+                diseases: selectedDiseaseIds,
+                medications: selectedMedicationIds,
+            });
+        },
+        onSuccess: async () => {
+            const updatedUser = await fetchCurrentUser(user!.id);
+            const mappedUser = {
+                id: updatedUser.id,
+                email: updatedUser.email,
+                name: updatedUser.name,
+                gender: updatedUser.gender,
+                age: updatedUser.age,
+                height: updatedUser.height,
+                weight: updatedUser.weight,
+                bmi: updatedUser.height > 0 ? (updatedUser.weight / Math.pow(updatedUser.height / 100, 2)) : 0,
+                role: updatedUser.role,
+                diseases: updatedUser.diseases.map((d) => ({
+                    id: d.sickCode,
+                    name: d.name,
+                })),
+                medications: updatedUser.medications.map((m) => ({
+                    id: m.id,
+                    name: m.name,
+                })),
+            };
+            setAuth(token!, mappedUser);
+            router.push("/(record)/symptomchoice");
+        },
+        onError: () => {
+            Alert.alert("오류", "프로필 저장에 실패했습니다.");
+        },
+    });
+
+    const handleChange = (key: keyof typeof profileState, value: string) => {
+        setProfileState((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const getDiseaseNames = () =>
+        selectedDiseaseIds.map((id) => diseaseList.find((d) => d.sickCode === id)?.name).filter(Boolean).join(", ");
+
+    const getMedicationNames = () =>
+        selectedMedicationIds.map((id) => medicationList.find((m) => m.id === id)?.name).filter(Boolean).join(", ");
+
+    const calculateBMI = (heightCm: string, weightKg: string) => {
+        const height = parseFloat(heightCm) / 100;
+        const weight = parseFloat(weightKg);
+        if (!height || !weight) return "";
+        return (weight / (height * height)).toFixed(1);
+    };
+
+    const bmi = calculateBMI(profileState.height, profileState.weight);
 
     const handleButtonClick = () => {
         if (buttonState === "scroll") {
             scrollViewRef.current?.scrollToEnd({ animated: true });
             setButtonState("next");
-        } else if (buttonState === "next") {
-            router.push("/(record)/symptomchoice");
+        } else {
+            mutation.mutate();
         }
     };
 
@@ -98,20 +164,6 @@ export default function SymptomInputScreen() {
         const isScrolledToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 10;
         if (isScrolledToBottom && buttonState === "scroll") {
             setButtonState("next");
-        }
-    };
-
-    const handleChange = (key: keyof EditableProfile, value: string) => {
-        setProfile((prev) => ({ ...prev, [key]: value }));
-    };
-
-    const handleEdit = (key: keyof EditableProfile) => {
-        if (key === "diseases") {
-            setDiseaseModalOpen(true);
-        } else if (key === "medications") {
-            setMedicationModalOpen(true);
-        } else {
-            setEditField(key);
         }
     };
 
@@ -143,13 +195,13 @@ export default function SymptomInputScreen() {
                     {editField === "name" ? (
                         <TextInput
                             style={styles.inputValue}
-                            value={profile.name}
+                            value={profileState.name}
                             onChangeText={(text) => handleChange("name", text)}
                             onBlur={() => setEditField(null)}
                             autoFocus
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profile.name}</Text>
+                        <Text style={styles.inputValue}>{profileState.name}</Text>
                     )}
                 </View>
 
@@ -175,7 +227,7 @@ export default function SymptomInputScreen() {
                                     <View
                                         style={[
                                             styles.radioCircle,
-                                            profile.gender === item && styles.radioCircleSelected,
+                                            profileState.gender === item && styles.radioCircleSelected,
                                         ]}
                                     />
                                     <Text style={styles.radioLabel}>{item}</Text>
@@ -183,7 +235,7 @@ export default function SymptomInputScreen() {
                             ))}
                         </View>
                     ) : (
-                        <Text style={styles.inputValue}>{profile.gender}</Text>
+                        <Text style={styles.inputValue}>{profileState.gender}</Text>
                     )}
                 </View>
 
@@ -198,14 +250,14 @@ export default function SymptomInputScreen() {
                     {editField === "age" ? (
                         <TextInput
                             style={styles.inputValue}
-                            value={profile.age}
+                            value={profileState.age}
                             onChangeText={(text) => handleChange("age", text)}
                             onBlur={() => setEditField(null)}
                             autoFocus
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profile.age}</Text>
+                        <Text style={styles.inputValue}>{profileState.age}</Text>
                     )}
                 </View>
 
@@ -220,14 +272,14 @@ export default function SymptomInputScreen() {
                     {editField === "height" ? (
                         <TextInput
                             style={styles.inputValue}
-                            value={profile.height}
+                            value={profileState.height}
                             onChangeText={(text) => handleChange("height", text)}
                             onBlur={() => setEditField(null)}
                             autoFocus
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profile.height}</Text>
+                        <Text style={styles.inputValue}>{profileState.height}</Text>
                     )}
                 </View>
 
@@ -242,14 +294,14 @@ export default function SymptomInputScreen() {
                     {editField === "weight" ? (
                         <TextInput
                             style={styles.inputValue}
-                            value={profile.weight}
+                            value={profileState.weight}
                             onChangeText={(text) => handleChange("weight", text)}
                             onBlur={() => setEditField(null)}
                             autoFocus
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profile.weight}</Text>
+                        <Text style={styles.inputValue}>{profileState.weight}</Text>
                     )}
                 </View>
 
@@ -263,22 +315,22 @@ export default function SymptomInputScreen() {
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>지병</Text>
-                        <TouchableOpacity onPress={() => handleEdit("diseases")}>
+                        <TouchableOpacity onPress={() => setDiseaseModalOpen(true)}>
                             <Ionicons name="add" size={16} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.inputValue}>{profile.diseases || "-"}</Text>
+                    <Text style={styles.inputValue}>{getDiseaseNames() || "-"}</Text>
                 </View>
 
-                {/* 복용 약물 */}
+                {/* 약물 */}
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>복용 약물</Text>
-                        <TouchableOpacity onPress={() => handleEdit("medications")}>
+                        <TouchableOpacity onPress={() => setMedicationModalOpen(true)}>
                             <Ionicons name="add" size={16} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.inputValue}>{profile.medications || "-"}</Text>
+                    <Text style={styles.inputValue}>{getMedicationNames() || "-"}</Text>
                 </View>
             </ScrollView>
 
@@ -300,24 +352,24 @@ export default function SymptomInputScreen() {
 
             <DiseaseSelectModal
                 visible={diseaseModalOpen}
-                selected={profile.diseases.split(",").map((d) => d.trim())}
+                selected={selectedDiseaseIds}
                 diseaseList={diseaseList}
-                isLoading={isDiseaseLoading}
+                isLoading={false}
                 onClose={() => setDiseaseModalOpen(false)}
                 onSave={(items) => {
-                    handleChange("diseases", items.join(", "));
+                    setSelectedDiseaseIds(items);
                     setDiseaseModalOpen(false);
                 }}
             />
 
             <MedicationSelectModal
                 visible={medicationModalOpen}
-                selected={profile.medications.split(",").map((m) => m.trim())}
+                selected={selectedMedicationIds}
                 medicationList={medicationList}
-                isLoading={isMedicationLoading}
+                isLoading={false}
                 onClose={() => setMedicationModalOpen(false)}
                 onSave={(items) => {
-                    handleChange("medications", items.join(", "));
+                    setSelectedMedicationIds(items);
                     setMedicationModalOpen(false);
                 }}
             />
@@ -361,7 +413,7 @@ const styles = StyleSheet.create({
     },
     inputLabel: {
         fontSize: 14,
-        color: "#6b7280",
+        color: "#6B7280",
     },
     inputValue: {
         fontSize: 17,
