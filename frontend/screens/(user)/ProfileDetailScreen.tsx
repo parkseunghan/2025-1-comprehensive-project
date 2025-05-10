@@ -1,5 +1,3 @@
-// 📄 screens/(user)/ProfileDetailScreen.tsx
-
 import {
     View,
     Text,
@@ -22,12 +20,11 @@ import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
 import { Disease } from "@/types/disease.types";
 import { Medication } from "@/types/medication.types";
-import type { UserProfileResponse } from "@/types/user.types";
 
 export default function ProfileDetailScreen() {
     const { user, token, setAuth } = useAuthStore();
 
-    const { data: profile, refetch } = useQuery({
+    const { data: profile } = useQuery({
         queryKey: ["user", user?.id],
         queryFn: () => fetchCurrentUser(user!.id),
         enabled: !!user?.id,
@@ -54,7 +51,7 @@ export default function ProfileDetailScreen() {
         weight: "",
     });
 
-    const [editField, setEditField] = useState<"age" | "height" | "weight" | null>(null);
+    const [editField, setEditField] = useState<"name" | "age" | "height" | "weight" | null>(null);
     const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
     const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
@@ -76,6 +73,7 @@ export default function ProfileDetailScreen() {
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
+                name: editableProfile.name,
                 gender: editableProfile.gender as "남성" | "여성",
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),
@@ -86,7 +84,6 @@ export default function ProfileDetailScreen() {
         },
         onSuccess: async () => {
             const updatedUser = await fetchCurrentUser(user!.id);
-            // ✅ 타입 변환 후 상태 저장
             const mappedUser = {
                 id: updatedUser.id,
                 email: updatedUser.email,
@@ -129,7 +126,13 @@ export default function ProfileDetailScreen() {
                 <Text style={styles.title}>프로필 정보</Text>
 
                 <View style={styles.card}>
-                    <Text style={styles.userName}>{editableProfile.name}</Text>
+                    <EditableNameField
+                        value={editableProfile.name}
+                        editing={editField === "name"}
+                        onPressEdit={() => setEditField("name")}
+                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, name: v }))}
+                        onBlur={() => setEditField(null)}
+                    />
                     <Text style={styles.userEmail}>{user?.email}</Text>
                 </View>
 
@@ -227,6 +230,30 @@ export default function ProfileDetailScreen() {
     );
 }
 
+function EditableNameField({ value, editing, onPressEdit, onChange, onBlur }: any) {
+    return (
+        <View style={styles.nameContainer}>
+            {editing ? (
+                <TextInput
+                    style={styles.userName}
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="default"
+                    autoFocus
+                    onBlur={onBlur}
+                />
+            ) : (
+                <View style={styles.nameRow}>
+                    <Text style={styles.userName}>{value}</Text>
+                    <TouchableOpacity onPress={onPressEdit} style={{ marginLeft: 6 }}>
+                        <Ionicons name="create-outline" size={16} color="#6B7280" />
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
+    );
+}
+
 function EditableField({ label, value, editing, onPressEdit, onChange, onBlur }: any) {
     return (
         <View style={styles.itemRow}>
@@ -267,7 +294,7 @@ function EditableTextWithButton({ label, value, onPress }: any) {
 }
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#F4F1FF" }, // ✅ 배경색 통일
+    root: { flex: 1, backgroundColor: "#F4F1FF" },
     backButton: { position: "absolute", top: 20, left: 16, zIndex: 10, padding: 8 },
     container: { paddingTop: 70, paddingHorizontal: 24, paddingBottom: 60 },
     title: { fontSize: 22, fontWeight: "bold", color: "#1E3A8A", marginBottom: 28, textAlign: "center" },
@@ -286,6 +313,8 @@ const styles = StyleSheet.create({
         shadowRadius: 6,
         elevation: 3,
     },
+    nameContainer: { width: "100%", alignItems: "center", marginBottom: 4 },
+    nameRow: { flexDirection: "row", alignItems: "center" },
     userName: { fontSize: 20, fontWeight: "bold", color: "#111827" },
     userEmail: { fontSize: 14, color: "#6B7280" },
     infoBox: {
@@ -332,7 +361,7 @@ const styles = StyleSheet.create({
     },
     radioLabel: { fontSize: 16, color: "#111827" },
     saveButtonWrapper: {
-        backgroundColor: "#F4F1FF", // ✅ 배경 통일
+        backgroundColor: "#F4F1FF",
         paddingHorizontal: 20,
     },
     saveButton: {
