@@ -49,3 +49,12 @@ export const requestPrediction = async (
   const res = await axios.post("/prediction", data);
   return res.data;
 };
+
+/**
+ * 🔹 4. 사용자 전체 예측 통계 조회
+ * @route GET /api/prediction/stats
+ */
+export const fetchPredictionStats = async (): Promise<Prediction[]> => {
+  const res = await axios.get("/prediction/stats");
+  return res.data;
+};

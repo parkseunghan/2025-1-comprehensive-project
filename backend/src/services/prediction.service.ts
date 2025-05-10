@@ -66,3 +66,30 @@ export const findByRecord = async (recordId: string) => {
     include: { ranks: true },
   });
 };
+
+/**
+ * 사용자 전체 예측 통계 데이터를 반환합니다.
+ * - 질병 분포, 위험도 평균, 예측 일시 등 포함
+ * @param userId 로그인한 사용자 ID
+ */
+export const getPredictionStats = async (userId: string) => {
+  const predictions = await prisma.prediction.findMany({
+    where: {
+      record: {
+        userId,
+      },
+    },
+    select: {
+      coarseLabel: true,
+      fineLabel: true,
+      riskScore: true,
+      riskLevel: true,
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return predictions;
+};

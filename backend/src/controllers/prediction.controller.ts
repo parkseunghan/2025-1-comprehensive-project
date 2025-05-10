@@ -106,3 +106,23 @@ export const savePredictions = async (req: Request, res: Response) => {
     res.status(500).json({ message: "서버 에러" });
   }
 };
+
+/**
+ * GET /api/prediction/stats
+ * 로그인한 사용자의 예측 결과 목록을 반환합니다.
+ */
+export const getPredictionStats = async (req: Request, res: Response) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "인증된 사용자만 접근할 수 있습니다." });
+    }
+
+    const userId = req.user.id;
+    const stats = await predictionService.getPredictionStats(userId);
+
+    res.status(200).json(stats);
+  } catch (err) {
+    console.error("❌ 통계 데이터 조회 오류:", err);
+    res.status(500).json({ message: "통계 데이터를 불러오는 중 오류가 발생했습니다." });
+  }
+};

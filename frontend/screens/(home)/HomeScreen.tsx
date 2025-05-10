@@ -110,8 +110,9 @@ export default function HomeScreen() {
                     <Text style={styles.cardLabel}>자가진단</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.featureCard, styles.statsCard]}
-
+                <TouchableOpacity 
+                style={[styles.featureCard, styles.statsCard]}
+                onPress={() => router.push("/(home)/healthstats")}
                 >
                     <View style={styles.iconContainer}>
                         <Feather name="bar-chart-2" size={40} color="#ffffff" />
