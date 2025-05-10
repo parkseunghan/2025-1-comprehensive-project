@@ -29,15 +29,14 @@ export default function HomeScreen() {
         if (bmi < 25) return "과체중";
         return "비만";
     };
+
     const getBMIColor = (bmi?: number) => {
-        if (!bmi) return "#9CA3AF"; // gray-400
-        if (bmi < 18.5) return "#3B82F6"; // blue-500
-        if (bmi < 23) return "#16A34A";   // green-600
-        if (bmi < 25) return "#FACC15";   // yellow-400
-        return "#EF4444";                // red-500
+        if (!bmi) return "#9CA3AF";
+        if (bmi < 18.5) return "#3B82F6";
+        if (bmi < 23) return "#16A34A";
+        if (bmi < 25) return "#FACC15";
+        return "#EF4444";
     };
-
-
 
     return (
         <ScrollView style={styles.container}>
@@ -55,15 +54,10 @@ export default function HomeScreen() {
                             </Text>
                         </Text>
 
-
-
                         <View style={styles.tagGroup}>
                             <Text style={styles.profileSubLabel}>지병:</Text>
                             <View style={styles.tagList}>
-                                {(profile?.diseases?.length
-                                    ? profile.diseases
-                                    : [{ name: "없음" }]
-                                ).map((d, idx) => (
+                                {(profile?.diseases?.length ? profile.diseases : [{ name: "없음" }]).map((d, idx) => (
                                     <View key={idx} style={styles.tagBox}>
                                         <Text style={styles.tagText}>{d.name}</Text>
                                     </View>
@@ -72,10 +66,7 @@ export default function HomeScreen() {
 
                             <Text style={[styles.profileSubLabel, { marginTop: 6 }]}>약물:</Text>
                             <View style={styles.tagList}>
-                                {(profile?.medications?.length
-                                    ? profile.medications
-                                    : [{ name: "없음" }]
-                                ).map((m, idx) => (
+                                {(profile?.medications?.length ? profile.medications : [{ name: "없음" }]).map((m, idx) => (
                                     <View key={idx} style={styles.tagBox}>
                                         <Text style={styles.tagText}>{m.name}</Text>
                                     </View>
@@ -113,8 +104,8 @@ export default function HomeScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity 
-                style={[styles.featureCard, styles.statsCard]}
-                onPress={() => router.push("/(home)/healthstats")}
+                    style={[styles.featureCard, styles.statsCard]}
+                    onPress={() => router.push("/(home)/healthstats")}
                 >
                     <View style={styles.iconContainer}>
                         <Feather name="bar-chart-2" size={40} color="#ffffff" />
@@ -122,24 +113,26 @@ export default function HomeScreen() {
                     <Text style={[styles.cardLabel, styles.lightLabel]}>건강 통계</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.featureCard, styles.encyclopediaCard]}
-                    onPress={() => router.push("/(dictionary)/disease")}>
+                <TouchableOpacity
+                    style={[styles.featureCard, styles.encyclopediaCard]}
+                    onPress={() => router.push("/(dictionary)/disease")}
+                >
                     <View style={styles.iconContainer}>
                         <Feather name="book-open" size={40} color="#ffffff" />
                     </View>
-                    <Text style={[styles.cardLabel, styles.lightLabel]}>의료 도감</Text>
+                    <Text style={[styles.cardLabel, styles.lightLabel]}>질병 도감</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     style={[styles.featureCard, styles.recordsCard]}
-                    onPress={() => router.push("/(tabs)/history")}
+                    onPress={() => router.push("/(dictionary)/medication")}
                 >
                     <View style={styles.iconContainer}>
                         <View style={[styles.iconCircle, styles.recordsIconCircle]}>
-                            <Feather name="folder" size={35} color="#7F66FF" />
+                            <FontAwesome5 name="pills" size={35} color="#7F66FF" />
                         </View>
                     </View>
-                    <Text style={styles.cardLabel}>기록 보기</Text>
+                    <Text style={styles.cardLabel}>약물 도감</Text>
                 </TouchableOpacity>
             </View>
         </ScrollView>
