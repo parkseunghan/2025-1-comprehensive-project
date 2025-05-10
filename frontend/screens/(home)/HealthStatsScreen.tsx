@@ -1,3 +1,5 @@
+// 📄 screens/(home)/HealthStatsScreen.tsx
+
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, Dimensions, StyleSheet } from "react-native";
 import { useQuery } from "@tanstack/react-query";

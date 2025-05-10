@@ -1,3 +1,5 @@
+// 📄 screens/(home)/HomeScreen.tsx
+
 import {
     View,
     Text,
