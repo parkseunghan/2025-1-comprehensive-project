@@ -7,6 +7,7 @@ import { fetchPredictionStats } from "@/services/prediction.api";
 import { Prediction } from "@/types/prediction.types";
 import { BarChart, LineChart, PieChart } from "react-native-chart-kit";
 import { ChartData } from "react-native-chart-kit/dist/HelperTypes";
+import BackButton from "@/common/BackButton";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -97,6 +98,7 @@ export default function HealthStatsScreen() {
 
   return (
     <ScrollView style={styles.container}>
+        <BackButton />
       <Text style={styles.title}>건강 통계 요약</Text>
 
       <View style={styles.card}>
