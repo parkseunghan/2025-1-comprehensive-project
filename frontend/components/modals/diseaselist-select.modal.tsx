@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   View,
@@ -7,13 +7,14 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  TextInput,
 } from "react-native";
 import { Disease } from "@/types/disease.types";
 
 interface Props {
   visible: boolean;
   category: string;
-  diseaseList: Disease[]; 
+  diseaseList: Disease[];
   selected: string[];
   onToggle: (id: string) => void;
   onSave: () => void;
@@ -29,20 +30,33 @@ export default function DiseaseListSelectModal({
   onSave,
   onClose,
 }: Props) {
-  const filtered = diseaseList.filter((d) => d.category === category);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = diseaseList
+    .filter((d) => d.category === category)
+    .filter((d) => d.name.includes(searchQuery));
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View
         style={[
           styles.overlay,
-          { pointerEvents: visible ? "auto" : "none" }, // 🔧 Web 경고 해결
+          { pointerEvents: visible ? "auto" : "none" },
         ]}
       >
         <View style={styles.container}>
           <Text style={styles.title}>{category} 관련 질병</Text>
 
-          {/* 🔽 스크롤뷰 높이 제한 */}
+          {/* 🔍 검색창 */}
+          <TextInput
+            placeholder="질병명을 입력하세요"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={styles.searchInput}
+            placeholderTextColor="#9CA3AF"
+          />
+
+          {/* 🔽 스크롤뷰 */}
           <ScrollView style={styles.scrollArea}>
             {filtered.map((d) => (
               <TouchableOpacity
@@ -57,7 +71,7 @@ export default function DiseaseListSelectModal({
             ))}
           </ScrollView>
 
-          {/* ✅ 버튼 고정 */}
+          {/* ✅ 버튼 */}
           <View style={styles.buttonRow}>
             <TouchableOpacity onPress={onClose} style={styles.button}>
               <Text style={styles.cancel}>취소</Text>
@@ -91,6 +105,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,
+  },
+  searchInput: {
+    height: 40,
+    borderWidth: 1.5,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    color: "black",
   },
   scrollArea: {
     maxHeight: SCREEN_HEIGHT * 0.5,
