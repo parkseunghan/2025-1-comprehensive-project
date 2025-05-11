@@ -39,9 +39,13 @@ export default function DiseaseDetailModal({ visible, disease, onClose }: Props)
             <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
                 <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
                     <Text style={styles.title}>{disease?.name}</Text>
-                    <Text style={styles.desc}>{disease?.description || "설명 없음"}</Text>
-                    {disease?.tips && (
-                        <Text style={styles.tip}>💡 {disease.tips}</Text>
+                    <Text style={styles.desc}>
+                        {disease?.description || "설명 없음"}
+                    </Text>
+                    {disease && (
+                        <Text style={styles.tip}>
+                            💡 {disease.tips?.trim() ? disease.tips : "tips 없음"}
+                        </Text>
                     )}
                     <Pressable onPress={onClose} style={styles.closeBtn}>
                         <Text style={styles.closeText}>닫기</Text>

@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import prisma from "../src/config/prisma.service";
 
-const DATA_PATH = path.resolve(__dirname, "../data/diseases.json");
+const DATA_PATH = path.resolve(__dirname, "../data/diseases copy.json");
 
 async function insertDiseases() {
   try {
@@ -15,8 +15,8 @@ async function insertDiseases() {
       sickCode: item.code,
       name: item.name,
       englishName: item.englishName || null,
-      description: null,
-      tips: null,
+      description: item.description || null,
+      tips: item.tips || null,
     }));
 
     await prisma.disease.createMany({
