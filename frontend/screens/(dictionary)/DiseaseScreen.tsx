@@ -48,22 +48,33 @@ export default function DiseaseScreen() {
         </View>
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="궁금한 질병이 있으신가요?"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholderTextColor="#111827"
-      />
+      {/* 🔍 개선된 검색창 */}
+      <View style={styles.searchWrapper}>
+        <Feather
+          name="search"
+          size={18}
+          color="#9CA3AF"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="궁금한 질병이 있으신가요?"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor="#6B7280"
+        />
+      </View>
 
       <FlatList
         data={filteredDiseases}
         keyExtractor={(item) => item.sickCode}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => {
-            setSelectedDisease(item);
-            setModalVisible(true);
-          }}>
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedDisease(item);
+              setModalVisible(true);
+            }}
+          >
             <View style={styles.card}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.desc} numberOfLines={2}>
@@ -124,15 +135,25 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#111827",
   },
-  searchInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
+  searchWrapper: {
+    position: "relative",
     marginBottom: 12,
-    fontSize: 14,
+  },
+  searchIcon: {
+    position: "absolute",
+    top: 12,
+    left: 10,
+    zIndex: 1,
+  },
+  searchInput: {
+    borderWidth: 1.5,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 36,
+    fontSize: 15,
     color: "#111827",
     backgroundColor: "#fff",
-    borderColor: "#111827",
+    borderColor: "#D92B4B",
   },
   card: {
     backgroundColor: "#f9fafb",
