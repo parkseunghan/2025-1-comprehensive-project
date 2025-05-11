@@ -1,3 +1,6 @@
 {
-  "urlRandomness": "TaqXYWI"
+  "urlRandomness": "TaqXYWI",
+  "dev": true,
+  "minify": false,
+  "https": false
 }

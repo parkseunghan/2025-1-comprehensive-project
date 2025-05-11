@@ -1,6 +1,6 @@
 // 📄 src/types/symptom.types.ts
 
-// 🔹 LLM 추출 결과용
+// ✅ 추출된 단일 증상 키워드
 export interface LLMExtractKeyword {
   symptom: string;
   time: string | null;

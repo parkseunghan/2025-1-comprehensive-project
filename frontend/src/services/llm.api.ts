@@ -3,17 +3,9 @@
 // 백엔드의 `/llm/extract` 엔드포인트와 연결됩니다.
 
 import axios from './axios';
+import { LLMExtractKeyword } from '@/types/symptom.types';
 
-// ✅ 추출된 단일 증상 키워드의 타입
-export interface LLMExtractKeyword {
-    symptom: string;
-    time: string | null;
-}
 
-// ✅ API 요청 시 보낼 형식
-export interface LLMExtractRequest {
-    symptomText: string; // 사용자 입력 텍스트
-}
 
 // ✅ 실제 응답: 증상 배열로 리턴
 export const extractSymptoms = async (

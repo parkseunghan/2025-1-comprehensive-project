@@ -128,13 +128,24 @@ export default function SymptomTextInputScreen() {
                 <Animated.View style={[styles.buttonWrapper, { transform: [{ translateY }] }]}>
                     <TouchableOpacity
                         onPress={handleStartDiagnosis}
+                        style={[styles.button, { marginBottom: 12 }]}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#ffffff" />
+                        ) : (
+                            <Text style={styles.buttonText}>예측 시작(NLP)</Text>
+                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={handleStartDiagnosis}
                         style={styles.button}
                         disabled={isLoading}
                     >
                         {isLoading ? (
                             <ActivityIndicator color="#ffffff" />
                         ) : (
-                            <Text style={styles.buttonText}>예측 시작</Text>
+                            <Text style={styles.buttonText}>예측 시작(LLM)</Text>
                         )}
                     </TouchableOpacity>
                 </Animated.View>
