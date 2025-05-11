@@ -10,6 +10,7 @@ import { createSymptomRecord } from "@/services/record.api";
 import { requestPrediction, requestPredictionToDB } from "@/services/prediction.api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+
 export default function SymptomSelectScreen() {
   const { category } = useLocalSearchParams();
   const decoded = decodeURIComponent(category as string);
@@ -69,7 +70,6 @@ export default function SymptomSelectScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* 🔙 뒤로가기 + 예측하기 버튼 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backText}>◀</Text>

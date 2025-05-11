@@ -68,19 +68,9 @@ export const remove = async (id: string) => {
 };
 
 /**
- * 🔹 응급 진단명 리스트 (이것들만 "응급" 허용)
+ * 🔹 응급 진단명 리스트 ("응급" 허용)
  */
 const EMERGENCY_DISEASES = ["심근경색", "뇌출혈", "급성 폐렴"];
-
-/**
- * 🔹 위험 점수 → 위험 등급
- */
-function calculateRiskLevel(score: number, fineLabel: string): string {
-  if (score >= 6.0 && EMERGENCY_DISEASES.includes(fineLabel)) return "응급";
-  if (score >= 4.5) return "높음";
-  if (score >= 2.5) return "보통";
-  return "낮음";
-}
 
 /**
  * 🔹 위험 등급 → 가이드라인 텍스트
@@ -93,7 +83,17 @@ function generateGuideline(riskLevel: string): string {
 }
 
 /**
- * 🔹 위험도 계산 (P(D) × [가중합])
+ * 🔹 위험 점수 → 위험 등급 (완화된 기준 적용)
+ */
+function calculateRiskLevel(score: number, fineLabel: string): string {
+  if (score >= 7.0 && EMERGENCY_DISEASES.includes(fineLabel)) return "응급";
+  if (score >= 5.5) return "높음";
+  if (score >= 3.5) return "보통";
+  return "낮음";
+}
+
+/**
+ * 🔹 위험도 계산 (P(D) × [가중합] × 건강 보정)
  */
 function calculateRiskScore({
   predictionProb,
@@ -114,16 +114,25 @@ function calculateRiskScore({
 }): number {
   const W1 = 1.0, W2 = 1.0, W3 = 1.0, W4 = 1.0, W5 = 1.0, W6 = 1.0;
 
-  const riskScore =
+  const isHealthy =
+    chronicWeight < 0.5 &&
+    medicationWeight < 0.5 &&
+    ageWeight < 0.7 &&
+    bmiWeight < 0.7;
+
+  const healthyPenalty = isHealthy ? 0.6 : 1.0;
+
+  const rawScore =
     predictionProb *
     (W1 * symptomWeight +
       W2 * chronicWeight +
       W3 * ageWeight +
       W4 * genderWeight +
       W5 * bmiWeight +
-      W6 * medicationWeight);
+      W6 * medicationWeight) *
+    healthyPenalty;
 
-  return Number(riskScore.toFixed(2));
+  return Number(rawScore.toFixed(2));
 }
 
 /**
@@ -136,21 +145,21 @@ export const savePredictionResult = async (
 ) => {
   const top1 = predictions[0];
 
-  // ✅ 실제 사용자 데이터 기반으로 추후 대입 예정
+  // ✅ 사용자 조건 기반 가중치 보정 적용
   const riskScore = calculateRiskScore({
     predictionProb: top1.riskScore, // top1.riskScore는 예측 확률
     symptomWeight: 0.9,
-    chronicWeight: 1.2,
-    ageWeight: 1.1,
+    chronicWeight: 0.0, // 예시: 지병 없음
+    ageWeight: 0.5,     // 예시: 20대
     genderWeight: 1.0,
-    bmiWeight: 1.3,
-    medicationWeight: 1.1,
+    bmiWeight: 0.6,
+    medicationWeight: 0.0, // 예시: 복용약 없음
   });
 
   const riskLevel = top1.riskLevel ?? calculateRiskLevel(riskScore, top1.fineLabel);
   const guideline = top1.guideline ?? generateGuideline(riskLevel);
 
-  // ✅ 디버깅 로그로 확인
+  // ✅ 디버깅 로그
   console.log("🧠 위험도 계산", {
     fineLabel: top1.fineLabel,
     riskScore,
@@ -175,7 +184,7 @@ export const savePredictionResult = async (
     rank: index + 1,
     coarseLabel: item.coarseLabel,
     fineLabel: item.fineLabel,
-    riskScore: item.riskScore, // raw 확률 그대로 저장
+    riskScore: item.riskScore,
   }));
 
   await prisma.predictionRank.createMany({

@@ -85,6 +85,13 @@ export default function MedicationScreen() {
                     medication={selectedMedication}
                 />
             )}
+
+            {/* ✅ 저작권 */}
+                <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
+                    <Text style={styles.footerText}>
+                    ※ 본 약물 정보는 식품의약품안전처 의약품 개요정보 서비스 API를 활용하여 제공됩니다.
+                    </Text>
+                </View>
         </View>
     );
 }
@@ -139,4 +146,19 @@ const styles = StyleSheet.create({
         color: "#111827",
         fontWeight: "500",
     },
+    footer: {
+        position: "absolute",
+        bottom: 0,
+        width: "100%",
+        backgroundColor: "#F4F1FF",
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderTopWidth: 1,
+        borderColor: "#e5e7eb",
+      },
+      footerText: {
+        fontSize: 11,
+        color: "#6b7280",
+        textAlign: "center",
+      },
 });
