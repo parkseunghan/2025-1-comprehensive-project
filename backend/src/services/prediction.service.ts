@@ -80,6 +80,7 @@ export const getPredictionStats = async (userId: string) => {
       },
     },
     select: {
+      id: true,                // ✅ 기본키 ID 추가
       coarseLabel: true,
       fineLabel: true,
       riskScore: true,
