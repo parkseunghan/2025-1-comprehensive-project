@@ -45,7 +45,7 @@ export default function SettingScreen() {
         <Text style={styles.sectionTitle}>앱</Text>
         <SettingItem label="데이터 초기화" icon="refresh-outline" />
         <SettingItem label="앱 정보" icon="information-circle-outline" />
-        <LogoutButton /> {/* ✅ 로그아웃 버튼 추가 */}
+        <LogoutButton />
       </View>
     </ScrollView>
   );

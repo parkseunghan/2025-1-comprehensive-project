@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import {
   Modal,
   View,
+  Platform,
   Text,
   StyleSheet,
   Pressable,
@@ -36,7 +37,15 @@ export default function DiseaseDetailModal({ visible, disease, onClose }: Props)
       visible={visible}
       onRequestClose={onClose}
     >
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+      <Animated.View
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim,
+            pointerEvents: visible ? "auto" : "none", // 🔧 경고 해결
+          },
+        ]}
+      >
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           <Text style={styles.title}>{disease?.name}</Text>
 
@@ -77,11 +86,20 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 16,
     width: "85%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
+      },
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
   title: {
     fontSize: 20,

@@ -3,6 +3,7 @@ import {
     View,
     Text,
     FlatList,
+    Platform,
     StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
@@ -30,7 +31,7 @@ export default function HistoryScreen() {
         switch (level) {
             case "높음":
                 return "#EF4444";
-            case "중간":
+            case "보통":
                 return "#F59E0B";
             case "낮음":
                 return "#10B981";
@@ -43,7 +44,7 @@ export default function HistoryScreen() {
         switch (level) {
             case "높음":
                 return "alert-circle";
-            case "중간":
+            case "보통":
                 return "warning";
             case "낮음":
                 return "checkmark-circle";
@@ -53,18 +54,13 @@ export default function HistoryScreen() {
     };
 
     const renderItem = ({ item }: { item: Prediction }) => {
+        if (!item.id) console.warn("❗ 예측 항목에 ID가 없습니다:", item);
         const date = formatDate(item.createdAt);
         const color = getRiskColor(item.riskLevel);
         const iconName = getRiskIcon(item.riskLevel);
 
         return (
-            <TouchableOpacity
-                style={styles.card}
-                activeOpacity={0.7}
-                onPress={() => {
-                    // router.push(`/history/${item.id}`);
-                }}
-            >
+            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
                 <View style={styles.dateRow}>
                     <Ionicons name="calendar-outline" size={16} color="#6B7280" />
                     <Text style={styles.date}>{date}</Text>
@@ -77,9 +73,12 @@ export default function HistoryScreen() {
                             {item.coarseLabel} / {item.fineLabel}
                         </Text>
                     </View>
+
                     <View style={styles.riskContainer}>
                         <Text style={styles.riskTitle}>위험도</Text>
-                        <View style={[styles.riskBadge, { backgroundColor: color + "20" }]}>
+                        <View
+                            style={[styles.riskBadge, { backgroundColor: color + "20" }]}
+                        >
                             <Ionicons name={iconName} size={16} color={color} />
                             <Text style={[styles.riskValue, { color }]}>{item.riskLevel}</Text>
                         </View>
@@ -98,7 +97,9 @@ export default function HistoryScreen() {
                             ]}
                         />
                     </View>
-                    <Text style={styles.score}>위험도 점수: {item.riskScore.toFixed(1)}</Text>
+                    <Text style={styles.score}>
+                        위험도 점수: {item.riskScore.toFixed(1)}
+                    </Text>
                 </View>
             </TouchableOpacity>
         );
@@ -108,7 +109,9 @@ export default function HistoryScreen() {
         <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={64} color="#D1D5DB" />
             <Text style={styles.emptyTitle}>기록이 없습니다</Text>
-            <Text style={styles.emptySubtitle}>예측을 실행하면 이곳에 기록이 표시됩니다</Text>
+            <Text style={styles.emptySubtitle}>
+                예측을 실행하면 이곳에 기록이 표시됩니다
+            </Text>
         </View>
     );
 
@@ -126,7 +129,11 @@ export default function HistoryScreen() {
             ) : (
                 <FlatList
                     data={data}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item, index) => {
+                        const key = item.id || `prediction-${index}`;
+                        console.log("🔑 Key used:", key);
+                        return key;
+                    }}
                     renderItem={renderItem}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={renderEmptyList}
@@ -171,13 +178,22 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
-        shadowColor: "#000",
-        shadowOpacity: 0.08,
-        shadowOffset: { width: 0, height: 2 },
-        shadowRadius: 8,
-        elevation: 2,
         borderWidth: 1,
         borderColor: "#F3F4F6",
+        ...Platform.select({
+            web: {
+                boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.08)",
+            },
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     dateRow: {
         flexDirection: "row",

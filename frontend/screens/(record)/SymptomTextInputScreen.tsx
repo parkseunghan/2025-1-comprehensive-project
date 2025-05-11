@@ -134,7 +134,7 @@ export default function SymptomTextInputScreen() {
     };
 
     return (
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.container, { opacity: fadeAnim, pointerEvents: "auto", }]}>
             <View style={styles.header}>
                 <BackButton />
             </View>
@@ -154,7 +154,7 @@ export default function SymptomTextInputScreen() {
                     style={styles.textInput}
                 />
 
-                <Animated.View style={[styles.buttonWrapper, { transform: [{ translateY }] }]}>
+                <Animated.View style={[styles.buttonWrapper, { transform: [{ translateY }], pointerEvents: "auto", }]}>
                     <TouchableOpacity
                         onPress={handleNlpDiagnosis}
                         style={[styles.button, { marginBottom: 12 }]}

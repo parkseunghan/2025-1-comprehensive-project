@@ -33,7 +33,6 @@ export default function MedicationDetailModal({ visible, onClose, medication }: 
 
   if (!medication) return null;
 
-  // ✅ 수출명을 제거한 한글 이름만 출력
   const displayName = medication.name.replace(/\(수출명\s*:\s*.*?\)/g, "").trim();
 
   const imageSource = medication.imageUrl
@@ -47,7 +46,15 @@ export default function MedicationDetailModal({ visible, onClose, medication }: 
       transparent
       onRequestClose={onClose}
     >
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+      <Animated.View
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim,
+            pointerEvents: visible ? "auto" : "none", // 🔧 Web 경고 해결
+          },
+        ]}
+      >
         <Animated.View style={[styles.modal, { opacity: fadeAnim }]}>
           <ScrollView showsVerticalScrollIndicator={false}>
             <Image

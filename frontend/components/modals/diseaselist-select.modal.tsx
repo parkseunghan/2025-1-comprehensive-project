@@ -1,12 +1,19 @@
-// components/modals/diseaselist-select.modal.tsx
 import React from "react";
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from "react-native";
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { Disease } from "@/types/disease.types";
 
 interface Props {
   visible: boolean;
   category: string;
-  diseaseList: Disease[];
+  diseaseList: Disease[]; 
   selected: string[];
   onToggle: (id: string) => void;
   onSave: () => void;
@@ -26,14 +33,23 @@ export default function DiseaseListSelectModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          { pointerEvents: visible ? "auto" : "none" }, // 🔧 Web 경고 해결
+        ]}
+      >
         <View style={styles.container}>
           <Text style={styles.title}>{category} 관련 질병</Text>
 
           {/* 🔽 스크롤뷰 높이 제한 */}
           <ScrollView style={styles.scrollArea}>
             {filtered.map((d) => (
-              <TouchableOpacity key={d.sickCode} onPress={() => onToggle(d.sickCode)} style={styles.item}>
+              <TouchableOpacity
+                key={d.sickCode}
+                onPress={() => onToggle(d.sickCode)}
+                style={styles.item}
+              >
                 <Text style={[styles.text, selected.includes(d.sickCode) && styles.selected]}>
                   {d.name} {selected.includes(d.sickCode) && "✔"}
                 </Text>
@@ -69,7 +85,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
-    maxHeight: SCREEN_HEIGHT * 0.8, // 전체 높이 제한
+    maxHeight: SCREEN_HEIGHT * 0.8,
   },
   title: {
     fontSize: 18,
@@ -77,7 +93,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   scrollArea: {
-    maxHeight: SCREEN_HEIGHT * 0.5, // 스크롤뷰 높이 제한
+    maxHeight: SCREEN_HEIGHT * 0.5,
     marginBottom: 12,
   },
   item: {

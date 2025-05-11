@@ -27,7 +27,7 @@ export default function Welcome() {
                     <Text style={styles.footerText}>회원가입</Text>
                 </TouchableOpacity>
                 <Text style={styles.footerDivider}> | </Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => { /* TODO: 비회원 로직 */ }}>
                     <Text style={styles.footerText}>비회원</Text>
                 </TouchableOpacity>
             </View>

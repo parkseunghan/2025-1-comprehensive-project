@@ -2,6 +2,7 @@
 import {
     View,
     Text,
+    Platform,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
@@ -290,11 +291,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderWidth: 1,
         borderColor: "#E5E7EB",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        elevation: 3,
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+            },
+            android: {
+                elevation: 3,
+            },
+            web: {
+                boxShadow: "0px 2px 8px rgba(0,0,0,0.05)",
+            },
+        }),
     },
     nameContainer: { width: "100%", alignItems: "center", marginBottom: 4 },
     nameRow: { flexDirection: "row", alignItems: "center" },
@@ -308,11 +318,20 @@ const styles = StyleSheet.create({
         marginBottom: 28,
         borderWidth: 1,
         borderColor: "#E5E7EB",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 2,
+            },
+            android: {
+                elevation: 1,
+            },
+            web: {
+                boxShadow: "0px 1px 4px rgba(0,0,0,0.05)",
+            },
+        }),
     },
     itemRow: {
         paddingVertical: 14,

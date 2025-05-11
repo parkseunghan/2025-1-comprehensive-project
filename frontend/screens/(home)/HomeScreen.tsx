@@ -3,6 +3,7 @@
 import {
     View,
     Text,
+    Platform,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
@@ -149,14 +150,26 @@ const styles = StyleSheet.create({
     profileCard: {
         backgroundColor: "#ffffff",
         borderRadius: 18,
-        padding: 12, // ⬅ 축소
+        padding: 12,
         marginBottom: 24,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 2,
+        elevation: 2, // ✅ Android/iOS 용
+
+        ...Platform.select({
+            web: {
+                boxShadow: "0 2px 4px rgba(0,0,0,0.06)", // ✅ Web 전용
+            },
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.06,
+                shadowRadius: 4,
+            },
+            android: {
+                // Android는 elevation만 있어도 충분
+            },
+        }),
     },
+
     profileRow: {
         flexDirection: "row",
         alignItems: "flex-start",

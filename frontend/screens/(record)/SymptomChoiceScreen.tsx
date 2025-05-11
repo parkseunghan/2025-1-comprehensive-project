@@ -11,7 +11,7 @@ const ROUTES = {
     symptomTextInput: "/(record)/symptomtextinput",
     CategorySelectScreen: "/(record)/categoryselect", // 대분류
     SymptomSelectScreen: "/(record)/symptomselectscreen", // 소분류 ✅
-  };
+};
 
 export default function SymptomChoiceScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -47,7 +47,7 @@ export default function SymptomChoiceScreen() {
             </View>
 
             <Animated.View
-                style={[styles.content, { opacity: fadeAnim, transform: [{ translateY }] }]}
+                style={[styles.content, { opacity: fadeAnim, transform: [{ translateY }], pointerEvents: "auto", }]}
             >
                 <Text style={styles.title}>어떤 방식으로 증상을 입력할까요?</Text>
 

@@ -168,7 +168,7 @@ export default function SymptomInputScreen() {
     };
 
     return (
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.container, { opacity: fadeAnim, pointerEvents: "auto" }]}>
             <View style={styles.header}>
                 <BackButton />
             </View>
@@ -340,6 +340,7 @@ export default function SymptomInputScreen() {
                     {
                         opacity: fadeAnim,
                         transform: [{ translateY }],
+                        pointerEvents: "auto",
                     },
                 ]}
             >

@@ -2,11 +2,11 @@ import React, { useMemo, useState } from "react";
 import {
     View,
     Text,
+    Platform,
     ScrollView,
     Dimensions,
     StyleSheet,
     TouchableOpacity,
-    SafeAreaView,
     ActivityIndicator,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
@@ -268,6 +268,8 @@ export default function HealthStatsScreen() {
                                 decimalPlaces: 0,
                             }}
                             fromZero
+                            yAxisLabel=""
+                            yAxisSuffix=""
                             showValuesOnTopOfBars
                             withInnerLines={false}
                             style={styles.chart}
@@ -330,8 +332,8 @@ export default function HealthStatsScreen() {
                             {avgRisk > 60
                                 ? "최근 위험도가 높은 패턴을 보이고 있습니다. 정기 검진을 권장합니다."
                                 : avgRisk > 30
-                                ? "중간 수준의 위험도를 유지하고 있습니다. 주기적인 모니터링을 권장합니다."
-                                : "안정적인 건강 상태를 유지하고 있습니다. 현재 생활 습관을 유지하세요."}
+                                    ? "중간 수준의 위험도를 유지하고 있습니다. 주기적인 모니터링을 권장합니다."
+                                    : "안정적인 건강 상태를 유지하고 있습니다. 현재 생활 습관을 유지하세요."}
                         </Text>
                     </View>
                 </>
@@ -412,11 +414,22 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 12,
         marginBottom: 12,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 2,
+            },
+            web: {
+                boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.05)",
+            },
+        }),
     },
     primaryCard: {
         backgroundColor: "#FFF0F3",
@@ -461,13 +474,22 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 16,
         marginBottom: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 2,
         borderWidth: 1,
         borderColor: "#F0F0F0",
+        ...Platform.select({
+            ios: {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 2,
+            },
+            web: {
+                boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.05)",
+            },
+        }),
     },
     cardHeader: {
         flexDirection: "row",
