@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
         borderColor: "#e5e7eb",
       },
       footerText: {
-        fontSize: 11,
+        fontSize: 10,
         color: "#6b7280",
         textAlign: "center",
       },
