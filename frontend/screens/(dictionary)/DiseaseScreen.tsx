@@ -191,7 +191,7 @@ import {
       borderColor: "#e5e7eb",
     },
     footerText: {
-      fontSize: 9,
+      fontSize: 11,
       color: "#6b7280",
       textAlign: "center",
     },
