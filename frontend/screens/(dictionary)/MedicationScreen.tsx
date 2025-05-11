@@ -1,164 +1,248 @@
 import {
-    View,
-    Text,
-    FlatList,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Image,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
+import { fetchAllMedications } from "@/services/medication.api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
-import { useState, useMemo } from "react";
-
 import BackButton from "@/common/BackButton";
 import { Medication } from "@/types/medication.types";
-import { fetchAllMedications } from "@/services/medication.api";
+import { Feather } from "@expo/vector-icons";
+import { useMemo, useState } from "react";
 import MedicationDetailModal from "@/modals/medication-detail.modal";
+import AJINGA_LOGO from "@/images/AJINGA_LOGO.png";
+
+// ✅ 수출명 제거 유틸 함수
+const extractItemName = (rawName: string): string => {
+  return rawName.replace(/\(수출명\s*:\s*.*?\)/g, "").trim();
+};
+
+// ✅ 수출명만 추출
+const extractExportName = (rawName: string): string | null => {
+  const match = rawName.match(/\(수출명\s*:\s*(.*?)\)/);
+  return match?.[1]?.trim() || null;
+};
 
 export default function MedicationScreen() {
-    const { data, isLoading, error } = useQuery<Medication[]>({
-        queryKey: ["medications"],
-        queryFn: fetchAllMedications,
-    });
+  const { data, isLoading, error } = useQuery<Medication[]>({
+    queryKey: ["medications"],
+    queryFn: fetchAllMedications,
+  });
 
-    const insets = useSafeAreaInsets();
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isFocused, setIsFocused] = useState(false);
-    const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
-    const [modalVisible, setModalVisible] = useState(false);
+  const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMedication, setSelectedMedication] = useState<
+    (Medication & { exportNameParsed?: string }) | null
+  >(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-    const filteredList = useMemo(() => {
-        if (!searchQuery.trim()) return data;
-        return data?.filter((item) =>
-            item.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
-        );
-    }, [searchQuery, data]);
-
-    const handlePressMedication = (med: Medication) => {
-        setSelectedMedication(med);
-        setModalVisible(true);
-    };
-
-    if (isLoading) return <Text style={styles.center}>불러오는 중...</Text>;
-    if (error) return <Text style={styles.center}>에러 발생!</Text>;
-
-    return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-            <View style={styles.header}>
-                <BackButton />
-            </View>
-
-            <Text style={styles.title}>💊 약물 도감</Text>
-
-            <TextInput
-                style={[
-                    styles.searchInput,
-                    {
-                        borderColor: isFocused ? "#D92B4B" : "#999",
-                        color: "#111",
-                    },
-                ]}
-                placeholder="약물명을 검색하세요"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholderTextColor="#999"
-            />
-
-            <FlatList
-                data={filteredList}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={{ paddingBottom: 120 }}
-                renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handlePressMedication(item)} style={styles.itemBox}>
-                        <Text style={styles.itemText}>{item.name}</Text>
-                    </TouchableOpacity>
-                )}
-            />
-
-            {selectedMedication && (
-                <MedicationDetailModal
-                    visible={modalVisible}
-                    onClose={() => setModalVisible(false)}
-                    medication={selectedMedication}
-                />
-            )}
-
-            {/* ✅ 저작권 */}
-                <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
-                    <Text style={styles.footerText}>
-                    ※ 본 약물 정보는 식품의약품안전처 의약품 개요정보 서비스 API를 활용하여 제공됩니다.
-                    </Text>
-                </View>
-        </View>
+  const filteredMedications = useMemo(() => {
+    if (!data) return [];
+    return data.filter((m) =>
+      m.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+  }, [data, searchQuery]);
+
+  const handlePressMedication = (med: Medication) => {
+    setSelectedMedication({
+      ...med,
+      exportNameParsed: extractExportName(med.name),
+    });
+    setModalVisible(true);
+  };
+
+  if (isLoading) return <Text style={styles.center}>불러오는 중...</Text>;
+  if (error) return <Text style={styles.center}>에러 발생!</Text>;
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <BackButton />
+        <View style={styles.titleRow}>
+          <View style={styles.iconCircle}>
+            <Feather name="package" size={24} color="#D92B4B" />
+          </View>
+          <Text style={styles.title}>약물 도감</Text>
+        </View>
+      </View>
+
+      <TextInput
+        style={styles.searchInput}
+        placeholder="약물 이름을 검색해보세요"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholderTextColor="#111827"
+      />
+
+      <FlatList
+        data={filteredMedications}
+        keyExtractor={(item) => item.itemSeq}
+        renderItem={({ item }) => {
+          const displayName = extractItemName(item.name);
+          const exportName = extractExportName(item.name);
+
+          return (
+            <TouchableOpacity onPress={() => handlePressMedication(item)}>
+              <View style={styles.card}>
+                <Image
+                  source={item.imageUrl ? { uri: item.imageUrl } : AJINGA_LOGO}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+                <View style={styles.cardText}>
+                  <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap" }}>
+                    {exportName && (
+                      <View style={styles.exportTagBox}>
+                        <Text style={styles.exportTag}>수출용</Text>
+                      </View>
+                    )}
+                    <Text style={styles.name}>
+                      {displayName}
+                    </Text>
+                  </View>
+
+
+                  <Text style={styles.efcy} numberOfLines={2}>
+                    {item.efcy || "효능 정보 없음"}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+        contentContainerStyle={{
+          paddingTop: 4,
+          paddingBottom: insets.bottom + 120,
+        }}
+      />
+
+      <MedicationDetailModal
+        visible={modalVisible}
+        medication={selectedMedication}
+        onClose={() => setModalVisible(false)}
+      />
+
+      <View style={[styles.fixedFooter, { paddingBottom: insets.bottom + 8 }]}>
+        <Text style={styles.footerText}>
+          ※ 본 약물 정보는 식품의약품안전처 e약은요 API를 통해 수집되었으며,{"\n"}
+          별도의 이용 제한 없이 자유롭게 활용 가능합니다.
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingHorizontal: 20,
-        backgroundColor: "#F4F1FF",
-    },
-    header: {
-        paddingTop: 24,
-        height: 60,
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 0,
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#111827",
-        marginVertical: 12,
-    },
-    center: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    searchInput: {
-        height: 44,
-        borderWidth: 2,
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        fontSize: 16,
-        marginBottom: 16,
-        backgroundColor: "#ffffff",
-    },
-    itemBox: {
-        paddingVertical: 12,
-        paddingHorizontal: 10,
-        backgroundColor: "#ffffff",
-        marginBottom: 10,
-        borderRadius: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 3,
-        elevation: 1,
-    },
-    itemText: {
-        fontSize: 16,
-        color: "#111827",
-        fontWeight: "500",
-    },
-    footer: {
-        position: "absolute",
-        bottom: 0,
-        width: "100%",
-        backgroundColor: "#F4F1FF",
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderTopWidth: 1,
-        borderColor: "#e5e7eb",
-      },
-      footerText: {
-        fontSize: 10,
-        color: "#6b7280",
-        textAlign: "center",
-      },
+  container: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+  },
+  header: {
+    paddingTop: 24,
+    marginBottom: 12,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFE9ED",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 12,
+    fontSize: 14,
+    color: "#111827",
+    backgroundColor: "#fff",
+    borderColor: "#111827",
+  },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#f9fafb",
+    borderRadius: 12,
+    padding: 8,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  image: {
+    width: 60,
+    height: 60,
+    marginRight: 12,
+    borderRadius: 8,
+    backgroundColor: "#E5E7EB",
+  },
+  cardText: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  exportTagBox: {
+    backgroundColor: "#EDE9FE", // 연보라
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  exportTag: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#5B21B6", // 보라색 텍스트
+  },
+
+
+  efcy: {
+    fontSize: 13,
+    color: "#4b5563",
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#9CA3AF",
+    fontSize: 14,
+    marginTop: 40,
+  },
+  center: {
+    textAlign: "center",
+    marginTop: 30,
+  },
+  fixedFooter: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  footerText: {
+    fontSize: 11,
+    color: "#6b7280",
+    textAlign: "center",
+  },
 });

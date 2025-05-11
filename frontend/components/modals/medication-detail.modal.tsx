@@ -1,96 +1,155 @@
-// 📄 components/modals/medication-detail.modal.tsx
-
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
-    Modal,
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Animated,
+  Image,
 } from "react-native";
 import { Medication } from "@/types/medication.types";
-import { Feather } from "@expo/vector-icons";
 
 interface Props {
-    visible: boolean;
-    onClose: () => void;
-    medication: Medication | null;
+  visible: boolean;
+  onClose: () => void;
+  medication: (Medication & { exportNameParsed?: string }) | null;
 }
 
 export default function MedicationDetailModal({ visible, onClose, medication }: Props) {
-    if (!medication) return null;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-    return (
-        <Modal
-            visible={visible}
-            animationType="fade"
-            transparent
-            onRequestClose={onClose}
-        >
-            <View style={styles.overlay}>
-                <View style={styles.modal}>
-                    {/* 상단 닫기 버튼 */}
-                    <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                        <Feather name="x" size={20} color="#6B7280" />
-                    </TouchableOpacity>
+  useEffect(() => {
+    if (visible) {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
 
-                    <ScrollView>
-                        <Text style={styles.title}>{medication.name}</Text>
+  if (!medication) return null;
 
-                        <Text style={styles.label}>💬 설명</Text>
-                        <Text style={styles.content}>
-                            {medication.description || "설명 정보가 없습니다."}
-                        </Text>
+  // ✅ 수출명을 제거한 한글 이름만 출력
+  const displayName = medication.name.replace(/\(수출명\s*:\s*.*?\)/g, "").trim();
 
-                        <Text style={styles.label}>💡 복용 팁</Text>
-                        <Text style={styles.content}>
-                            {medication.tips || "복용 팁 정보가 없습니다."}
-                        </Text>
-                    </ScrollView>
-                </View>
-            </View>
-        </Modal>
-    );
+  const imageSource = medication.imageUrl
+    ? { uri: medication.imageUrl }
+    : require("@/images/AJINGA_LOGO.png");
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={onClose}
+    >
+      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.modal, { opacity: fadeAnim }]}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Image
+              source={imageSource}
+              style={styles.image}
+              resizeMode="contain"
+            />
+
+            <Text style={styles.title}>{displayName}</Text>
+
+            {medication.exportNameParsed && (
+              <Text style={styles.exportName}>
+                수출명: {medication.exportNameParsed}
+              </Text>
+            )}
+
+            {[
+              { label: "💊 효능", value: medication.efcy },
+              { label: "📝 사용법", value: medication.useMethod },
+              { label: "⚠️ 주의사항", value: medication.atpn },
+              { label: "❗ 경고", value: medication.atpnWarn },
+              { label: "🔄 상호작용", value: medication.intrc },
+              { label: "🚨 부작용", value: medication.se },
+              { label: "📦 보관법", value: medication.depositMethod },
+            ].map(({ label, value }) => (
+              <View key={label}>
+                <Text style={styles.label}>{label}</Text>
+                <Text style={styles.content}>
+                  {value?.trim() || "정보 없음"}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+
+          <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Text style={styles.closeText}>닫기</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.4)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-    },
-    modal: {
-        width: "100%",
-        maxHeight: "85%",
-        backgroundColor: "#ffffff",
-        borderRadius: 12,
-        padding: 20,
-    },
-    closeBtn: {
-        position: "absolute",
-        right: 12,
-        top: 12,
-        zIndex: 10,
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#111827",
-        marginBottom: 16,
-    },
-    label: {
-        fontSize: 15,
-        fontWeight: "600",
-        marginTop: 14,
-        marginBottom: 6,
-        color: "#4B5563",
-    },
-    content: {
-        fontSize: 14,
-        color: "#374151",
-        lineHeight: 22,
-    },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  modal: {
+    width: "100%",
+    maxHeight: "90%",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+  },
+  image: {
+    width: "100%",
+    height: 180,
+    marginTop: 12,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111827",
+    marginTop: 16,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  exportName: {
+    fontSize: 14,
+    fontStyle: "italic",
+    color: "#6B7280",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  label: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 14,
+    marginBottom: 6,
+    color: "#4B5563",
+  },
+  content: {
+    fontSize: 14,
+    color: "#374151",
+    lineHeight: 22,
+  },
+  closeBtn: {
+    alignSelf: "flex-end",
+    marginTop: 16,
+    backgroundColor: "#7F66FF",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  closeText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 });
