@@ -103,7 +103,7 @@ export default function HomeScreen() {
                     <Text style={styles.cardLabel}>자가진단</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={[styles.featureCard, styles.statsCard]}
                     onPress={() => router.push("/(home)/healthstats")}
                 >
@@ -134,17 +134,7 @@ export default function HomeScreen() {
                     </View>
                     <Text style={styles.cardLabel}>약물 도감</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.featureCard, styles.recordsCard]}
-                    onPress={() => router.push("/(dictionary)/test")}
-                >
-                    <View style={styles.iconContainer}>
-                        <View style={[styles.iconCircle, styles.recordsIconCircle]}>
-                            <FontAwesome5 name="pills" size={35} color="#7F66FF" />
-                        </View>
-                    </View>
-                    <Text style={styles.cardLabel}>테스트</Text>
-                </TouchableOpacity>
+
             </View>
         </ScrollView>
     );
