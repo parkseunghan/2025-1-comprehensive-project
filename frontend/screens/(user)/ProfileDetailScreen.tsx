@@ -1,3 +1,4 @@
+// ✅ ProfileDetailScreen.tsx
 import {
     View,
     Text,
@@ -9,12 +10,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { fetchCurrentUser, updateUserProfile } from "@/services/user.api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import BackButton from "@/common/BackButton";
-import DiseaseSelectModal from "@/modals/disease-select.modal";
+import DiseaseCategorySelectModal from "@/modals/disease_category-select.modal";
+import DiseaseListSelectModal from "@/modals/diseaselist-select.modal";
 import MedicationSelectModal from "@/modals/medication-select.modal";
 import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
@@ -52,8 +54,14 @@ export default function ProfileDetailScreen() {
     });
 
     const [editField, setEditField] = useState<"name" | "age" | "height" | "weight" | null>(null);
-    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
     const [medicationModalOpen, setMedicationModalOpen] = useState(false);
+    const [diseaseCategoryModalOpen, setDiseaseCategoryModalOpen] = useState(false);
+    const [diseaseListModalOpen, setDiseaseListModalOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState("");
+
+    const uniqueCategories = useMemo(() => {
+        return [...new Set(diseaseList.map((d) => d.category).filter(Boolean))];
+    }, [diseaseList]);
 
     useEffect(() => {
         if (profile) {
@@ -73,7 +81,6 @@ export default function ProfileDetailScreen() {
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
-                name: editableProfile.name,
                 gender: editableProfile.gender as "남성" | "여성",
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),
@@ -94,14 +101,8 @@ export default function ProfileDetailScreen() {
                 weight: updatedUser.weight,
                 bmi: updatedUser.height > 0 ? (updatedUser.weight / Math.pow(updatedUser.height / 100, 2)) : 0,
                 role: updatedUser.role,
-                diseases: updatedUser.diseases.map((d) => ({
-                    id: d.sickCode,
-                    name: d.name,
-                })),
-                medications: updatedUser.medications.map((m) => ({
-                    id: m.id,
-                    name: m.name,
-                })),
+                diseases: updatedUser.diseases.map((d) => ({ id: d.sickCode, name: d.name })),
+                medications: updatedUser.medications.map((m) => ({ id: m.id, name: m.name })),
             };
             setAuth(token!, mappedUser);
             Alert.alert("저장 완료", "프로필 정보가 저장되었습니다.");
@@ -112,19 +113,14 @@ export default function ProfileDetailScreen() {
         },
     });
 
-    const getDiseaseNames = (ids: string[], list: Disease[]) =>
-        ids.map((id) => list.find((d) => d.sickCode === id)?.name).filter(Boolean).join(", ");
-
     const getMedicationNames = (ids: string[], list: Medication[]) =>
         ids.map((id) => list.find((m) => m.id === id)?.name).filter(Boolean).join(", ");
 
     return (
         <View style={styles.root}>
             <BackButton style={styles.backButton} />
-
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
                 <Text style={styles.title}>프로필 정보</Text>
-
                 <View style={styles.card}>
                     <EditableNameField
                         value={editableProfile.name}
@@ -135,100 +131,87 @@ export default function ProfileDetailScreen() {
                     />
                     <Text style={styles.userEmail}>{user?.email}</Text>
                 </View>
-
                 <View style={styles.infoBox}>
                     <View style={styles.itemRow}>
                         <Text style={styles.itemLabel}>성별</Text>
                         <View style={styles.radioGroup}>
                             {["남성", "여성"].map((item) => (
-                                <TouchableOpacity
-                                    key={item}
-                                    onPress={() => setEditableProfile((prev) => ({ ...prev, gender: item }))}
-                                    style={styles.radioItem}
-                                >
-                                    <View
-                                        style={[
-                                            styles.radioCircle,
-                                            editableProfile.gender === item && styles.radioCircleSelected,
-                                        ]}
-                                    />
+                                <TouchableOpacity key={item} onPress={() => setEditableProfile((prev) => ({ ...prev, gender: item }))} style={styles.radioItem}>
+                                    <View style={[styles.radioCircle, editableProfile.gender === item && styles.radioCircleSelected]} />
                                     <Text style={styles.radioLabel}>{item}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
                     </View>
 
-                    <EditableField
-                        label="나이"
-                        value={editableProfile.age}
-                        editing={editField === "age"}
-                        onPressEdit={() => setEditField("age")}
-                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, age: v }))}
-                        onBlur={() => setEditField(null)}
-                    />
+                    <EditableField label="나이" value={editableProfile.age} editing={editField === "age"} onPressEdit={() => setEditField("age")} onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, age: v }))} onBlur={() => setEditField(null)} />
+                    <EditableField label="키" value={editableProfile.height} editing={editField === "height"} onPressEdit={() => setEditField("height")} onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, height: v }))} onBlur={() => setEditField(null)} />
+                    <EditableField label="몸무게" value={editableProfile.weight} editing={editField === "weight"} onPressEdit={() => setEditField("weight")} onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, weight: v }))} onBlur={() => setEditField(null)} />
 
-                    <EditableField
-                        label="키"
-                        value={editableProfile.height}
-                        editing={editField === "height"}
-                        onPressEdit={() => setEditField("height")}
-                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, height: v }))}
-                        onBlur={() => setEditField(null)}
-                    />
+                    <EditableTextWithButton label="지병" value="" onPress={() => setDiseaseCategoryModalOpen(true)} />
+                    {selectedDiseaseIds.length > 0 && (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 8 }}>
+                            {selectedDiseaseIds.map((id) => {
+                                const disease = diseaseList.find((d) => d.sickCode === id);
+                                return (
+                                    <TouchableOpacity
+                                        key={id}
+                                        onPress={() => setSelectedDiseaseIds((prev) => prev.filter((v) => v !== id))}
+                                        style={{
+                                            backgroundColor: "#f3f4f6",
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 4,
+                                            borderRadius: 16,
+                                            margin: 4,
+                                        }}
+                                    >
+                                        <Text style={{ color: "#111827" }}>{disease?.name} ✕</Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    )}
 
-                    <EditableField
-                        label="몸무게"
-                        value={editableProfile.weight}
-                        editing={editField === "weight"}
-                        onPressEdit={() => setEditField("weight")}
-                        onChange={(v: string) => setEditableProfile((prev) => ({ ...prev, weight: v }))}
-                        onBlur={() => setEditField(null)}
-                    />
-
-                    <EditableTextWithButton
-                        label="지병"
-                        value={getDiseaseNames(selectedDiseaseIds, diseaseList)}
-                        onPress={() => setDiseaseModalOpen(true)}
-                    />
-                    <EditableTextWithButton
-                        label="복용 약물"
-                        value={getMedicationNames(selectedMedicationIds, medicationList)}
-                        onPress={() => setMedicationModalOpen(true)}
-                    />
+                    <EditableTextWithButton label="복용 약물" value="" onPress={() => setMedicationModalOpen(true)} />
+                    {selectedMedicationIds.length > 0 && (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 8 }}>
+                            {selectedMedicationIds.map((id) => {
+                                const med = medicationList.find((m) => m.id === id);
+                                return (
+                                    <TouchableOpacity
+                                        key={id}
+                                        onPress={() => setSelectedMedicationIds((prev) => prev.filter((v) => v !== id))}
+                                        style={{
+                                            backgroundColor: "#f3f4f6",
+                                            paddingHorizontal: 10,
+                                            paddingVertical: 4,
+                                            borderRadius: 16,
+                                            margin: 4,
+                                        }}
+                                    >
+                                        <Text style={{ color: "#111827" }}>{med?.name} ✕</Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    )}
                 </View>
-
                 <View style={styles.saveButtonWrapper}>
                     <TouchableOpacity style={styles.saveButton} onPress={() => mutation.mutate()}>
                         <Text style={styles.saveText}>저장</Text>
                     </TouchableOpacity>
                 </View>
 
-                <DiseaseSelectModal
-                    visible={diseaseModalOpen}
-                    selected={selectedDiseaseIds}
-                    diseaseList={diseaseList}
-                    isLoading={false}
-                    onClose={() => setDiseaseModalOpen(false)}
-                    onSave={(items) => {
-                        setSelectedDiseaseIds(items);
-                        setDiseaseModalOpen(false);
-                    }}
-                />
-                <MedicationSelectModal
-                    visible={medicationModalOpen}
-                    selected={selectedMedicationIds}
-                    medicationList={medicationList}
-                    isLoading={isMedicationLoading}
-                    onClose={() => setMedicationModalOpen(false)}
-                    onSave={(items) => {
-                        setSelectedMedicationIds(items);
-                        setMedicationModalOpen(false);
-                    }}
-                />
+                <DiseaseCategorySelectModal visible={diseaseCategoryModalOpen} categories={uniqueCategories} onSelect={(cat) => { setSelectedCategory(cat); setDiseaseCategoryModalOpen(false); setDiseaseListModalOpen(true); }} onClose={() => setDiseaseCategoryModalOpen(false)} />
+
+                <DiseaseListSelectModal visible={diseaseListModalOpen} category={selectedCategory} diseaseList={diseaseList} selected={selectedDiseaseIds} onToggle={(id) => setSelectedDiseaseIds((prev) => prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id])} onSave={() => setDiseaseListModalOpen(false)} onClose={() => setDiseaseListModalOpen(false)} />
+
+                <MedicationSelectModal visible={medicationModalOpen} selected={selectedMedicationIds} medicationList={medicationList} isLoading={isMedicationLoading} onClose={() => setMedicationModalOpen(false)} onSave={(items) => { setSelectedMedicationIds(items); setMedicationModalOpen(false); }} />
             </ScrollView>
         </View>
     );
 }
+
 
 function EditableNameField({ value, editing, onPressEdit, onChange, onBlur }: any) {
     return (

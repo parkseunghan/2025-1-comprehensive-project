@@ -22,6 +22,7 @@ CREATE TABLE "Disease" (
     "englishName" TEXT,
     "description" TEXT,
     "tips" TEXT,
+    "category" TEXT,
 
     CONSTRAINT "Disease_pkey" PRIMARY KEY ("id")
 );
