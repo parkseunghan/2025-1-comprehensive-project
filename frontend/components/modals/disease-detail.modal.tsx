@@ -25,7 +25,7 @@ export default function DiseaseDetailModal({ visible, disease, onClose }: Props)
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     }
   }, [visible]);
