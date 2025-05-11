@@ -2,6 +2,7 @@
 // 이 파일은 '지병' 객체와 사용자의 객체 간의 관계를 개발적으로 처리하는 서비스 계층입니다.
 
 import prisma from "../config/prisma.service";
+import { diseaseAPI } from "../utils/public-api";
 
 /**
  * 전체 질병 리스트 조회
@@ -20,8 +21,8 @@ export const findAll = async () => {
 };
 
 /** 특정 ID의 지병 검색 */
-export const findById = async (id: string) => {
-  return await prisma.disease.findUnique({ where: { id } });
+export const findBySickCode = async (sickCode: string) => {
+  return await prisma.disease.findUnique({ where: { sickCode } });
 };
 
 /** userId를 기반으로 사용자의 지병 목록 조회 */

@@ -1,5 +1,3 @@
-// 📄 screens/(record)/SymptomTextInputScreen.tsx
-
 import { useEffect, useState, useRef } from "react";
 import {
     View,
@@ -16,20 +14,21 @@ import { router } from "expo-router";
 
 import { useAuthStore } from "@/store/auth.store";
 import { extractSymptoms } from "@/services/llm.api";
+import { extractSymptomsWithNLP } from "@/services/nlp.api";
 import { createSymptomRecord } from "@/services/record.api";
 import { requestPrediction, requestPredictionToDB } from "@/services/prediction.api";
-import { LLMExtractKeyword } from "@/types/symptom.types";
+import { LLMExtractKeyword, NlpExtractResponse } from "@/types/symptom.types";
 import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
 import BackButton from "@/common/BackButton";
 
-// ✅ 컴포넌트 이름을 파일명과 맞춰서 명확하게
 export default function SymptomTextInputScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(20)).current;
 
     const { user } = useAuthStore();
     const [text, setText] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingNlp, setIsLoadingNlp] = useState(false);
+    const [isLoadingLlm, setIsLoadingLlm] = useState(false);
 
     useEffect(() => {
         Animated.parallel([
@@ -46,61 +45,91 @@ export default function SymptomTextInputScreen() {
         ]).start();
     }, []);
 
-    const handleStartDiagnosis = async () => {
+    const runPredictionPipeline = async (extracted: LLMExtractKeyword[]) => {
+        const record = await createSymptomRecord({
+            userId: user!.id,
+            symptoms: extracted.map((item) => item.symptom),
+        });
+
+        await AsyncStorage.setItem("lastRecordId", record.id);
+
+        const aiPrediction = await requestPrediction({
+            symptomKeywords: extracted.map((item) => item.symptom),
+            age: user?.age || 0,
+            gender: user?.gender === "남성" ? "남성" : "여성",
+            height: user?.height || 0,
+            weight: user?.weight || 0,
+            bmi: user?.bmi || 0,
+            diseases: user?.diseases?.map((d) => d.name) || [],
+            medications: user?.medications?.map((m) => m.name) || [],
+        });
+
+        const top1 = aiPrediction.predictions[0];
+        const riskLevel = calculateRiskLevel(top1.riskScore);
+        const guideline = generateGuideline(riskLevel);
+
+        const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
+            rank: i + 1,
+            coarseLabel: pred.coarseLabel,
+            fineLabel: pred.fineLabel,
+            riskScore: pred.riskScore,
+        }));
+
+        await requestPredictionToDB({
+            recordId: record.id,
+            predictions: predictionRanks,
+        });
+
+        router.push("/(record)/result");
+    };
+
+    const handleNlpDiagnosis = async () => {
         if (!text.trim()) {
             Alert.alert("⚠️ 증상을 입력해 주세요.");
             return;
         }
 
         try {
-            setIsLoading(true);
+            setIsLoadingNlp(true);
+            const response: NlpExtractResponse = await extractSymptomsWithNLP(text);
+            const extracted = response.results;
 
-            const extracted: LLMExtractKeyword[] = await extractSymptoms(text);
             if (extracted.length === 0) {
-                Alert.alert("⚠️ 증상 키워드를 추출하지 못했어요.");
+                Alert.alert("⚠️ NLP로 증상 키워드를 추출하지 못했어요.");
                 return;
             }
 
-            const record = await createSymptomRecord({
-                userId: user!.id,
-                symptoms: extracted.map((item) => item.symptom),
-            });
+            // TODO: response.translated, response.cleaned 등을 추후 활용 가능
 
-            await AsyncStorage.setItem("lastRecordId", record.id);
-
-            const aiPrediction = await requestPrediction({
-                symptomKeywords: extracted.map((item) => item.symptom),
-                age: user?.age || 0,
-                gender: user?.gender === "남성" ? "남성" : "여성",
-                height: user?.height || 0,
-                weight: user?.weight || 0,
-                bmi: user?.bmi || 0,
-                diseases: user?.diseases?.map((d) => d.name) || [],
-                medications: user?.medications?.map((m) => m.name) || [],
-            });
-
-            const top1 = aiPrediction.predictions[0];
-            const riskLevel = calculateRiskLevel(top1.riskScore);
-            const guideline = generateGuideline(riskLevel);
-
-            const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
-                rank: i + 1,
-                coarseLabel: pred.coarseLabel,
-                fineLabel: pred.fineLabel,
-                riskScore: pred.riskScore,
-            }));
-
-            await requestPredictionToDB({
-                recordId: record.id,
-                predictions: predictionRanks,
-            });
-
-            router.push("/(record)/result");
+            await runPredictionPipeline(extracted);
         } catch (err) {
-            console.error("❌ 예측 실패:", err);
-            Alert.alert("예측 중 오류가 발생했습니다.");
+            console.error("❌ NLP 예측 실패:", err);
+            Alert.alert("NLP 예측 중 오류가 발생했습니다.");
         } finally {
-            setIsLoading(false);
+            setIsLoadingNlp(false);
+        }
+    };
+
+    const handleLlmDiagnosis = async () => {
+        if (!text.trim()) {
+            Alert.alert("⚠️ 증상을 입력해 주세요.");
+            return;
+        }
+
+        try {
+            setIsLoadingLlm(true);
+            const extracted = await extractSymptoms(text);
+            if (extracted.length === 0) {
+                Alert.alert("⚠️ LLM으로 증상 키워드를 추출하지 못했어요.");
+                return;
+            }
+
+            await runPredictionPipeline(extracted);
+        } catch (err) {
+            console.error("❌ LLM 예측 실패:", err);
+            Alert.alert("LLM 예측 중 오류가 발생했습니다.");
+        } finally {
+            setIsLoadingLlm(false);
         }
     };
 
@@ -127,25 +156,26 @@ export default function SymptomTextInputScreen() {
 
                 <Animated.View style={[styles.buttonWrapper, { transform: [{ translateY }] }]}>
                     <TouchableOpacity
-                        onPress={handleStartDiagnosis}
+                        onPress={handleNlpDiagnosis}
                         style={[styles.button, { marginBottom: 12 }]}
-                        disabled={isLoading}
+                        disabled={isLoadingNlp}
                     >
-                        {isLoading ? (
+                        {isLoadingNlp ? (
                             <ActivityIndicator color="#ffffff" />
                         ) : (
-                            <Text style={styles.buttonText}>예측 시작(NLP)</Text>
+                            <Text style={styles.buttonText}>예측 시작 (NLP 기반)</Text>
                         )}
                     </TouchableOpacity>
+
                     <TouchableOpacity
-                        onPress={handleStartDiagnosis}
+                        onPress={handleLlmDiagnosis}
                         style={styles.button}
-                        disabled={isLoading}
+                        disabled={isLoadingLlm}
                     >
-                        {isLoading ? (
+                        {isLoadingLlm ? (
                             <ActivityIndicator color="#ffffff" />
                         ) : (
-                            <Text style={styles.buttonText}>예측 시작(LLM)</Text>
+                            <Text style={styles.buttonText}>예측 시작 (LLM 기반)</Text>
                         )}
                     </TouchableOpacity>
                 </Animated.View>

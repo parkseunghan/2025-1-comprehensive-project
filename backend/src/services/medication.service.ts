@@ -2,7 +2,7 @@
 // 이 파일은 '약물(Medication)' 관련 데이터 처리 및 사용자와의 관계를 다루는 서비스 계층입니다.
 
 import prisma from "../config/prisma.service";
-import publicAPI from "../utils/public-api";
+import { medicationAPI } from "../utils/public-api";
 
 /** 전체 약물 목록 조회 */
 export const findAll = async () => {
@@ -60,7 +60,7 @@ export const removeMedicationFromUser = async (userId: string, medicationId: str
 /** 공공 API에서 약물 상세정보 가져와 DB에 저장 */
 export const fetchAndSaveMedicationDetail = async (itemSeq: string) => {
   try {
-    const response = await publicAPI.get("/getDrbEasyDrugList", {
+    const response = await medicationAPI.get("/getDrbEasyDrugList", {
       params: {
         serviceKey: process.env.MEDICATION_API_KEY,
         itemSeq,

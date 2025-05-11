@@ -14,9 +14,13 @@ async def extract_symptoms(request: TextRequest):
     translated = translate_to_english(cleaned_text)
 
     results = extract_combined_symptoms(cleaned_text, translated)
-
+    print("✅ original:", original_text)
+    print("✅ cleaned:", cleaned_text)
+    print("✅ translated:", translated)
+    print("✅ results:", results)
     return {
         "original": original_text,
+        "cleaned": cleaned_text,
         "translated": translated,
         "results": results,
     }
