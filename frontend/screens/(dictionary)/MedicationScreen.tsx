@@ -12,7 +12,7 @@ import { fetchAllMedications } from "@/services/medication.api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BackButton from "@/common/BackButton";
 import { Medication } from "@/types/medication.types";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5, Feather } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import MedicationDetailModal from "@/modals/medication-detail.modal";
 import AJINGA_LOGO from "@/images/AJINGA_LOGO.png";
@@ -56,26 +56,35 @@ export default function MedicationScreen() {
       setModalVisible(true);
   };
 
-  if (isLoading) return <Text style={styles.center}>불러오는 중...</Text>;
-  if (error) return <Text style={styles.center}>에러 발생!</Text>;
+  if (isLoading) return <Text style={styles.centerText}>불러오는 중...</Text>;
+  if (error) return <Text style={styles.centerText}>에러 발생!</Text>;
 
   return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
           <View style={styles.header}>
               <BackButton />
               <View style={styles.titleRow}>
-                  <FontAwesome5 name="pills" size={24} color="#D92B4B" />
+                  <FontAwesome5 name="pills" size={24} color="#7F66FF" />
                   <Text style={styles.title}>약물 도감</Text>
               </View>
           </View>
 
-          <TextInput
-              style={styles.searchInput}
-              placeholder="약물 이름을 검색해보세요"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#111827"
-          />
+          {/* 🔍 개선된 검색창 */}
+          <View style={styles.searchWrapper}>
+              <Feather
+                  name="search"
+                  size={18}
+                  color="#9CA3AF"
+                  style={styles.searchIcon}
+              />
+              <TextInput
+                  style={styles.searchInput}
+                  placeholder="궁금한 약물이 있으신가요?"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor="#6B7280"
+              />
+          </View>
 
           <FlatList
               data={filteredMedications}
@@ -103,7 +112,6 @@ export default function MedicationScreen() {
                                           {displayName}
                                       </Text>
                                   </View>
-
                                   <Text style={styles.efcy} numberOfLines={2}>
                                       {item.efcy || "효능 정보 없음"}
                                   </Text>
@@ -112,10 +120,13 @@ export default function MedicationScreen() {
                       </TouchableOpacity>
                   );
               }}
+              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
               contentContainerStyle={{
-                  paddingTop: 4,
                   paddingBottom: insets.bottom + 120,
               }}
+              ListEmptyComponent={() => (
+                  <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
+              )}
           />
 
           <MedicationDetailModal
@@ -124,7 +135,7 @@ export default function MedicationScreen() {
               onClose={() => setModalVisible(false)}
           />
 
-          <View style={[styles.fixedFooter, { paddingBottom: insets.bottom + 8 }]}>
+          <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
               <Text style={styles.footerText}>
                   ※ 본 약물 정보는 식품의약품안전처 e약은요 API를 통해 수집되었으며,{"\n"}
                   별도의 이용 제한 없이 자유롭게 활용 가능합니다.
@@ -155,15 +166,25 @@ const styles = StyleSheet.create({
       color: "#111827",
       marginLeft: 10,
   },
-  searchInput: {
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 8,
+  searchWrapper: {
+      position: "relative",
       marginBottom: 12,
-      fontSize: 14,
+  },
+  searchIcon: {
+      position: "absolute",
+      top: 12,
+      left: 10,
+      zIndex: 1,
+  },
+  searchInput: {
+      borderWidth: 1.5,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 36,
+      fontSize: 15,
       color: "#111827",
       backgroundColor: "#fff",
-      borderColor: "#111827",
+      borderColor: "#D92B4B",
   },
   card: {
       flexDirection: "row",
@@ -171,7 +192,6 @@ const styles = StyleSheet.create({
       borderRadius: 12,
       padding: 8,
       alignItems: "center",
-      marginBottom: 8,
   },
   image: {
       width: 60,
@@ -188,6 +208,12 @@ const styles = StyleSheet.create({
       fontWeight: "700",
       color: "#111827",
   },
+  efcy: {
+      fontSize: 13,
+      color: "#4b5563",
+      marginTop: 4,
+      lineHeight: 18,
+  },
   exportTagBox: {
       backgroundColor: "#EDE9FE",
       paddingHorizontal: 6,
@@ -200,23 +226,17 @@ const styles = StyleSheet.create({
       fontWeight: "600",
       color: "#5B21B6",
   },
-  efcy: {
-      fontSize: 13,
-      color: "#4b5563",
-      marginTop: 4,
-      lineHeight: 18,
-  },
   emptyText: {
       textAlign: "center",
       color: "#9CA3AF",
       fontSize: 14,
       marginTop: 40,
   },
-  center: {
+  centerText: {
       textAlign: "center",
       marginTop: 30,
   },
-  fixedFooter: {
+  footer: {
       position: "absolute",
       bottom: 0,
       left: 0,
@@ -230,6 +250,7 @@ const styles = StyleSheet.create({
   footerText: {
       fontSize: 11,
       color: "#6b7280",
+      lineHeight: 16,
       textAlign: "center",
   },
 });
