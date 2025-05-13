@@ -16,7 +16,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { fetchCurrentUser, updateUserProfile } from "@/services/user.api";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import BackButton from "@/common/BackButton";
-import DiseaseCategorySelectModal from "@/modals/disease_category-select.modal";
+import DiseaseCategorySelectModal from "@/modals/disease-category-select.modal";
 import DiseaseListSelectModal from "@/modals/diseaselist-select.modal";
 import MedicationSelectModal from "@/modals/medication-select.modal";
 import { fetchAllDiseases } from "@/services/disease.api";

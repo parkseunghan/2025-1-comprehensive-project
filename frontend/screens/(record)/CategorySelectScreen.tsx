@@ -20,6 +20,7 @@ import {
 } from "@/services/prediction.api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackButton from "@/common/BackButton";
+import SymptomSelectModal from "../../components/modals/symptom-select.modal"; // ✅ 모달 추가
 
 export default function CategorySelectScreen() {
     const router = useRouter();
@@ -27,6 +28,8 @@ export default function CategorySelectScreen() {
     const { selected, toggle } = useSymptomStore();
     const { user } = useAuthStore();
     const [isLoading, setIsLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false); // ✅ 모달 상태
+    const [selectedCategory, setSelectedCategory] = useState(""); // ✅ 현재 선택한 대분류
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(20)).current;
@@ -72,6 +75,11 @@ export default function CategorySelectScreen() {
         }
     };
 
+    const openModal = (category: string) => {
+        setSelectedCategory(category);
+        setModalVisible(true);
+    };
+
     useEffect(() => {
         const fetch = async () => {
             try {
@@ -100,71 +108,74 @@ export default function CategorySelectScreen() {
     }, []);
 
     return (
-        <Animated.View
-            style={[
-                styles.container,
-                { opacity: fadeAnim, pointerEvents: "auto" },
-            ]}
-        >
-            <View style={styles.header}>
-                <BackButton fallbackRoute="/(record)/symptomchoice" />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.title}>대분류를 선택하세요</Text>
-
-                {selected.length > 0 && (
-                    <View style={styles.selectedBox}>
-                        {selected.map((name) => (
-                            <TouchableOpacity
-                                key={name}
-                                style={styles.chip}
-                                onPress={() => toggle(name)}
-                            >
-                                <Text style={styles.chipText}>{name} ✕</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
-
-                {categories.map((category) => (
-                    <TouchableOpacity
-                        key={category}
-                        style={styles.item}
-                        onPress={() =>
-                            router.push(
-                                `/(record)/symptomselectscreen?category=${encodeURIComponent(
-                                    category
-                                )}`
-                            )
-                        }
-                    >
-                        <Text style={styles.itemText}>{category}</Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-
+        <>
             <Animated.View
                 style={[
-                    styles.buttonWrapper,
-                    {
-                        transform: [{ translateY }],
-                    },
+                    styles.container,
+                    { opacity: fadeAnim, pointerEvents: "auto" },
                 ]}
             >
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={handlePrediction}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <ActivityIndicator color="#ffffff" />
-                    ) : (
-                        <Text style={styles.buttonText}>예측하기</Text>
+                <View style={styles.header}>
+                    <BackButton fallbackRoute="/(record)/symptomchoice" />
+                </View>
+
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <Text style={styles.title}>대분류를 선택하세요</Text>
+
+                    {selected.length > 0 && (
+                        <View style={styles.selectedBox}>
+                            {selected.map((name) => (
+                                <TouchableOpacity
+                                    key={name}
+                                    style={styles.chip}
+                                    onPress={() => toggle(name)}
+                                >
+                                    <Text style={styles.chipText}>{name} ✕</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     )}
-                </TouchableOpacity>
+
+                    {categories.map((category) => (
+                        <TouchableOpacity
+                            key={category}
+                            style={styles.item}
+                            onPress={() => openModal(category)} // ✅ router.push → 모달 열기
+                        >
+                            <Text style={styles.itemText}>{category}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+
+                <Animated.View
+                    style={[
+                        styles.buttonWrapper,
+                        {
+                            transform: [{ translateY }],
+                        },
+                    ]}
+                >
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={handlePrediction}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#ffffff" />
+                        ) : (
+                            <Text style={styles.buttonText}>예측하기</Text>
+                        )}
+                    </TouchableOpacity>
+                </Animated.View>
             </Animated.View>
-        </Animated.View>
+
+            {/* ✅ 모달 컴포넌트 삽입 */}
+            <SymptomSelectModal
+                visible={modalVisible}
+                category={selectedCategory}
+                onClose={() => setModalVisible(false)}
+            />
+        </>
     );
 }
 
@@ -186,10 +197,10 @@ const styles = StyleSheet.create({
         paddingBottom: 80,
     },
     title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 12, // ✅ 아래로 내리기 위한 여백 추가
-    marginBottom: 20,
+        fontSize: 20,
+        fontWeight: "bold",
+        marginTop: 12,
+        marginBottom: 20,
     },
     selectedBox: {
         flexDirection: "row",
