@@ -16,7 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
 import BackButton from "@/common/BackButton";
-import DiseaseSelectModal from "@/modals/disease-select.modal";
+import DiseaseCategorySelectModal from "@/modals/disease-category-select.modal";
+import DiseaseListSelectModal from "@/modals/diseaselist-select.modal";
 import MedicationSelectModal from "@/modals/medication-select.modal";
 
 import { fetchAllDiseases } from "@/services/disease.api";
@@ -60,7 +61,10 @@ export default function SymptomInputScreen() {
 
     const [editField, setEditField] = useState<keyof typeof profileState | null>(null);
     const [buttonState, setButtonState] = useState<"scroll" | "next">("scroll");
-    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+
+    const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+    const [listModalOpen, setListModalOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState("");
     const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
     useEffect(() => {
@@ -141,6 +145,8 @@ export default function SymptomInputScreen() {
     const getMedicationNames = () =>
         selectedMedicationIds.map((id) => medicationList.find((m) => m.id === id)?.name).filter(Boolean).join(", ");
 
+    const diseaseCategories = [...new Set(diseaseList.map((d) => d.category))];
+
     const calculateBMI = (heightCm: string, weightKg: string) => {
         const height = parseFloat(heightCm) / 100;
         const weight = parseFloat(weightKg);
@@ -168,7 +174,7 @@ export default function SymptomInputScreen() {
     };
 
     return (
-        <Animated.View style={[styles.container, { opacity: fadeAnim, pointerEvents: "auto" }]}>
+        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
             <View style={styles.header}>
                 <BackButton />
             </View>
@@ -180,29 +186,12 @@ export default function SymptomInputScreen() {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
             >
-                <View style={styles.titleWrapper}>
-                    <Text style={styles.title}>기본정보를 확인해주세요</Text>
-                </View>
-
                 {/* 이름 */}
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>이름</Text>
-                        <TouchableOpacity onPress={() => setEditField("name")}>
-                            <Ionicons name="create-outline" size={16} color="#6B7280" />
-                        </TouchableOpacity>
                     </View>
-                    {editField === "name" ? (
-                        <TextInput
-                            style={styles.inputValue}
-                            value={profileState.name}
-                            onChangeText={(text) => handleChange("name", text)}
-                            onBlur={() => setEditField(null)}
-                            autoFocus
-                        />
-                    ) : (
-                        <Text style={styles.inputValue}>{profileState.name}</Text>
-                    )}
+                    <Text style={styles.inputValue}>{profileState.name}</Text>
                 </View>
 
                 {/* 성별 */}
@@ -315,7 +304,7 @@ export default function SymptomInputScreen() {
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>지병</Text>
-                        <TouchableOpacity onPress={() => setDiseaseModalOpen(true)}>
+                        <TouchableOpacity onPress={() => setCategoryModalOpen(true)}>
                             <Ionicons name="add" size={16} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
@@ -351,15 +340,27 @@ export default function SymptomInputScreen() {
                 </TouchableOpacity>
             </Animated.View>
 
-            <DiseaseSelectModal
-                visible={diseaseModalOpen}
-                selected={selectedDiseaseIds}
+            <DiseaseCategorySelectModal
+                visible={categoryModalOpen}
+                categories={diseaseCategories}
+                onSelect={(cat) => {
+                    setSelectedCategory(cat);
+                    setCategoryModalOpen(false);
+                    setListModalOpen(true);
+                }}
+                onClose={() => setCategoryModalOpen(false)}
+            />
+
+            <DiseaseListSelectModal
+                visible={listModalOpen}
+                category={selectedCategory}
                 diseaseList={diseaseList}
-                isLoading={false}
-                onClose={() => setDiseaseModalOpen(false)}
-                onSave={(items) => {
-                    setSelectedDiseaseIds(items);
-                    setDiseaseModalOpen(false);
+                selected={selectedDiseaseIds}
+                onToggle={(items) => setSelectedDiseaseIds(items)}
+                onSave={() => setListModalOpen(false)}
+                onBack={() => {
+                    setListModalOpen(false);
+                    setCategoryModalOpen(true);
                 }}
             />
 

@@ -1,5 +1,3 @@
-// 📄 screens/ProfileFormScreen.tsx
-
 import { useState } from "react";
 import {
     View,
@@ -19,9 +17,10 @@ import { updateUserProfile } from "@/services/user.api";
 import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
 
-import DiseaseSelectModal from "@/modals/disease-select.modal";
-import MedicationSelectModal from "@/modals/medication-select.modal";
 import BackButton from "@/common/BackButton";
+import DiseaseCategorySelectModal from "@/modals/disease-category-select.modal";
+import DiseaseListSelectModal from "@/modals/diseaselist-select.modal";
+import MedicationSelectModal from "@/modals/medication-select.modal";
 
 import { z } from "zod";
 import { Disease } from "@/types/disease.types";
@@ -58,7 +57,10 @@ export default function ProfileFormScreen() {
 
     const [diseases, setDiseases] = useState<string[]>([]);
     const [medications, setMedications] = useState<string[]>([]);
-    const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+
+    const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+    const [listModalOpen, setListModalOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState("");
     const [medicationModalOpen, setMedicationModalOpen] = useState(false);
 
     const handleSubmit = async () => {
@@ -92,6 +94,8 @@ export default function ProfileFormScreen() {
         }
     };
 
+    const diseaseCategories = [...new Set(diseaseList.map((d) => d.category))];
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>
@@ -118,6 +122,7 @@ export default function ProfileFormScreen() {
                 ))}
             </View>
 
+            {/* 나이, 키, 몸무게 입력 */}
             <TextInput
                 style={styles.input}
                 placeholder="예: 25"
@@ -151,7 +156,7 @@ export default function ProfileFormScreen() {
                         .join(", ")}
                     editable={false}
                 />
-                <TouchableOpacity onPress={() => setDiseaseModalOpen(true)}>
+                <TouchableOpacity onPress={() => setCategoryModalOpen(true)}>
                     <Ionicons name="add" size={20} color="#111827" />
                 </TouchableOpacity>
             </View>
@@ -172,21 +177,36 @@ export default function ProfileFormScreen() {
                 </TouchableOpacity>
             </View>
 
+            {/* 저장 버튼 */}
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                 <Text style={styles.submitButtonText}>저장하기</Text>
             </TouchableOpacity>
 
-            <DiseaseSelectModal
-                visible={diseaseModalOpen}
-                selected={diseases}
+            {/* 모달 컴포넌트들 */}
+            <DiseaseCategorySelectModal
+                visible={categoryModalOpen}
+                categories={diseaseCategories}
+                onSelect={(cat) => {
+                    setSelectedCategory(cat);
+                    setCategoryModalOpen(false);
+                    setListModalOpen(true);
+                }}
+                onClose={() => setCategoryModalOpen(false)}
+            />
+
+            <DiseaseListSelectModal
+                visible={listModalOpen}
+                category={selectedCategory}
                 diseaseList={diseaseList}
-                isLoading={isDiseaseLoading}
-                onClose={() => setDiseaseModalOpen(false)}
-                onSave={(items) => {
-                    setDiseases(items);
-                    setDiseaseModalOpen(false);
+                selected={diseases}
+                onToggle={(items) => setDiseases(items)}
+                onSave={() => setListModalOpen(false)}
+                onBack={() => {
+                    setListModalOpen(false);
+                    setCategoryModalOpen(true);
                 }}
             />
+
             <MedicationSelectModal
                 visible={medicationModalOpen}
                 selected={medications}
