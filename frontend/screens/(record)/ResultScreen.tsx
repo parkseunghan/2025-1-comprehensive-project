@@ -1,3 +1,4 @@
+// 📄 ResultScreen.tsx
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from "react-native";
 import { useEffect, useState } from "react";
 import { getPredictionByRecord } from "@/services/prediction.api";
@@ -6,25 +7,38 @@ import { Prediction, PredictionRank } from "@/types/prediction.types";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { diseaseNameMap } from "@/utils/diseaseMapping";
+import { getDiseaseInfo } from "@/services/disease.api"; // ✅ 백엔드 API 사용
+
 
 export default function ResultScreen() {
   const [result, setResult] = useState<Prediction & { ranks: PredictionRank[] } | null>(null);
+  const [diseaseInfo, setDiseaseInfo] = useState<{ description: string; tips: string } | null>(null);
   const navigation = useNavigation();
 
   useEffect(() => {
     const fetchResult = async () => {
       const recordId = await AsyncStorage.getItem("lastRecordId");
       if (!recordId) return;
-
-      const data = await getPredictionByRecord(recordId);
-      console.log("[ResultScreen] 예측 결과:", data);
-      setResult(data);
+  
+      const result = await getPredictionByRecord(recordId);
+      setResult(result);
+  
+      const topLabel = result.ranks[0]?.fineLabel;
+      const mappedName = diseaseNameMap[topLabel];
+  
+      if (mappedName) {
+        const info = await getDiseaseInfo(mappedName);
+        if (info) {
+          setDiseaseInfo({ description: info.description, tips: info.tips });
+        }
+      }
     };
-
+  
     fetchResult();
   }, []);
 
-  const getRiskColor = (riskLevel) => {
+  const getRiskColor = (riskLevel: string): [string, string] => {
     switch (riskLevel) {
       case "높음":
         return ["#ff416c", "#ff4b2b"];
@@ -36,6 +50,7 @@ export default function ResultScreen() {
         return ["#4776E6", "#8E54E9"];
     }
   };
+ 
 
   const getRiskEmoji = (riskLevel) => {
     switch (riskLevel) {
@@ -154,6 +169,17 @@ export default function ResultScreen() {
           </View>
         </View>
 
+        {diseaseInfo && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>예측 질병 정보</Text>
+            <Text style={styles.sectionTitle}>설명</Text>
+            <Text style={styles.guideline}>{diseaseInfo.description}</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>관리 팁</Text>
+            <Text style={styles.guideline}>{diseaseInfo.tips}</Text>
+          </View>
+        )}
+
+
         <TouchableOpacity style={styles.moreInfoButton}>
           <Text style={styles.moreInfoButtonText}>상세 정보 보기</Text>
           <Ionicons name="chevron-forward" size={20} color="#D92B4B" />
@@ -173,6 +199,7 @@ export default function ResultScreen() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeArea: {
