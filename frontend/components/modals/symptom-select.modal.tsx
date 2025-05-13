@@ -8,6 +8,7 @@ import {
     StyleSheet,
     ActivityIndicator,
     Animated,
+    Dimensions,
 } from "react-native";
 import { fetchAllSymptoms } from "@/services/symptom.api";
 import { Symptom } from "@/types/symptom.types";
@@ -24,22 +25,23 @@ export default function SymptomSelectModal({ visible, category, onClose }: Props
     const [loading, setLoading] = useState(false);
     const { selected, toggle } = useSymptomStore();
 
-    // ✅ fade-only 애니메이션
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
+    // ✅ 모달 전용 선택 상태 (로컬)
+    const [localSelected, setLocalSelected] = useState<string[]>([]);
+
+    // ✅ 모달 열릴 때 현재 상태 복사
     useEffect(() => {
         if (visible) {
-            // fade 초기화
             fadeAnim.setValue(0);
-
-            // 애니메이션 실행
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 250,
                 useNativeDriver: true,
             }).start();
 
-            // 증상 데이터 로드
+            setLocalSelected([...selected]);
+
             const fetchSymptoms = async () => {
                 setLoading(true);
                 try {
@@ -57,96 +59,132 @@ export default function SymptomSelectModal({ visible, category, onClose }: Props
         }
     }, [visible]);
 
+    // ✅ 항목 선택 토글 (localSelected만 변경)
+    const handleToggle = (name: string) => {
+        if (localSelected.includes(name)) {
+            setLocalSelected((prev) => prev.filter((n) => n !== name));
+        } else {
+            setLocalSelected((prev) => [...prev, name]);
+        }
+    };
+
+    // ✅ 확인 → 실제 toggle 반영
+    const handleConfirm = () => {
+        // 기존 selected → localSelected로 맞추기
+        const toAdd = localSelected.filter((item) => !selected.includes(item));
+        const toRemove = selected.filter((item) => !localSelected.includes(item));
+
+        toAdd.forEach((item) => toggle(item));
+        toRemove.forEach((item) => toggle(item));
+
+        onClose();
+    };
+
+    // ✅ 취소 → 아무 것도 안 바꾸고 닫기
+    const handleCancel = () => {
+        onClose();
+    };
+
     return (
         <Modal
             visible={visible}
-            animationType="none"
             transparent
+            animationType="none"
             onRequestClose={onClose}
         >
-            <View style={styles.overlay}>
+            <View style={[styles.overlay, { pointerEvents: visible ? "auto" : "none" }]}>
                 <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
                     <Text style={styles.title}>{category} 증상 선택</Text>
 
                     {loading ? (
                         <ActivityIndicator color="#D92B4B" />
                     ) : (
-                        <ScrollView style={{ marginBottom: 20 }}>
+                        <ScrollView style={styles.scrollArea}>
                             {symptoms.map((s) => (
                                 <TouchableOpacity
                                     key={s.id}
-                                    style={[
-                                        styles.item,
-                                        selected.includes(s.name) && styles.itemSelected,
-                                    ]}
-                                    onPress={() => toggle(s.name)}
+                                    style={styles.item}
+                                    onPress={() => handleToggle(s.name)}
                                 >
                                     <Text
                                         style={[
-                                            styles.itemText,
-                                            selected.includes(s.name) && styles.itemTextSelected,
+                                            styles.text,
+                                            localSelected.includes(s.name) && styles.selected,
                                         ]}
                                     >
-                                        {s.name}
+                                        {s.name} {localSelected.includes(s.name) && "✔"}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
                     )}
 
-                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <Text style={styles.closeText}>확인</Text>
-                    </TouchableOpacity>
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity onPress={handleCancel} style={styles.button}>
+                            <Text style={styles.cancel}>취소</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleConfirm} style={styles.button}>
+                            <Text style={styles.confirm}>확인</Text>
+                        </TouchableOpacity>
+                    </View>
                 </Animated.View>
             </View>
         </Modal>
     );
 }
 
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.3)",
         justifyContent: "center",
-        alignItems: "center",
+        backgroundColor: "rgba(0,0,0,0.3)",
+        paddingHorizontal: 16,
     },
     container: {
-        width: "90%",
-        maxHeight: "80%",
-        backgroundColor: "#fff",
-        borderRadius: 16,
+        backgroundColor: "white",
+        borderRadius: 10,
         padding: 20,
+        maxHeight: SCREEN_HEIGHT * 0.8,
     },
     title: {
         fontSize: 18,
         fontWeight: "bold",
-        marginBottom: 16,
+        marginBottom: 12,
+    },
+    scrollArea: {
+        maxHeight: SCREEN_HEIGHT * 0.5,
+        marginBottom: 12,
     },
     item: {
-        padding: 14,
-        borderWidth: 1,
-        borderRadius: 10,
-        marginBottom: 12,
-        borderColor: "#E5E7EB",
+        paddingVertical: 10,
     },
-    itemSelected: {
-        backgroundColor: "#D92B4B",
-    },
-    itemText: {
+    text: {
         fontSize: 16,
-        color: "#374151",
     },
-    itemTextSelected: {
-        color: "#ffffff",
+    selected: {
+        color: "#D92B4B",
+        fontWeight: "bold",
     },
-    closeButton: {
-        backgroundColor: "#D92B4B",
-        padding: 12,
-        borderRadius: 8,
+    buttonRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 20,
+    },
+    button: {
+        flex: 1,
         alignItems: "center",
+        paddingVertical: 12,
+        borderRadius: 8,
+        backgroundColor: "#f9fafb",
     },
-    closeText: {
-        color: "#fff",
+    cancel: {
+        color: "#6B7280",
+        fontWeight: "bold",
+    },
+    confirm: {
+        color: "#D92B4B",
         fontWeight: "bold",
     },
 });
