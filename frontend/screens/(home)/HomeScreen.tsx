@@ -15,6 +15,10 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 
+// ✅ 수출명 제거 유틸
+const extractItemName = (raw: string): string =>
+    raw.replace(/\(수출명\s*:\s*.*?\)/g, "").trim();
+
 export default function HomeScreen() {
     const { user } = useAuthStore();
     const { data: profile } = useQuery({
@@ -60,7 +64,9 @@ export default function HomeScreen() {
                             <View style={styles.tagList}>
                                 {(profile?.diseases?.length ? profile.diseases : [{ name: "없음" }]).map((d, idx) => (
                                     <View key={idx} style={styles.tagBox}>
-                                        <Text style={styles.tagText}>{d.name}</Text>
+                                        <Text style={styles.tagText} numberOfLines={1} ellipsizeMode="tail">
+                                            {d.name}
+                                        </Text>
                                     </View>
                                 ))}
                             </View>
@@ -69,7 +75,9 @@ export default function HomeScreen() {
                             <View style={styles.tagList}>
                                 {(profile?.medications?.length ? profile.medications : [{ name: "없음" }]).map((m, idx) => (
                                     <View key={idx} style={styles.tagBox}>
-                                        <Text style={styles.tagText}>{m.name}</Text>
+                                        <Text style={styles.tagText} numberOfLines={1} ellipsizeMode="tail">
+                                            {extractItemName(m.name)}
+                                        </Text>
                                     </View>
                                 ))}
                             </View>
@@ -86,11 +94,9 @@ export default function HomeScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* ✅ 기능 타이틀 */}
             <Text style={styles.sectionTitle}>기능</Text>
             <Text style={styles.sectionSub}>주요 기능들을 바로 확인해보세요</Text>
 
-            {/* ✅ 기능 카드 */}
             <View style={styles.cardGrid}>
                 <TouchableOpacity
                     style={[styles.featureCard, styles.diagnosisCard]}
@@ -135,7 +141,6 @@ export default function HomeScreen() {
                     </View>
                     <Text style={styles.cardLabel}>약물 도감</Text>
                 </TouchableOpacity>
-
             </View>
         </ScrollView>
     );
@@ -152,11 +157,10 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         padding: 12,
         marginBottom: 24,
-        elevation: 2, // ✅ Android/iOS 용
-
+        elevation: 2,
         ...Platform.select({
             web: {
-                boxShadow: "0 2px 4px rgba(0,0,0,0.06)", // ✅ Web 전용
+                boxShadow: "0 2px 4px rgba(0,0,0,0.06)",
             },
             ios: {
                 shadowColor: "#000",
@@ -164,12 +168,8 @@ const styles = StyleSheet.create({
                 shadowOpacity: 0.06,
                 shadowRadius: 4,
             },
-            android: {
-                // Android는 elevation만 있어도 충분
-            },
         }),
     },
-
     profileRow: {
         flexDirection: "row",
         alignItems: "flex-start",
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     profileMain: {
-        fontSize: 18, // ⬇
+        fontSize: 18,
         fontWeight: "bold",
         color: "#111827",
         marginBottom: 4,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     profileSubLabel: {
-        fontSize: 12, // ⬇
+        fontSize: 12,
         color: "#6B7280",
         fontWeight: "600",
         marginBottom: 2,
@@ -211,12 +211,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#A78BFA",
         borderRadius: 5,
-        paddingHorizontal: 6, // ⬇
-        paddingVertical: 1,   // ⬇
+        paddingHorizontal: 6,
+        paddingVertical: 1,
         backgroundColor: "#F3F0FF",
+        maxWidth: "100%",
     },
     tagText: {
-        fontSize: 11, // ⬇
+        fontSize: 11,
         color: "#4B5563",
         fontWeight: "500",
     },

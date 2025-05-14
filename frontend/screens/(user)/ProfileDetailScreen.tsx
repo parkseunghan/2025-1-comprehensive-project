@@ -282,6 +282,10 @@ export default function ProfileDetailScreen() {
                                 const med = medicationList.find(
                                     (m) => m.id === id
                                 );
+                                const displayName = med?.name
+                                    .replace(/\(수출명\s*:\s*.*?\)/g, "")
+                                    .trim();
+
                                 return (
                                     <TouchableOpacity
                                         key={id}
@@ -296,10 +300,15 @@ export default function ProfileDetailScreen() {
                                             paddingVertical: 4,
                                             borderRadius: 16,
                                             margin: 4,
+                                            maxWidth: "100%",
                                         }}
                                     >
-                                        <Text style={{ color: "#111827" }}>
-                                            {med?.name} ✕
+                                        <Text
+                                            style={{ color: "#111827" }}
+                                            numberOfLines={1}
+                                            ellipsizeMode="tail"
+                                        >
+                                            {displayName} ✕
                                         </Text>
                                     </TouchableOpacity>
                                 );
