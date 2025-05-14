@@ -76,10 +76,17 @@ const EMERGENCY_DISEASES = ["심근경색", "뇌출혈", "급성 폐렴"];
  * 🔹 위험 등급 → 가이드라인 텍스트
  */
 function generateGuideline(riskLevel: string): string {
-  if (riskLevel === "응급") return "즉시 응급실 방문이 필요합니다.";
-  if (riskLevel === "높음") return "가까운 병원 방문을 권장합니다.";
-  if (riskLevel === "보통") return "증상을 경과 관찰하고 심화 시 병원을 방문하세요.";
-  return "생활 관리를 통해 주의하세요.";
+  if (riskLevel === "응급") {
+    return "심각한 증상이 의심됩니다. 즉시 119 또는 응급실로 이동하세요.";
+  }
+  if (riskLevel === "높음") {
+    return "증상이 심각할 수 있습니다. 오늘 중 가까운 병원에 방문해 진료를 받으세요.";
+  }
+  if (riskLevel === "보통") {
+    return "상태를 주의 깊게 관찰하세요. 증상이 1~2일 이상 지속되거나 심해지면 병원을 방문하세요.";
+  }
+  // 낮음
+  return "증상이 가벼운 상태입니다. 수분 섭취, 휴식 등 생활 관리를 하며 경과를 지켜보세요.";
 }
 
 /**

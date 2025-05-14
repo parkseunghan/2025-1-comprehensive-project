@@ -1,4 +1,4 @@
-// 📄 ResultScreen.tsx
+// 📄 screens/(record)/ResultScreen.tsx
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from "react-native";
 import { useEffect, useState } from "react";
 import { getPredictionByRecord } from "@/services/prediction.api";
@@ -8,11 +8,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { diseaseNameMap } from "@/utils/diseaseMapping";
-import { getDiseaseInfo } from "@/services/disease.api"; // ✅ 백엔드 API 사용
-
+import { getDiseaseInfo } from "@/services/disease.api";
 
 export default function ResultScreen() {
   const [result, setResult] = useState<Prediction & { ranks: PredictionRank[] } | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [diseaseInfo, setDiseaseInfo] = useState<{ description: string; tips: string } | null>(null);
   const navigation = useNavigation();
 
@@ -20,48 +20,40 @@ export default function ResultScreen() {
     const fetchResult = async () => {
       const recordId = await AsyncStorage.getItem("lastRecordId");
       if (!recordId) return;
-  
       const result = await getPredictionByRecord(recordId);
       setResult(result);
-  
-      const topLabel = result.ranks[0]?.fineLabel;
-      const mappedName = diseaseNameMap[topLabel];
-  
-      if (mappedName) {
-        const info = await getDiseaseInfo(mappedName);
-        if (info) {
-          setDiseaseInfo({ description: info.description, tips: info.tips });
-        }
-      }
     };
-  
     fetchResult();
   }, []);
 
+  useEffect(() => {
+    if (!result?.ranks || result.ranks.length === 0) return;
+    const selected = result.ranks[selectedIndex];
+    const mappedName = diseaseNameMap[selected.fineLabel];
+    if (mappedName) {
+      getDiseaseInfo(mappedName).then((info) => {
+        if (info) {
+          setDiseaseInfo({ description: info.description, tips: info.tips });
+        }
+      });
+    }
+  }, [result, selectedIndex]);
+
   const getRiskColor = (riskLevel: string): [string, string] => {
     switch (riskLevel) {
-      case "높음":
-        return ["#ff416c", "#ff4b2b"];
-      case "중간":
-        return ["#f7b733", "#fc4a1a"];
-      case "낮음":
-        return ["#56ab2f", "#a8e063"];
-      default:
-        return ["#4776E6", "#8E54E9"];
+      case "높음": return ["#ff416c", "#ff4b2b"];
+      case "중간": return ["#f7b733", "#fc4a1a"];
+      case "낮음": return ["#56ab2f", "#a8e063"];
+      default: return ["#4776E6", "#8E54E9"];
     }
   };
- 
 
-  const getRiskEmoji = (riskLevel) => {
+  const getRiskEmoji = (riskLevel: string) => {
     switch (riskLevel) {
-      case "높음":
-        return "😰";
-      case "중간":
-        return "😐";
-      case "낮음":
-        return "😊";
-      default:
-        return "🤔";
+      case "높음": return "😰";
+      case "중간": return "😐";
+      case "낮음": return "😊";
+      default: return "🤔";
     }
   };
 
@@ -80,6 +72,9 @@ export default function ResultScreen() {
     );
   }
 
+  const selectedDisease = result.ranks[selectedIndex]?.fineLabel;
+  const mappedDiseaseName = diseaseNameMap[selectedDisease];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -97,7 +92,6 @@ export default function ResultScreen() {
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>진단 요약</Text>
           </View>
-
           <View style={styles.section}>
             <View style={styles.sectionTitleContainer}>
               <MaterialCommunityIcons name="shape" size={20} color="#D92B4B" />
@@ -113,12 +107,7 @@ export default function ResultScreen() {
               <MaterialCommunityIcons name="alert-circle-outline" size={20} color="#D92B4B" />
               <Text style={styles.sectionTitle}>위험도</Text>
             </View>
-            <LinearGradient
-              colors={getRiskColor(result.riskLevel)}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.riskContainer}
-            >
+            <LinearGradient colors={getRiskColor(result.riskLevel)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.riskContainer}>
               <View style={styles.riskContent}>
                 <Text style={styles.riskScore}>{Number(result.riskScore).toFixed(2)}</Text>
                 <View style={styles.riskLevelContainer}>
@@ -136,64 +125,51 @@ export default function ResultScreen() {
           </View>
           <View style={styles.diseaseList}>
             {result.ranks.map((rank, index) => (
-              <View key={rank.rank} style={styles.diseaseItem}>
+              <TouchableOpacity
+                key={rank.rank}
+                style={[styles.diseaseItem, index === selectedIndex && { backgroundColor: "#fff0f3" }]}
+                onPress={() => setSelectedIndex(index)}
+              >
                 <View style={styles.rankContainer}>
                   <Text style={styles.rank}>{index + 1}</Text>
                 </View>
                 <View style={styles.diseaseDetails}>
                   <Text style={styles.diseaseName}>{rank.fineLabel}</Text>
                   <View style={styles.progressBarContainer}>
-                    <View
-                      style={[
-                        styles.progressBar,
-                        { width: `${rank.riskScore * 100}%` }
-                      ]}
-                    />
+                    <View style={[styles.progressBar, { width: `${rank.riskScore * 100}%` }]} />
                   </View>
                   <Text style={styles.diseaseScore}>{(rank.riskScore * 100).toFixed(1)}%</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
+
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>대응 가이드라인</Text>
           </View>
+          {diseaseInfo?.description && (
+          <View style={[styles.card, { backgroundColor: '#ecf4ff', borderLeftColor: '#3b82f6', borderLeftWidth: 4, flexDirection: 'row' }]}>
+            <View style={styles.guidelineIconContainer}>
+              <MaterialCommunityIcons name="information-outline" size={24} color="#3b82f6" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>질병 설명</Text>
+              <Text style={styles.guideline}>{diseaseInfo.description}</Text>
+            </View>
+          </View>
+        )}
           <View style={styles.guidelineContainer}>
             <View style={styles.guidelineIconContainer}>
               <MaterialCommunityIcons name="lightbulb-outline" size={24} color="#f59e0b" />
             </View>
-            <Text style={styles.guideline}>{result.guideline}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>관리 팁</Text>
+              <Text style={styles.guideline}>{diseaseInfo?.tips ?? result.guideline}</Text>
+            </View>
           </View>
-        </View>
-
-        {diseaseInfo && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>예측 질병 정보</Text>
-            <Text style={styles.sectionTitle}>설명</Text>
-            <Text style={styles.guideline}>{diseaseInfo.description}</Text>
-            <Text style={[styles.sectionTitle, { marginTop: 12 }]}>관리 팁</Text>
-            <Text style={styles.guideline}>{diseaseInfo.tips}</Text>
-          </View>
-        )}
-
-
-        <TouchableOpacity style={styles.moreInfoButton}>
-          <Text style={styles.moreInfoButtonText}>상세 정보 보기</Text>
-          <Ionicons name="chevron-forward" size={20} color="#D92B4B" />
-        </TouchableOpacity>
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton}>
-            <MaterialCommunityIcons name="share-variant" size={22} color="#fff" />
-            <Text style={styles.actionButtonText}>결과 공유</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, styles.saveButton]}>
-            <MaterialCommunityIcons name="content-save" size={22} color="#fff" />
-            <Text style={styles.actionButtonText}>PDF로 저장</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
