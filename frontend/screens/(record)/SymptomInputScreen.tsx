@@ -57,9 +57,13 @@ export default function SymptomInputScreen() {
     });
 
     const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
-    const [selectedMedicationIds, setSelectedMedicationIds] = useState<string[]>([]);
+    const [selectedMedicationIds, setSelectedMedicationIds] = useState<
+        string[]
+    >([]);
 
-    const [editField, setEditField] = useState<keyof typeof profileState | null>(null);
+    const [editField, setEditField] = useState<
+        keyof typeof profileState | null
+    >(null);
     const [buttonState, setButtonState] = useState<"scroll" | "next">("scroll");
 
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -116,7 +120,11 @@ export default function SymptomInputScreen() {
                 age: updatedUser.age,
                 height: updatedUser.height,
                 weight: updatedUser.weight,
-                bmi: updatedUser.height > 0 ? (updatedUser.weight / Math.pow(updatedUser.height / 100, 2)) : 0,
+                bmi:
+                    updatedUser.height > 0
+                        ? updatedUser.weight /
+                          Math.pow(updatedUser.height / 100, 2)
+                        : 0,
                 role: updatedUser.role,
                 diseases: updatedUser.diseases.map((d) => ({
                     id: d.sickCode,
@@ -140,10 +148,16 @@ export default function SymptomInputScreen() {
     };
 
     const getDiseaseNames = () =>
-        selectedDiseaseIds.map((id) => diseaseList.find((d) => d.sickCode === id)?.name).filter(Boolean).join(", ");
+        selectedDiseaseIds
+            .map((id) => diseaseList.find((d) => d.sickCode === id)?.name)
+            .filter(Boolean)
+            .join(", ");
 
     const getMedicationNames = () =>
-        selectedMedicationIds.map((id) => medicationList.find((m) => m.id === id)?.name).filter(Boolean).join(", ");
+        selectedMedicationIds
+            .map((id) => medicationList.find((m) => m.id === id)?.name)
+            .filter(Boolean)
+            .join(", ");
 
     const diseaseCategories = [...new Set(diseaseList.map((d) => d.category))];
 
@@ -166,8 +180,11 @@ export default function SymptomInputScreen() {
     };
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-        const isScrolledToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 10;
+        const { layoutMeasurement, contentOffset, contentSize } =
+            event.nativeEvent;
+        const isScrolledToBottom =
+            layoutMeasurement.height + contentOffset.y >=
+            contentSize.height - 10;
         if (isScrolledToBottom && buttonState === "scroll") {
             setButtonState("next");
         }
@@ -198,8 +215,14 @@ export default function SymptomInputScreen() {
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>성별</Text>
-                        <TouchableOpacity onPress={() => setEditField("gender")}>
-                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        <TouchableOpacity
+                            onPress={() => setEditField("gender")}
+                        >
+                            <Ionicons
+                                name="create-outline"
+                                size={16}
+                                color="#6B7280"
+                            />
                         </TouchableOpacity>
                     </View>
                     {editField === "gender" ? (
@@ -216,15 +239,20 @@ export default function SymptomInputScreen() {
                                     <View
                                         style={[
                                             styles.radioCircle,
-                                            profileState.gender === item && styles.radioCircleSelected,
+                                            profileState.gender === item &&
+                                                styles.radioCircleSelected,
                                         ]}
                                     />
-                                    <Text style={styles.radioLabel}>{item}</Text>
+                                    <Text style={styles.radioLabel}>
+                                        {item}
+                                    </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
                     ) : (
-                        <Text style={styles.inputValue}>{profileState.gender}</Text>
+                        <Text style={styles.inputValue}>
+                            {profileState.gender}
+                        </Text>
                     )}
                 </View>
 
@@ -233,7 +261,11 @@ export default function SymptomInputScreen() {
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>나이</Text>
                         <TouchableOpacity onPress={() => setEditField("age")}>
-                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                            <Ionicons
+                                name="create-outline"
+                                size={16}
+                                color="#6B7280"
+                            />
                         </TouchableOpacity>
                     </View>
                     {editField === "age" ? (
@@ -246,7 +278,9 @@ export default function SymptomInputScreen() {
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profileState.age}</Text>
+                        <Text style={styles.inputValue}>
+                            {profileState.age}
+                        </Text>
                     )}
                 </View>
 
@@ -254,21 +288,31 @@ export default function SymptomInputScreen() {
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>키(cm)</Text>
-                        <TouchableOpacity onPress={() => setEditField("height")}>
-                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        <TouchableOpacity
+                            onPress={() => setEditField("height")}
+                        >
+                            <Ionicons
+                                name="create-outline"
+                                size={16}
+                                color="#6B7280"
+                            />
                         </TouchableOpacity>
                     </View>
                     {editField === "height" ? (
                         <TextInput
                             style={styles.inputValue}
                             value={profileState.height}
-                            onChangeText={(text) => handleChange("height", text)}
+                            onChangeText={(text) =>
+                                handleChange("height", text)
+                            }
                             onBlur={() => setEditField(null)}
                             autoFocus
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profileState.height}</Text>
+                        <Text style={styles.inputValue}>
+                            {profileState.height}
+                        </Text>
                     )}
                 </View>
 
@@ -276,21 +320,31 @@ export default function SymptomInputScreen() {
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>몸무게(kg)</Text>
-                        <TouchableOpacity onPress={() => setEditField("weight")}>
-                            <Ionicons name="create-outline" size={16} color="#6B7280" />
+                        <TouchableOpacity
+                            onPress={() => setEditField("weight")}
+                        >
+                            <Ionicons
+                                name="create-outline"
+                                size={16}
+                                color="#6B7280"
+                            />
                         </TouchableOpacity>
                     </View>
                     {editField === "weight" ? (
                         <TextInput
                             style={styles.inputValue}
                             value={profileState.weight}
-                            onChangeText={(text) => handleChange("weight", text)}
+                            onChangeText={(text) =>
+                                handleChange("weight", text)
+                            }
                             onBlur={() => setEditField(null)}
                             autoFocus
                             keyboardType="numeric"
                         />
                     ) : (
-                        <Text style={styles.inputValue}>{profileState.weight}</Text>
+                        <Text style={styles.inputValue}>
+                            {profileState.weight}
+                        </Text>
                     )}
                 </View>
 
@@ -304,22 +358,30 @@ export default function SymptomInputScreen() {
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>지병</Text>
-                        <TouchableOpacity onPress={() => setCategoryModalOpen(true)}>
+                        <TouchableOpacity
+                            onPress={() => setCategoryModalOpen(true)}
+                        >
                             <Ionicons name="add" size={16} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.inputValue}>{getDiseaseNames() || "-"}</Text>
+                    <Text style={styles.inputValue}>
+                        {getDiseaseNames() || "-"}
+                    </Text>
                 </View>
 
                 {/* 약물 */}
                 <View style={styles.inputGroup}>
                     <View style={styles.inputHeader}>
                         <Text style={styles.inputLabel}>복용 약물</Text>
-                        <TouchableOpacity onPress={() => setMedicationModalOpen(true)}>
+                        <TouchableOpacity
+                            onPress={() => setMedicationModalOpen(true)}
+                        >
                             <Ionicons name="add" size={16} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.inputValue}>{getMedicationNames() || "-"}</Text>
+                    <Text style={styles.inputValue}>
+                        {getMedicationNames() || "-"}
+                    </Text>
                 </View>
             </ScrollView>
 
@@ -333,7 +395,10 @@ export default function SymptomInputScreen() {
                     },
                 ]}
             >
-                <TouchableOpacity style={styles.button} onPress={handleButtonClick}>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={handleButtonClick}
+                >
                     <Text style={styles.buttonText}>
                         {buttonState === "scroll" ? "화면 스크롤" : "다음"}
                     </Text>
@@ -343,7 +408,10 @@ export default function SymptomInputScreen() {
             <DiseaseCategorySelectModal
                 visible={categoryModalOpen}
                 categories={diseaseCategories}
-                onSelect={(cat) => {
+                diseaseList={diseaseList}
+                selected={selectedDiseaseIds}
+                onSelectDiseases={(ids) => setSelectedDiseaseIds(ids)}
+                onOpenSubcategory={(cat) => {
                     setSelectedCategory(cat);
                     setCategoryModalOpen(false);
                     setListModalOpen(true);

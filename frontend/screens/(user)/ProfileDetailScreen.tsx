@@ -319,7 +319,10 @@ export default function ProfileDetailScreen() {
                 <DiseaseCategorySelectModal
                     visible={diseaseCategoryModalOpen}
                     categories={uniqueCategories}
-                    onSelect={(cat) => {
+                    diseaseList={diseaseList}
+                    selected={selectedDiseaseIds}
+                    onSelectDiseases={(ids) => setSelectedDiseaseIds(ids)} // ✅ 검색에서 바로 선택
+                    onOpenSubcategory={(cat) => {
                         setSelectedCategory(cat);
                         setDiseaseCategoryModalOpen(false);
                         setDiseaseListModalOpen(true);

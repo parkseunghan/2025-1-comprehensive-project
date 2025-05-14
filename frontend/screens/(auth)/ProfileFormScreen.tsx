@@ -38,15 +38,18 @@ const profileSchema = z.object({
 export default function ProfileFormScreen() {
     const { user } = useAuthStore();
 
-    const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery<Disease[]>({
+    const { data: diseaseList = [], isLoading: isDiseaseLoading } = useQuery<
+        Disease[]
+    >({
         queryKey: ["diseases"],
         queryFn: fetchAllDiseases,
     });
 
-    const { data: medicationList = [], isLoading: isMedicationLoading } = useQuery<Medication[]>({
-        queryKey: ["medications"],
-        queryFn: fetchAllMedications,
-    });
+    const { data: medicationList = [], isLoading: isMedicationLoading } =
+        useQuery<Medication[]>({
+            queryKey: ["medications"],
+            queryFn: fetchAllMedications,
+        });
 
     const [form, setForm] = useState({
         gender: null as "남성" | "여성" | null,
@@ -85,11 +88,15 @@ export default function ProfileFormScreen() {
             router.replace("/(tabs)/home");
         } catch (err: any) {
             if (err instanceof z.ZodError) {
-                const firstError = err.issues[0]?.message || "입력값이 올바르지 않습니다.";
+                const firstError =
+                    err.issues[0]?.message || "입력값이 올바르지 않습니다.";
                 Alert.alert("⚠️ 유효성 검사 실패", firstError);
             } else {
                 console.error("❌ 프로필 저장 오류:", err);
-                Alert.alert("❌ 저장 실패", err?.response?.data?.message || "서버 오류가 발생했습니다.");
+                Alert.alert(
+                    "❌ 저장 실패",
+                    err?.response?.data?.message || "서버 오류가 발생했습니다."
+                );
             }
         }
     };
@@ -108,13 +115,19 @@ export default function ProfileFormScreen() {
                 {["남성", "여성"].map((item) => (
                     <TouchableOpacity
                         key={item}
-                        onPress={() => setForm({ ...form, gender: item as "남성" | "여성" })}
+                        onPress={() =>
+                            setForm({
+                                ...form,
+                                gender: item as "남성" | "여성",
+                            })
+                        }
                         style={styles.radioItem}
                     >
                         <View
                             style={[
                                 styles.radioCircle,
-                                form.gender === item && styles.radioCircleSelected,
+                                form.gender === item &&
+                                    styles.radioCircleSelected,
                             ]}
                         />
                         <Text style={styles.radioLabel}>{item}</Text>
@@ -151,7 +164,10 @@ export default function ProfileFormScreen() {
                     style={styles.flexInput}
                     placeholder="선택된 지병 없음"
                     value={diseases
-                        .map((id) => diseaseList.find((d) => d.sickCode === id)?.name)
+                        .map(
+                            (id) =>
+                                diseaseList.find((d) => d.sickCode === id)?.name
+                        )
                         .filter(Boolean)
                         .join(", ")}
                     editable={false}
@@ -167,7 +183,10 @@ export default function ProfileFormScreen() {
                     style={styles.flexInput}
                     placeholder="선택된 약물 없음"
                     value={medications
-                        .map((id) => medicationList.find((m) => m.id === id)?.name)
+                        .map(
+                            (id) =>
+                                medicationList.find((m) => m.id === id)?.name
+                        )
                         .filter(Boolean)
                         .join(", ")}
                     editable={false}
@@ -178,7 +197,10 @@ export default function ProfileFormScreen() {
             </View>
 
             {/* 저장 버튼 */}
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmit}
+            >
                 <Text style={styles.submitButtonText}>저장하기</Text>
             </TouchableOpacity>
 
@@ -186,7 +208,10 @@ export default function ProfileFormScreen() {
             <DiseaseCategorySelectModal
                 visible={categoryModalOpen}
                 categories={diseaseCategories}
-                onSelect={(cat) => {
+                diseaseList={diseaseList}
+                selected={diseases}
+                onSelectDiseases={(ids) => setDiseases(ids)}
+                onOpenSubcategory={(cat) => {
                     setSelectedCategory(cat);
                     setCategoryModalOpen(false);
                     setListModalOpen(true);
