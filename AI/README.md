@@ -135,3 +135,12 @@ ai/
 │   └── train_fine_models.py                     # coarse 그룹별 fine 모델 학습
 ```
 
+## 📚 데이터 출처
+
+본 프로젝트에서 사용된 질병 및 증상 관련 데이터는 다음 캐글(Kaggle) 공개 데이터셋을 기반으로 가공 및 활용되었습니다:
+
+- **Dataset Name**: [Disease Symptom Description Dataset](https://www.kaggle.com/datasets/itachi9604/disease-symptom-description-dataset)  
+- **Author**: *Itachi9604*  
+- **License**: *For research and educational purposes only.*
+
+> ❗ 이 데이터는 비상업적 용도로만 사용되며, 의료적 진단을 대체하지 않습니다. 원 저작자의 라이선스와 조건을 반드시 확인하십시오.
