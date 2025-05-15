@@ -19,8 +19,8 @@ export async function requestPrediction(data: PredictRequest): Promise<PredictRe
     console.log("✅ [Axios] 응답 도착:", response.data);
     return response.data;
   } catch (error: any) {
-    console.error("❌ [requestPrediction] AI 서버 요청 실패:", error.message);
-    throw new Error("AI 예측 요청 중 오류가 발생했습니다.");
+    console.error("❌ [requestPrediction] AI 서버 요청 실패:", error?.response?.data || error.message);
+    throw error; // 👈 반드시 원본 에러 그대로 던져야 프론트에서 .response.data 접근 가능
   }
 }
 

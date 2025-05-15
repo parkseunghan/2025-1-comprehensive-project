@@ -24,6 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackButton from "@/common/BackButton";
 import SymptomSelectModal from "../../components/modals/symptom-select.modal";
 import { Feather } from "@expo/vector-icons";
+import { Platform, ToastAndroid } from "react-native";
 
 export default function CategorySelectScreen() {
     const router = useRouter();
@@ -51,16 +52,33 @@ export default function CategorySelectScreen() {
                 symptoms: selected,
             });
             await AsyncStorage.setItem("lastRecordId", record.id);
-            const aiPrediction = await requestPrediction({
-                symptomKeywords: selected,
-                age: user?.age || 0,
-                gender: user?.gender || "",
-                height: user?.height || 0,
-                weight: user?.weight || 0,
-                bmi: user?.bmi || 0,
-                diseases: user?.diseases?.map((d) => d.name) || [],
-                medications: user?.medications?.map((m) => m.name) || [],
-            });
+    
+            // ✅ 예측 API 호출 및 에러 핸들링
+            let aiPrediction;
+            try {
+                aiPrediction = await requestPrediction({
+                    symptomKeywords: selected,
+                    age: user?.age || 0,
+                    gender: user?.gender || "",
+                    height: user?.height || 0,
+                    weight: user?.weight || 0,
+                    bmi: user?.bmi || 0,
+                    diseases: user?.diseases?.map((d) => d.name) || [],
+                    medications: user?.medications?.map((m) => m.name) || [],
+                });
+            } catch (error: any) {
+                const msg = error?.response?.data?.message || "AI 예측 중 문제가 발생했습니다.";
+              
+                console.log("🔥 잡힌 에러:", error);
+                console.log("✅ 에러 메시지:", msg);
+              
+                if (Platform.OS !== "web") {
+                  Alert.alert("입력 부족", msg);
+                }
+              
+                return;
+              }
+    
             const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
                 rank: i + 1,
                 coarseLabel: pred.coarseLabel,

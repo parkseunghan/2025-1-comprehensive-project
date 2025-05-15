@@ -32,6 +32,14 @@ export const predictFromAI = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // ✅ 증상 개수 검사
+    if (symptomKeywords.length < 2) {
+      res.status(400).json({
+        message: "❗ 입력하신 증상이 너무 적습니다. 증상을 좀 더 구체적으로 입력해주세요.",
+      });
+      return;
+    }
+
     // ✅ 디버깅 로그
     console.log("📦 [predictFromAI] 요청 수신:", req.body);
 

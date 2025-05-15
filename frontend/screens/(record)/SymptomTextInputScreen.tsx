@@ -8,6 +8,7 @@ import {
     Alert,
     Animated,
     StyleSheet,
+    Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -20,6 +21,7 @@ import { requestPrediction, requestPredictionToDB } from "@/services/prediction.
 import { LLMExtractKeyword, NlpExtractResponse } from "@/types/symptom.types";
 import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
 import BackButton from "@/common/BackButton";
+
 
 export default function SymptomTextInputScreen() {
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -47,41 +49,56 @@ export default function SymptomTextInputScreen() {
 
     const runPredictionPipeline = async (extracted: LLMExtractKeyword[]) => {
         const record = await createSymptomRecord({
-            userId: user!.id,
-            symptoms: extracted.map((item) => item.symptom),
+          userId: user!.id,
+          symptoms: extracted.map((item) => item.symptom),
         });
-
+      
         await AsyncStorage.setItem("lastRecordId", record.id);
-
-        const aiPrediction = await requestPrediction({
-            symptomKeywords: extracted.map((item) => item.symptom),
-            age: user?.age || 0,
-            gender: user?.gender === "남성" ? "남성" : "여성",
-            height: user?.height || 0,
-            weight: user?.weight || 0,
-            bmi: user?.bmi || 0,
-            diseases: user?.diseases?.map((d) => d.name) || [],
-            medications: user?.medications?.map((m) => m.name) || [],
-        });
-
+      
+        let aiPrediction;
+        try {
+            aiPrediction = await requestPrediction({
+              symptomKeywords: extracted.map((item) => item.symptom),
+              age: user?.age || 0,
+              gender: user?.gender === "남성" ? "남성" : "여성",
+              height: user?.height || 0,
+              weight: user?.weight || 0,
+              bmi: user?.bmi || 0,
+              diseases: user?.diseases?.map((d) => d.name) || [],
+              medications: user?.medications?.map((m) => m.name) || [],
+            });
+          } catch (error: any) {
+            const msg = error?.response?.data?.message || "AI 예측 중 문제가 발생했습니다.";
+          
+            console.log("🔥 잡힌 예측 에러:", error);
+            console.log("✅ 에러 메시지:", msg);
+          
+            if (Platform.OS !== "web") {
+              Alert.alert("입력 부족", msg);
+            }
+          
+            return;
+          }
+      
         const top1 = aiPrediction.predictions[0];
         const riskLevel = calculateRiskLevel(top1.riskScore);
         const guideline = generateGuideline(riskLevel);
-
+      
         const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
-            rank: i + 1,
-            coarseLabel: pred.coarseLabel,
-            fineLabel: pred.fineLabel,
-            riskScore: pred.riskScore,
+          rank: i + 1,
+          coarseLabel: pred.coarseLabel,
+          fineLabel: pred.fineLabel,
+          riskScore: pred.riskScore,
         }));
-
+      
         await requestPredictionToDB({
-            recordId: record.id,
-            predictions: predictionRanks,
+          recordId: record.id,
+          predictions: predictionRanks,
         });
-
+      
         router.push("/(record)/result");
-    };
+      };
+      
 
     const handleNlpDiagnosis = async () => {
         if (!text.trim()) {
