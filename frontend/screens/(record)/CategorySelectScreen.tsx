@@ -1,3 +1,4 @@
+// 📄 CategorySelectScreen.tsx - 전체 코드 (검색 포함 + 선택 증상 표시)
 import {
     View,
     Text,
@@ -7,6 +8,7 @@ import {
     Alert,
     ActivityIndicator,
     Animated,
+    TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +22,8 @@ import {
 } from "@/services/prediction.api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackButton from "@/common/BackButton";
-import SymptomSelectModal from "../../components/modals/symptom-select.modal"; // ✅ 모달 추가
+import SymptomSelectModal from "../../components/modals/symptom-select.modal";
+import { Feather } from "@expo/vector-icons";
 
 export default function CategorySelectScreen() {
     const router = useRouter();
@@ -28,8 +31,10 @@ export default function CategorySelectScreen() {
     const { selected, toggle } = useSymptomStore();
     const { user } = useAuthStore();
     const [isLoading, setIsLoading] = useState(false);
-    const [modalVisible, setModalVisible] = useState(false); // ✅ 모달 상태
-    const [selectedCategory, setSelectedCategory] = useState(""); // ✅ 현재 선택한 대분류
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [allSymptoms, setAllSymptoms] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(20)).current;
@@ -86,6 +91,7 @@ export default function CategorySelectScreen() {
                 const symptoms = await fetchAllSymptoms();
                 const categorySet = new Set(symptoms.map((s) => s.category));
                 setCategories(Array.from(categorySet));
+                setAllSymptoms(symptoms);
             } catch (err) {
                 console.error("❌ symptom fetch error:", err);
             }
@@ -107,53 +113,76 @@ export default function CategorySelectScreen() {
         ]).start();
     }, []);
 
+    const filteredSymptoms = allSymptoms.filter((s) =>
+        s.name.includes(searchTerm.trim())
+    );
+
     return (
         <>
-            <Animated.View
-                style={[
-                    styles.container,
-                    { opacity: fadeAnim, pointerEvents: "auto" },
-                ]}
-            >
+            <Animated.View style={[styles.container, { opacity: fadeAnim, pointerEvents: "auto" }]}>
                 <View style={styles.header}>
                     <BackButton fallbackRoute="/(record)/symptomchoice" />
                 </View>
 
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                    <Text style={styles.title}>대분류를 선택하세요</Text>
+                    <Text style={styles.title}>증상을 검색하거나 대분류를 선택하세요.</Text>
 
+                    {/* ✅ 선택된 증상 항상 보여주기 */}
                     {selected.length > 0 && (
                         <View style={styles.selectedBox}>
                             {selected.map((name) => (
-                                <TouchableOpacity
-                                    key={name}
-                                    style={styles.chip}
-                                    onPress={() => toggle(name)}
-                                >
+                                <TouchableOpacity key={name} style={styles.chip} onPress={() => toggle(name)}>
                                     <Text style={styles.chipText}>{name} ✕</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
                     )}
 
-                    {categories.map((category) => (
-                        <TouchableOpacity
-                            key={category}
-                            style={styles.item}
-                            onPress={() => openModal(category)} // ✅ router.push → 모달 열기
-                        >
-                            <Text style={styles.itemText}>{category}</Text>
-                        </TouchableOpacity>
-                    ))}
+                    <View style={styles.searchWrapper}>
+                        <Feather name="search" size={18} color="#9CA3AF" style={styles.searchIcon} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="현재 증상을 검색하세요."
+                            value={searchTerm}
+                            onChangeText={setSearchTerm}
+                            placeholderTextColor="#6B7280"
+                        />
+                    </View>
+
+                    {searchTerm.trim().length > 0 ? (
+                        filteredSymptoms.map((s) => (
+                            <TouchableOpacity
+                                key={s.id}
+                                style={styles.item}
+                                onPress={() => toggle(s.name)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.itemText,
+                                        selected.includes(s.name) && {
+                                            color: "#D92B4B",
+                                            fontWeight: "bold",
+                                        },
+                                    ]}
+                                >
+                                    {s.name} {selected.includes(s.name) && "✔"}
+                                </Text>
+                            </TouchableOpacity>
+                        ))
+                    ) : (
+                        categories.map((category) => (
+                            <TouchableOpacity
+                                key={category}
+                                style={styles.item}
+                                onPress={() => openModal(category)}
+                            >
+                                <Text style={styles.itemText}>{category}</Text>
+                            </TouchableOpacity>
+                        ))
+                    )}
                 </ScrollView>
 
-                <Animated.View
-                    style={[
-                        styles.buttonWrapper,
-                        {
-                            transform: [{ translateY }],
-                        },
-                    ]}
+                <Animated.View style={[styles.buttonWrapper, { transform: [{ translateY }] }]}
                 >
                     <TouchableOpacity
                         style={styles.button}
@@ -169,7 +198,6 @@ export default function CategorySelectScreen() {
                 </Animated.View>
             </Animated.View>
 
-            {/* ✅ 모달 컴포넌트 삽입 */}
             <SymptomSelectModal
                 visible={modalVisible}
                 category={selectedCategory}
@@ -183,29 +211,27 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#ffffff",
+        paddingHorizontal: 16,
     },
     header: {
         paddingTop: 24,
         height: 60,
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 16,
     },
     scrollContent: {
-        padding: 20,
-        paddingTop: 0,
         paddingBottom: 80,
     },
     title: {
         fontSize: 20,
         fontWeight: "bold",
         marginTop: 12,
-        marginBottom: 20,
+        marginBottom: 12,
     },
     selectedBox: {
         flexDirection: "row",
         flexWrap: "wrap",
-        marginBottom: 20,
+        marginBottom: 16,
     },
     chip: {
         backgroundColor: "#f3f4f6",
@@ -216,6 +242,26 @@ const styles = StyleSheet.create({
     },
     chipText: {
         color: "#111827",
+    },
+    searchWrapper: {
+        position: "relative",
+        marginBottom: 12,
+    },
+    searchIcon: {
+        position: "absolute",
+        top: 12,
+        left: 10,
+        zIndex: 1,
+    },
+    searchInput: {
+        borderWidth: 1.5,
+        borderRadius: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 36,
+        fontSize: 15,
+        color: "#111827",
+        backgroundColor: "#fff",
+        borderColor: "#D92B4B",
     },
     item: {
         padding: 14,
