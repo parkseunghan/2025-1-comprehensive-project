@@ -5,7 +5,7 @@ import path from "path";
 import prisma from "../src/config/prisma.service";
 
 // 🔹 파일 경로 설정
-const DATA_PATH = path.resolve(__dirname, "../data/diseases copy.json");
+const DATA_PATH = path.resolve(__dirname, "../data/diseases_copy.json");
 
 // 🔹 sickCode → category 분류 함수
 function getCategoryFromSickCode(code: string): string {
