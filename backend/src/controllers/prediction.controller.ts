@@ -90,15 +90,16 @@ export const getPredictionByRecord = async (req: Request, res: Response) => {
 export const savePredictions = async (req: Request, res: Response) => {
   try {
     const { recordId } = req.params;
-    const { predictions } = req.body;
+    const { predictions, age, bmi, diseases, medications, gender, symptomKeywords } = req.body;
 
-    if (!predictions || !Array.isArray(predictions)) {
-      res.status(400).json({ message: "predictions 배열이 필요합니다." });
+    // 입력값 유효성 검사
+    if (!predictions || !Array.isArray(predictions) || predictions.length === 0) {
+      res.status(400).json({ message: "유효한 predictions 배열이 필요합니다." });
       return;
     }
 
-    if (predictions.length === 0) {
-      res.status(400).json({ message: "predictions 배열이 비어 있습니다." });
+    if (!Array.isArray(symptomKeywords) || symptomKeywords.length === 0) {
+      res.status(400).json({ message: "symptomKeywords 배열이 필요합니다." });
       return;
     }
 
@@ -106,7 +107,18 @@ export const savePredictions = async (req: Request, res: Response) => {
     const sorted: PredictionCandidate[] = [...predictions].sort((a, b) => b.riskScore - a.riskScore);
 
     // 예측 결과 저장
-    await recordService.savePredictionResult(recordId, sorted);
+    await recordService.savePredictionResult(
+      recordId,
+      sorted,
+      {
+        age,
+        bmi,
+        diseases: diseases ?? [],
+        medications: medications ?? [],
+        gender,
+      },
+      symptomKeywords
+    );
 
     res.status(201).json({ message: "예측 결과 저장 완료" });
   } catch (err) {
@@ -114,6 +126,7 @@ export const savePredictions = async (req: Request, res: Response) => {
     res.status(500).json({ message: "서버 에러" });
   }
 };
+
 
 /**
  * GET /api/prediction/stats

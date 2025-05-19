@@ -10,23 +10,41 @@ import {
 } from "@/types/prediction.types";
 
 /**
- * 🔹 1. 기존 증상 기록 기반 예측 결과를 DB에 저장
+ * 🔹 1. 기존 증상 기록 기반 예측 결과를 DB에 저장 (Risk 평가 포함)
  * @route POST /api/predictions/symptom-records/:recordId/prediction
  */
-export const requestPredictionToDB = async (
-  {
-    recordId,
-    predictions,
-  }: {
-    recordId: string;
-    predictions: PredictionRank[]; // Top-N 후보 리스트만 전송
-  }
-): Promise<any> => {
+export const requestPredictionToDB = async ({
+  recordId,
+  predictions,
+  age,
+  bmi,
+  gender,
+  diseases,
+  medications,
+  symptomKeywords,
+}: {
+  recordId: string;
+  predictions: PredictionRank[];
+  age: number;
+  bmi: number;
+  gender: string;
+  diseases: string[];
+  medications: string[];
+  symptomKeywords: string[];
+}): Promise<any> => {
   const res = await axios.post(`/prediction/symptom-records/${recordId}/prediction`, {
     predictions,
+    age,
+    bmi,
+    gender,
+    diseases,
+    medications,
+    symptomKeywords,
   });
+
   return res.data;
 };
+
 
 /**
  * 🔹 2. 기존 증상 기록 기반 예측 결과 조회

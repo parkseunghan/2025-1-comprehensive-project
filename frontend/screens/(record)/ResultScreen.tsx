@@ -121,7 +121,7 @@ export default function ResultScreen() {
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>예측된 질병 (Top-N)</Text>
+            <Text style={styles.cardTitle}>예측된 질병 (Top-3)</Text>
           </View>
           <View style={styles.diseaseList}>
             {result.ranks.map((rank, index) => (

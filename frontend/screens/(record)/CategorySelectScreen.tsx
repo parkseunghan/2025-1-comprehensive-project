@@ -24,7 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackButton from "@/common/BackButton";
 import SymptomSelectModal from "../../components/modals/symptom-select.modal";
 import { Feather } from "@expo/vector-icons";
-import { Platform, ToastAndroid } from "react-native";
+import { Platform } from "react-native";
 
 export default function CategorySelectScreen() {
     const router = useRouter();
@@ -88,7 +88,13 @@ export default function CategorySelectScreen() {
             await requestPredictionToDB({
                 recordId: record.id,
                 predictions: predictionRanks,
-            });
+                age: user?.age || 0,
+                bmi: user?.bmi || 0,
+                gender: user?.gender || "",
+                diseases: user?.diseases?.map((d) => d.name) || [],
+                medications: user?.medications?.map((m) => m.name) || [],
+                symptomKeywords: selected,
+              });
             router.push("/(record)/result");
         } catch (err) {
             console.error("❌ 예측 실패:", err);

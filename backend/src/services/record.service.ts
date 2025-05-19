@@ -1,3 +1,4 @@
+// 📄 src/services/record.service.ts
 import prisma from "../config/prisma.service";
 import { PredictionCandidate } from "@/types/prediction.types";
 
@@ -5,9 +6,7 @@ import { PredictionCandidate } from "@/types/prediction.types";
  * 🔹 진단 기록 생성
  */
 export const create = async (userId: string, symptomIds: string[]) => {
-  const record = await prisma.symptomRecord.create({
-    data: { userId },
-  });
+  const record = await prisma.symptomRecord.create({ data: { userId } });
 
   for (const id of symptomIds) {
     const symptom = await prisma.symptom.findUnique({ where: { id } });
@@ -33,12 +32,8 @@ export const findByUserId = async (userId: string) => {
     where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
-      prediction: {
-        include: { ranks: true },
-      },
-      symptoms: {
-        include: { symptom: true },
-      },
+      prediction: { include: { ranks: true } },
+      symptoms: { include: { symptom: true } },
     },
   });
 };
@@ -50,12 +45,8 @@ export const findById = async (id: string) => {
   return prisma.symptomRecord.findUnique({
     where: { id },
     include: {
-      prediction: {
-        include: { ranks: true },
-      },
-      symptoms: {
-        include: { symptom: true },
-      },
+      prediction: { include: { ranks: true } },
+      symptoms: { include: { symptom: true } },
     },
   });
 };
@@ -68,7 +59,7 @@ export const remove = async (id: string) => {
 };
 
 /**
- * 🔹 응급 진단명 리스트 ("응급" 허용)
+ * 🔹 응급 진단명 리스트
  */
 const EMERGENCY_DISEASES = ["심근경색", "뇌출혈", "급성 폐렴"];
 
@@ -76,21 +67,14 @@ const EMERGENCY_DISEASES = ["심근경색", "뇌출혈", "급성 폐렴"];
  * 🔹 위험 등급 → 가이드라인 텍스트
  */
 function generateGuideline(riskLevel: string): string {
-  if (riskLevel === "응급") {
-    return "심각한 증상이 의심됩니다. 즉시 119 또는 응급실로 이동하세요.";
-  }
-  if (riskLevel === "높음") {
-    return "증상이 심각할 수 있습니다. 오늘 중 가까운 병원에 방문해 진료를 받으세요.";
-  }
-  if (riskLevel === "보통") {
-    return "상태를 주의 깊게 관찰하세요. 증상이 1~2일 이상 지속되거나 심해지면 병원을 방문하세요.";
-  }
-  // 낮음
+  if (riskLevel === "응급") return "심각한 증상이 의심됩니다. 즉시 119 또는 응급실로 이동하세요.";
+  if (riskLevel === "높음") return "증상이 심각할 수 있습니다. 오늘 중 가까운 병원에 방문해 진료를 받으세요.";
+  if (riskLevel === "보통") return "상태를 주의 깊게 관찰하세요. 증상이 1~2일 이상 지속되거나 심해지면 병원을 방문하세요.";
   return "증상이 가벼운 상태입니다. 수분 섭취, 휴식 등 생활 관리를 하며 경과를 지켜보세요.";
 }
 
 /**
- * 🔹 위험 점수 → 위험 등급 (완화된 기준 적용)
+ * 🔹 위험 점수 → 위험 등급
  */
 function calculateRiskLevel(score: number, fineLabel: string): string {
   if (score >= 7.0 && EMERGENCY_DISEASES.includes(fineLabel)) return "응급";
@@ -100,73 +84,79 @@ function calculateRiskLevel(score: number, fineLabel: string): string {
 }
 
 /**
- * 🔹 위험도 계산 (P(D) × [가중합] × 건강 보정)
+ * 🔹 개선된 위험도 계산 함수
  */
 function calculateRiskScore({
   predictionProb,
-  symptomWeight,
-  chronicWeight,
-  ageWeight,
-  genderWeight,
-  bmiWeight,
-  medicationWeight,
+  age,
+  bmi,
+  diseases,
+  medications,
+  symptoms,
 }: {
   predictionProb: number;
-  symptomWeight: number;
-  chronicWeight: number;
-  ageWeight: number;
-  genderWeight: number;
-  bmiWeight: number;
-  medicationWeight: number;
+  age: number;
+  bmi: number;
+  diseases: string[];
+  medications: string[];
+  symptoms: string[];
 }): number {
-  const W1 = 1.0, W2 = 1.0, W3 = 1.0, W4 = 1.0, W5 = 1.0, W6 = 1.0;
+  const ageWeight = age >= 65 ? 1.0 : age >= 40 ? 0.7 : 0.3;
+  const bmiWeight = bmi >= 25 ? 1.0 : bmi < 18.5 ? 0.8 : 0.3;
+  const chronicWeight = diseases.length > 0 ? 1.0 : 0.0;
+  const medicationWeight = medications.length > 0 ? 1.0 : 0.0;
+  const symptomWeight = symptoms.length >= 4 ? 1.0 : symptoms.length >= 2 ? 0.7 : 0.4;
 
   const isHealthy =
-    chronicWeight < 0.5 &&
-    medicationWeight < 0.5 &&
-    ageWeight < 0.7 &&
-    bmiWeight < 0.7;
+    chronicWeight === 0 &&
+    medicationWeight === 0 &&
+    ageWeight <= 0.3 &&
+    bmiWeight <= 0.3;
 
   const healthyPenalty = isHealthy ? 0.6 : 1.0;
 
-  const rawScore =
-    predictionProb *
-    (W1 * symptomWeight +
-      W2 * chronicWeight +
-      W3 * ageWeight +
-      W4 * genderWeight +
-      W5 * bmiWeight +
-      W6 * medicationWeight) *
-    healthyPenalty;
+  const weightedSum =
+    1.0 * symptomWeight +
+    1.0 * chronicWeight +
+    1.0 * ageWeight +
+    1.0 * 1.0 + // genderWeight (중립)
+    1.0 * bmiWeight +
+    1.0 * medicationWeight;
 
+  const rawScore = predictionProb * weightedSum * healthyPenalty;
   return Number(rawScore.toFixed(2));
 }
 
 /**
- * 🔹 예측 결과 저장 (Prediction + PredictionRank)
+ * 🔹 예측 결과 저장
  */
 export const savePredictionResult = async (
   recordId: string,
   predictions: PredictionCandidate[],
+  user: {
+    age: number;
+    bmi: number;
+    diseases: string[];
+    medications: string[];
+    gender: string;
+  },
+  symptoms: string[],
   elapsedSec?: number
 ) => {
   const top1 = predictions[0];
 
-  // ✅ 사용자 조건 기반 가중치 보정 적용
   const riskScore = calculateRiskScore({
-    predictionProb: top1.riskScore, // top1.riskScore는 예측 확률
-    symptomWeight: 0.9,
-    chronicWeight: 0.0, // 예시: 지병 없음
-    ageWeight: 0.5,     // 예시: 20대
-    genderWeight: 1.0,
-    bmiWeight: 0.6,
-    medicationWeight: 0.0, // 예시: 복용약 없음
+    predictionProb: top1.riskScore,
+    age: user.age,
+    bmi: user.bmi,
+    diseases: user.diseases,
+    medications: user.medications,
+    symptoms,
   });
 
   const riskLevel = top1.riskLevel ?? calculateRiskLevel(riskScore, top1.fineLabel);
   const guideline = top1.guideline ?? generateGuideline(riskLevel);
 
-  // ✅ 디버깅 로그
   console.log("🧠 위험도 계산", {
     fineLabel: top1.fineLabel,
     riskScore,
@@ -194,11 +184,7 @@ export const savePredictionResult = async (
     riskScore: item.riskScore,
   }));
 
-  await prisma.predictionRank.createMany({
-    data: ranks,
-    skipDuplicates: true,
-  });
-
+  await prisma.predictionRank.createMany({ data: ranks, skipDuplicates: true });
   return prediction;
 };
 
@@ -212,10 +198,7 @@ export const saveSymptomsToRecord = async (
   await prisma.symptomOnRecord.deleteMany({ where: { recordId } });
 
   for (const item of symptoms) {
-    const symptom = await prisma.symptom.findUnique({
-      where: { name: item.symptom },
-    });
-
+    const symptom = await prisma.symptom.findUnique({ where: { name: item.symptom } });
     if (symptom) {
       await prisma.symptomOnRecord.create({
         data: {
