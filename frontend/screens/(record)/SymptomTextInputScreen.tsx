@@ -84,6 +84,16 @@ export default function SymptomTextInputScreen() {
         fineLabel: pred.fineLabel,
         riskScore: pred.riskScore,
       }));
+      console.log("🚀 예측 결과 저장 요청 전송:", {
+        recordId: record.id,
+        predictions: predictionRanks,
+        age: user.age,
+        bmi: user.bmi,
+        gender: user.gender,
+        diseases: user.diseases?.map((d) => d.id),
+        medications: user.medications?.map((m) => m.id),
+        symptomKeywords: extracted.map((item) => item.symptom),
+      });
 
       await requestPredictionToDB({
         recordId: record.id,
@@ -93,8 +103,9 @@ export default function SymptomTextInputScreen() {
         gender: user.gender,
         diseases: user.diseases?.map((d) => d.id) ?? [],
         medications: user.medications?.map((m) => m.id) ?? [],
-        symptomKeywords: selectedSymptomKeywords,
+        symptomKeywords: extracted.map((item) => item.symptom),
       });
+
 
       router.push("/(record)/result");
     } catch (err) {

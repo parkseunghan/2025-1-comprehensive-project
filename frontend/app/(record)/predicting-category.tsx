@@ -44,6 +44,12 @@ export default function PredictingCategoryScreen() {
                 await requestPredictionToDB({
                     recordId: record.id,
                     predictions: predictionRanks,
+                    age: user?.age || 0,
+                    gender: user?.gender || "",
+                    bmi: user?.bmi || 0,
+                    diseases: user?.diseases?.map((d) => d.id) || [],
+                    medications: user?.medications?.map((m) => m.id) || [],
+                    symptomKeywords: selected,
                 });
 
                 router.replace("/(record)/result");
