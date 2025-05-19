@@ -1,10 +1,11 @@
+// 📄 screens/(record)/SymptomTextInputScreen.tsx
+
 import { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   Animated,
   StyleSheet,
@@ -14,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
 import { useAuthStore } from "@/store/auth.store";
-import { useSymptomStore } from "@/store/symptom.store"; // ✅ 추가
+import { useSymptomStore } from "@/store/symptom.store";
 
 import { extractSymptoms } from "@/services/llm.api";
 import { extractSymptomsWithNLP } from "@/services/nlp.api";
@@ -25,17 +26,17 @@ import { LLMExtractKeyword, NlpExtractResponse } from "@/types/symptom.types";
 import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
 
 import BackButton from "@/common/BackButton";
+import LoadingScreen from "@/common/LoadingScreen"; // ✅ 추가
 
 export default function SymptomTextInputScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
 
   const { user } = useAuthStore();
-  const { selected: selectedSymptomKeywords } = useSymptomStore(); // ✅ symptom 선택
+  const { selected: selectedSymptomKeywords } = useSymptomStore();
 
   const [text, setText] = useState("");
-  const [isLoadingNlp, setIsLoadingNlp] = useState(false);
-  const [isLoadingLlm, setIsLoadingLlm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // ✅ 로딩 제어
 
   useEffect(() => {
     Animated.parallel([
@@ -53,16 +54,20 @@ export default function SymptomTextInputScreen() {
   }, []);
 
   const runPredictionPipeline = async (extracted: LLMExtractKeyword[]) => {
-    const record = await createSymptomRecord({
-      userId: user!.id,
-      symptoms: extracted.map((item) => item.symptom),
-    });
+    setIsLoading(true); // ✅ 로딩 시작
 
-    await AsyncStorage.setItem("lastRecordId", record.id);
+    // 최소 0.5초 로딩 유지 보장
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    let aiPrediction;
     try {
-      aiPrediction = await requestPrediction({
+      const record = await createSymptomRecord({
+        userId: user!.id,
+        symptoms: extracted.map((item) => item.symptom),
+      });
+
+      await AsyncStorage.setItem("lastRecordId", record.id);
+
+      const aiPrediction = await requestPrediction({
         symptomKeywords: extracted.map((item) => item.symptom),
         age: user?.age || 0,
         gender: user?.gender || "",
@@ -72,88 +77,68 @@ export default function SymptomTextInputScreen() {
         diseases: user?.diseases?.map((d) => d.name) || [],
         medications: user?.medications?.map((m) => m.name) || [],
       });
-    } catch (error: any) {
-      const msg = error?.response?.data?.message || "AI 예측 중 문제가 발생했습니다.";
-      console.log("🔥 잡힌 예측 에러:", error);
-      if (Platform.OS !== "web") Alert.alert("입력 부족", msg);
-      return;
+
+      const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
+        rank: i + 1,
+        coarseLabel: pred.coarseLabel,
+        fineLabel: pred.fineLabel,
+        riskScore: pred.riskScore,
+      }));
+
+      await requestPredictionToDB({
+        recordId: record.id,
+        predictions: predictionRanks,
+        age: user.age,
+        bmi: user.bmi,
+        gender: user.gender,
+        diseases: user.diseases?.map((d) => d.id) ?? [],
+        medications: user.medications?.map((m) => m.id) ?? [],
+        symptomKeywords: selectedSymptomKeywords,
+      });
+
+      router.push("/(record)/result");
+    } catch (err) {
+      console.error("❌ 예측 실패:", err);
+      Alert.alert("예측 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
-
-    const predictionRanks = aiPrediction.predictions.map((pred, i) => ({
-      rank: i + 1,
-      coarseLabel: pred.coarseLabel,
-      fineLabel: pred.fineLabel,
-      riskScore: pred.riskScore,
-    }));
-
-    await requestPredictionToDB({
-      recordId: record.id,
-      predictions: predictionRanks,
-      age: user.age,
-      bmi: user.bmi,
-      gender: user.gender,
-      diseases: user.diseases?.map((d) => d.id) ?? [],       // ✅ 수정
-      medications: user.medications?.map((m) => m.id) ?? [], // ✅ 수정
-      symptomKeywords: selectedSymptomKeywords,              // ✅ 추가
-    });
-
-    router.push("/(record)/result");
   };
 
-  const handleNlpDiagnosis = async () => {
+  const handleDiagnosis = async (mode: "nlp" | "llm") => {
     if (!text.trim()) {
       Alert.alert("⚠️ 증상을 입력해 주세요.");
       return;
     }
 
     try {
-      setIsLoadingNlp(true);
-      const response: NlpExtractResponse = await extractSymptomsWithNLP(text);
-      const extracted = response.results;
-
-      if (extracted.length === 0) {
-        Alert.alert("⚠️ NLP로 증상 키워드를 추출하지 못했어요.");
-        return;
+      if (mode === "nlp") {
+        const response: NlpExtractResponse = await extractSymptomsWithNLP(text);
+        const extracted = response.results;
+        if (extracted.length === 0) {
+          Alert.alert("⚠️ NLP로 증상 키워드를 추출하지 못했어요.");
+          return;
+        }
+        await runPredictionPipeline(extracted);
+      } else {
+        const extracted = await extractSymptoms(text);
+        if (extracted.length === 0) {
+          Alert.alert("⚠️ LLM으로 증상 키워드를 추출하지 못했어요.");
+          return;
+        }
+        await runPredictionPipeline(extracted);
       }
-
-      await runPredictionPipeline(extracted);
     } catch (err) {
-      console.error("❌ NLP 예측 실패:", err);
-      Alert.alert("NLP 예측 중 오류가 발생했습니다.");
-    } finally {
-      setIsLoadingNlp(false);
+      console.error("❌ 증상 추출 실패:", err);
+      Alert.alert("예측 중 문제가 발생했습니다.");
     }
   };
 
-  const handleLlmDiagnosis = async () => {
-    if (!text.trim()) {
-      Alert.alert("⚠️ 증상을 입력해 주세요.");
-      return;
-    }
-
-    try {
-      setIsLoadingLlm(true);
-      const extracted = await extractSymptoms(text);
-      if (extracted.length === 0) {
-        Alert.alert("⚠️ LLM으로 증상 키워드를 추출하지 못했어요.");
-        return;
-      }
-
-      await runPredictionPipeline(extracted);
-    } catch (err) {
-      console.error("❌ LLM 예측 실패:", err);
-      Alert.alert("LLM 예측 중 오류가 발생했습니다.");
-    } finally {
-      setIsLoadingLlm(false);
-    }
-  };
-
-  return (
+  return isLoading ? (
+    <LoadingScreen /> // ✅ 전체 로딩 화면 출력
+  ) : (
     <Animated.View
-      style={[
-        styles.container,
-        { opacity: fadeAnim, pointerEvents: "auto" },
-      ]}
+      style={[styles.container, { opacity: fadeAnim, pointerEvents: "auto" }]}
     >
       <View style={styles.header}>
         <BackButton />
@@ -181,27 +166,17 @@ export default function SymptomTextInputScreen() {
           ]}
         >
           <TouchableOpacity
-            onPress={handleNlpDiagnosis}
+            onPress={() => handleDiagnosis("nlp")}
             style={[styles.button, { marginBottom: 12 }]}
-            disabled={isLoadingNlp}
           >
-            {isLoadingNlp ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.buttonText}>예측 시작 (NLP 기반)</Text>
-            )}
+            <Text style={styles.buttonText}>예측 시작 (NLP 기반)</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handleLlmDiagnosis}
+            onPress={() => handleDiagnosis("llm")}
             style={styles.button}
-            disabled={isLoadingLlm}
           >
-            {isLoadingLlm ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.buttonText}>예측 시작 (LLM 기반)</Text>
-            )}
+            <Text style={styles.buttonText}>예측 시작 (LLM 기반)</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
