@@ -38,7 +38,7 @@ export default function LoginScreen() {
 
             if (!user.gender) {
                 console.log("⚠️ 성별 없음 → 프로필 작성으로 이동");
-                router.replace("/(auth)/profile-form"); // 🧾 프로필 미작성 시
+                router.replace("/(user)/profile-form"); // 🧾 프로필 미작성 시
             } else {
                 console.log("✅ 성별 있음 → 홈으로 이동");
                 router.replace("/(tabs)/home"); // 🏠 홈으로

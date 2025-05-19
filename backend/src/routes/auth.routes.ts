@@ -17,4 +17,7 @@ router.post("/login", authController.login);
 // [GET] /auth/me - 로그인된 사용자 정보 조회
 router.get("/me", authMiddleware, authController.getMe);
 
+// [PUT] /auth/change-password - 비밀번호 변경
+router.put("/change-password", authMiddleware, authController.changePassword);
+
 export default router;

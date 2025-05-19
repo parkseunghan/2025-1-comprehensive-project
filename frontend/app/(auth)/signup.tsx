@@ -61,7 +61,7 @@ export default function SignupScreen() {
             await AsyncStorage.setItem("token", res.token);
             setAuth(res.token, res.user);
 
-            router.replace("/(auth)/profile-form");
+            router.replace("/(user)/profile-form");
         } catch (err: any) {
             if (err instanceof ZodError) {
                 Alert.alert("입력 오류", err.issues?.[0]?.message || "입력값이 올바르지 않습니다.");

@@ -127,7 +127,7 @@ export default function ProfileFormScreen() {
                             style={[
                                 styles.radioCircle,
                                 form.gender === item &&
-                                    styles.radioCircleSelected,
+                                styles.radioCircleSelected,
                             ]}
                         />
                         <Text style={styles.radioLabel}>{item}</Text>

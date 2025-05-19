@@ -1,16 +1,13 @@
-// 📄 screens/(record)/SymptomChoiceScreen.tsx
-
+// ✅ (record)/SymptomChoiceScreen.tsx - 음성 입력 버튼 추가
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import { useEffect, useRef } from "react";
 import { router } from "expo-router";
 import BackButton from "@/common/BackButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// ⚙️ 경로 상수화 관리
 const ROUTES = {
     symptomTextInput: "/(record)/symptomtextinput",
-    CategorySelectScreen: "/(record)/categoryselect", // 대분류
-    SymptomSelectScreen: "/(record)/symptomselectscreen", // 소분류 ✅
+    CategorySelectScreen: "/(record)/categoryselect",
 };
 
 export default function SymptomChoiceScreen() {
@@ -34,9 +31,9 @@ export default function SymptomChoiceScreen() {
 
     const handleSelect = (type: "text" | "list") => {
         if (type === "text") {
-            router.push(ROUTES.symptomTextInput);  // 텍스트 입력 화면으로 이동
+            router.push(ROUTES.symptomTextInput);
         } else if (type === "list") {
-            router.push(ROUTES.CategorySelectScreen);  // 리스트 선택 화면으로 이동
+            router.push(ROUTES.CategorySelectScreen);
         }
     };
 
@@ -46,9 +43,7 @@ export default function SymptomChoiceScreen() {
                 <BackButton />
             </View>
 
-            <Animated.View
-                style={[styles.content, { opacity: fadeAnim, transform: [{ translateY }], pointerEvents: "auto", }]}
-            >
+            <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY }] }]}>
                 <Text style={styles.title}>어떤 방식으로 증상을 입력할까요?</Text>
 
                 <TouchableOpacity style={styles.button} onPress={() => handleSelect("text")}>

@@ -1,14 +1,21 @@
-# <2025-1 종합프로젝트 trio>
+# 환경 구축 가이드
 
-## 환경 구축 가이드
+## expo 설정
 
-### 1. 의존성 설치 및 가상환경 생성
+- 서버와 모바일이 같은 공유기에 연결되어 있어야 함
+
+```sh
+# ipconfig - 무선 랜 ipv4 주소 확인
+API_URL="http://<IP>:5000"
+```
+
+## 1. 의존성 설치 및 가상환경 생성
 
 ```sh
 ./setup.sh
 ```
 
-### 2. 데이터베이스 설치 및 생성
+## 2. 데이터베이스 설치 및 생성
 
 - [postgreSQL 설치](https://www.postgresql.org/download/)
 - `시작` - `SQL Shell (psql)` 실행
@@ -25,11 +32,11 @@ CREATE DATABASE ai_diagnosis; -- ai_diagnosis DB 생성
 \q -- 종료
 ```
 
-### 3. .env 파일 작성
+## 3. .env 파일 작성
 - `.env_example` 파일 이름 변경 -> `.env`
 - `DATABASE_URL`변수의 `username`, `password` 변경 (SQL 실행 시 설정한 Username 및 사용자 암호)
 
-### 4. 백엔드 - 데이터베이스 데이터 삽입
+## 4. 백엔드 - 데이터베이스 데이터 삽입
 
 ```sh
 cd backend
@@ -37,7 +44,7 @@ cd backend
 npm run setup
 ```
 
-### 5. 앱 실행(옵션 1, 2 중 택1)
+## 5. 앱 실행(옵션 1, 2 중 택1)
 
 **옵션 1. frontend, backend, ai, symptom을 별도의 터미널에서 실행**
 ```sh
@@ -65,7 +72,7 @@ cd symptom
 npm run dev
 ```
 
-### (선택) API 리스트 새로 받기
+## (선택) API 리스트 새로 받기
 
 - [식품의약품안전처 의약품 개요정보 서비스](https://www.data.go.kr/tcs/dss/selectApiDataDetailView.do?publicDataPk=15075057)
 - [건강보험심사평가원 질병정보서비스](https://www.data.go.kr/tcs/dss/selectApiDataDetailView.do?publicDataPk=15119055)
@@ -79,7 +86,7 @@ npx ts-node scripts/fetchAllMedications.ts
 npx ts-node scripts/fetchAllDiseases.ts
 ```
 
-### (선택) Ollama 기능 사용 시
+## (선택) Ollama 기능 사용 시
 
 - [ollama 다운로드](https://ollama.com/download)
 - `mistral` 모델 설치 및 실행
@@ -89,6 +96,8 @@ ollama run mistral
 ```
 
 ---
+
+
 
 
 # 프로젝트명: AI 진단 도우미 (AI 기반 자가 진단 서비스 - SmartHealth: AI Self-Diagnosis System)

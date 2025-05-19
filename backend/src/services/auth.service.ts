@@ -1,31 +1,27 @@
 // 📄 services/auth.service.ts
 // 인증 로직 처리 (회원가입, 로그인, 사용자 조회)
 
-import { generateToken } from "../utils/jwt.util";
 import prisma from "../config/prisma.service";
+import bcrypt from "bcryptjs";
+import { generateToken, JwtPayload } from "../utils/jwt.util";
 
 /**
  * 🔹 회원가입
  */
-export const signup = async (data: {
+export const signup = async ({ email, password, name }: {
     email: string;
     password: string;
     name?: string;
-}): Promise<
-    | { id: string; email: string; name?: string }
-    | { message: string }
-> => {
-    const exists = await prisma.user.findUnique({ where: { email: data.email } });
+}): Promise<JwtPayload | { message: string }> => {
+    const exists = await prisma.user.findUnique({ where: { email } });
+    if (exists) return { message: "이미 등록된 이메일입니다." };
 
-    if (exists) {
-        return { message: "이미 등록된 이메일입니다." };
-    }
-
-    const newUser = await prisma.user.create({
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
         data: {
-            email: data.email,
-            password: data.password,
-            name: data.name ?? "",
+            email,
+            password: hashed,
+            name: name ?? "",
             gender: "",
             age: 0,
             height: 0,
@@ -34,47 +30,31 @@ export const signup = async (data: {
         },
     });
 
-    return {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name ?? undefined,
-    };
+    return { id: user.id, email: user.email, name: user.name ?? undefined };
 };
 
 /**
  * 🔹 로그인
  */
-export const login = async (
-    email: string,
-    password: string
-): Promise<
-    null | {
-        token: string;
-        user: {
-            id: string;
-            email: string;
-            name?: string;
-            gender: string; // ✅ 포함
-        };
-    }
-> => {
-    const user = await prisma.user.findUnique({
-        where: { email },
-        select: {
-            id: true,
-            email: true,
-            name: true,
-            gender: true,
-            password: true,
-        },
-    });
+export const login = async (email: string, password: string) => {
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    console.log("🔍 DB 조회 결과:", user);
+    console.log("🔐 입력된 비밀번호:", password);
+    console.log("🔐 저장된 해시:", user?.password);
+    
+    if (!user) return null;
 
-    if (!user || user.password !== password) return null;
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log("✅ 비밀번호 일치 여부:", isMatch);
+    
+    if (!isMatch) return null;
 
     const token = generateToken({
         id: user.id,
         email: user.email,
         name: user.name ?? "",
+        gender: user.gender,
     });
 
     return {
@@ -82,7 +62,7 @@ export const login = async (
         user: {
             id: user.id,
             email: user.email,
-            name: user.name ?? undefined,
+            name: user.name,
             gender: user.gender,
         },
     };
@@ -91,53 +71,55 @@ export const login = async (
 /**
  * 🔹 사용자 조회 (GET /auth/me)
  */
-export const getUserById = async (
-    id: string
-  ): Promise<{
-    id: string;
-    email: string;
-    name?: string;
-    gender: string;
-    age: number;
-    height: number;
-    weight: number;
-    bmi: number;
-    medications?: { id: string; name: string }[];
-    diseases?: { id: string; name: string }[];
-    createdAt: Date;
-    updatedAt: Date;
-  } | null> => {
+export const getUserById = async (id: string) => {
     const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        medications: { include: { medication: true } },
-        diseases: { include: { disease: true } },
-      },
+        where: { id },
+        include: {
+            medications: { include: { medication: true } },
+            diseases: { include: { disease: true } },
+        },
     });
-  
+
     if (!user) return null;
-  
+
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name ?? undefined,
-      gender: user.gender,
-      age: user.age,
-      height: user.height,
-      weight: user.weight,
-      bmi: user.bmi,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-  
-      // 🔥 여기에서 평탄화된 리스트로 변환해줘야 프론트가 받을 수 있음
-      medications: user.medications.map((m) => ({
-        id: m.medication.id,
-        name: m.medication.name,
-      })),
-      diseases: user.diseases.map((d) => ({
-        id: d.disease.id,
-        name: d.disease.name,
-      })),
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        gender: user.gender,
+        age: user.age,
+        height: user.height,
+        weight: user.weight,
+        bmi: user.bmi,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        medications: user.medications.map((m) => ({
+            id: m.medication.id,
+            name: m.medication.name,
+        })),
+        diseases: user.diseases.map((d) => ({
+            id: d.disease.sickCode,
+            name: d.disease.name,
+        })),
     };
-  };
-  
+};
+
+/**
+ * 🔹 비밀번호 변경
+ */
+export const changePassword = async (
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+) => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return { success: false, message: "사용자를 찾을 수 없습니다.", status: 404 };
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return { success: false, message: "현재 비밀번호가 일치하지 않습니다.", status: 401 };
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+
+    return { success: true, message: "비밀번호 변경 완료" };
+};

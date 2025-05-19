@@ -28,7 +28,7 @@ export default function SettingScreen() {
       {/* 🔹 계정 설정 */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>계정</Text>
-        <SettingItem label="비밀번호 변경" icon="lock-closed-outline" />
+        <SettingItem label="비밀번호 변경" icon="lock-closed-outline" onPress={() => router.push("/(user)/change-password")}/>
         <SettingItem label="이메일 변경" icon="mail-outline" />
 
       </View>

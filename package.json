@@ -6,8 +6,8 @@
         "start:frontend": "start cmd /k \"cd frontend && npm start\"",
         "start:backend": "start cmd /k \"cd backend && npm start\"",
         "start:ai": "start cmd /k \"cd ai && venv\\Scripts\\activate && python ai_server.py\"",
-        "start:symptom": "start cmd /k \"cd symptom && venv\\Scripts\\activate && python server.py\"",
-        "start:all": "npm run start:frontend && npm run start:backend && npm run start:ai && npm run start:symptom",
+        "start:extract": "start cmd /k \"cd extract && venv\\Scripts\\activate && python server.py\"",
+        "start:all": "npm run start:frontend && npm run start:backend && npm run start:ai && npm run start:symptom && npm run start:extract",
         "dev": "concurrently -n FRONT,BACK,AI,SYMPTOM -c green,blue,magenta,yellow \"cd frontend && npm start\" \"cd backend && npm start\" \"cd ai && venv\\Scripts\\activate && python ai_server.py\" \"cd symptom && venv\\Scripts\\activate && python server.py\""
     },  
     "author": "",

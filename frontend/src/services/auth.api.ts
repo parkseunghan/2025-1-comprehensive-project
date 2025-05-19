@@ -47,3 +47,16 @@ export const fetchCurrentUser = async (): Promise<{
   const { data } = await axios.get('/auth/me');
   return data;
 };
+
+/** 🔐 비밀번호 변경 */
+export const changePassword = async (data: {
+  currentPassword: string;
+  newPassword: string;
+}) => {
+  try {
+    const response = await axios.put("/auth/change-password", data);
+    return response;
+  } catch (error: any) {
+    throw error;
+  }
+};

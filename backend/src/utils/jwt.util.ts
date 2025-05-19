@@ -1,41 +1,34 @@
 // 📄 src/utils/jwt.util.ts
-import jwt, { Secret, SignOptions } from "jsonwebtoken";
+import jwt, { Secret, SignOptions, JwtPayload as JWTPayload } from "jsonwebtoken";
+import { StringValue } from "ms";
 import dotenv from "dotenv";
 import path from "path";
 
 dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_EXPIRES_IN: number | StringValue = (process.env.JWT_EXPIRES_IN || "7d") as StringValue;
 
-// ✅ 명확한 예외 처리
-if (!JWT_SECRET) {
-    throw new Error("❌ 환경 변수 'JWT_SECRET'이 설정되지 않았습니다.");
+export interface JwtPayload {
+  id: string;
+  email: string;
+  name?: string;
+  gender?: string;
 }
 
-/**
- * JWT 토큰 생성
- * @param payload - 토큰에 저장할 사용자 정보 객체
- * @param expiresIn - 만료 기간 (기본: 7일)
- */
 export const generateToken = (
-    payload: object,
-    expiresIn: string = JWT_EXPIRES_IN
+  payload: JwtPayload,
+  expiresIn: SignOptions["expiresIn"] = JWT_EXPIRES_IN
 ): string => {
-    const options: SignOptions = { expiresIn: expiresIn as jwt.SignOptions["expiresIn"] };
-    return jwt.sign(payload, JWT_SECRET as Secret, options);
+  const options: SignOptions = { expiresIn };
+  return jwt.sign(payload, JWT_SECRET, options);
 };
 
-/**
- * JWT 토큰 검증
- * @param token - 검증할 토큰
- * @returns payload 또는 null
- */
-export const verifyToken = (token: string): Record<string, any> | null => {
-    try {
-        return jwt.verify(token, JWT_SECRET) as Record<string, any>;
-    } catch (err) {
-        console.error("❌ JWT 검증 실패:", err);
-        return null;
-    }
+export const verifyToken = (token: string): JWTPayload | null => {
+  try {
+    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+  } catch (err) {
+    console.error("❌ JWT 검증 실패:", err);
+    return null;
+  }
 };
