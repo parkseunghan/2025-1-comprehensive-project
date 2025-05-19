@@ -39,14 +39,9 @@ export const signup = async ({ email, password, name }: {
 export const login = async (email: string, password: string) => {
     const user = await prisma.user.findUnique({ where: { email } });
     
-    console.log("🔍 DB 조회 결과:", user);
-    console.log("🔐 입력된 비밀번호:", password);
-    console.log("🔐 저장된 해시:", user?.password);
-    
     if (!user) return null;
 
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("✅ 비밀번호 일치 여부:", isMatch);
     
     if (!isMatch) return null;
 

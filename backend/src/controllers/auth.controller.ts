@@ -81,10 +81,6 @@ export const changePassword = async (
   req: AuthRequest<ChangePasswordBody>,
   res: Response
 ) => {
-  console.log("🔐 비밀번호 변경 요청 도착");
-  console.log("✅ 사용자:", req.user);
-  console.log("📦 req.body:", req.body);
-
   const userId = req.user?.id;
   const { currentPassword, newPassword } = req.body;
 

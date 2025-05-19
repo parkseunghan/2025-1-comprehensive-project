@@ -2,10 +2,22 @@
 // 하단 탭 네비게이션을 구성하는 레이아웃 파일입니다.
 // 디자인은 최신 스타일 기준에 맞춰 색상, 높이, 라벨 위치를 통일합니다.
 
-import { Tabs } from "expo-router";
+import { Tabs, useRootNavigationState, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect } from "react";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function TabsLayout() {
+    const { user } = useAuthStore();
+    const navState = useRootNavigationState();
+
+    useEffect(() => {
+        if (!navState?.key) return; // 아직 네비게이션 준비 안 됨
+        if (!user) {
+            console.log("🚫 로그인 안됨 → welcome 이동");
+            router.replace("/(auth)/welcome");
+        }
+    }, [user, navState?.key]);
     return (
         <Tabs
             screenOptions={{
