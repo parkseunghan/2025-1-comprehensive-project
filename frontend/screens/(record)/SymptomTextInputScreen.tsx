@@ -123,6 +123,7 @@ export default function SymptomTextInputScreen() {
     }
 
     try {
+      setIsLoading(true);
       if (mode === "nlp") {
         const response: NlpExtractResponse = await extractSymptomsWithNLP(text);
         const extracted = response.results;
@@ -142,6 +143,8 @@ export default function SymptomTextInputScreen() {
     } catch (err) {
       console.error("❌ 증상 추출 실패:", err);
       Alert.alert("예측 중 문제가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

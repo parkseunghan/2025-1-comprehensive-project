@@ -38,11 +38,11 @@ export const signup = async ({ email, password, name }: {
  */
 export const login = async (email: string, password: string) => {
     const user = await prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) return null;
 
     const isMatch = await bcrypt.compare(password, user.password);
-    
+
     if (!isMatch) return null;
 
     const token = generateToken({
@@ -118,3 +118,4 @@ export const changePassword = async (
 
     return { success: true, message: "비밀번호 변경 완료" };
 };
+

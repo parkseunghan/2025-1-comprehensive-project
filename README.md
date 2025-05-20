@@ -62,8 +62,8 @@ npm start
 cd ai
 ./start.sh
 
-# symptom
-cd symptom
+# extract
+cd extract
 ./start.sh
 ```
 

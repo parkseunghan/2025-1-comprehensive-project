@@ -2,28 +2,32 @@ import fs from "fs";
 import path from "path";
 import prisma from "../src/config/prisma.service";
 import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 async function main() {
   console.log("🌱 Seeding database...");
 
-  // 1. 사용자 생성
-  const user = await prisma.user.upsert({
-    where: { email: "test@example.com" },
-    update: {},
-    create: {
-      id: "user-001",
-      email: "test@example.com",
-      password: "1234",
-      name: "홍길동",
-      gender: "남성",
-      age: 30,
-      height: 175.5,
-      weight: 68.2,
-      bmi: 20.2,
-    },
-  });
+    // ✅ 비밀번호 해시
+    const hashedPassword = await bcrypt.hash("1234", 10);
+
+    // 1. 사용자 생성
+    const user = await prisma.user.upsert({
+      where: { email: "test@example.com" },
+      update: {},
+      create: {
+        id: "user-001",
+        email: "test@example.com",
+        password: hashedPassword, // ✅ 해시된 비밀번호 사용
+        name: "홍길동",
+        gender: "남성",
+        age: 30,
+        height: 175.5,
+        weight: 68.2,
+        bmi: 20.2,
+      },
+    });
 
   // 2. 사용자 ↔ 지병 연결 (질병은 미리 삽입됨)
   await prisma.userDisease.createMany({
