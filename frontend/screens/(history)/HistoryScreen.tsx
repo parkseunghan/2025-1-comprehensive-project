@@ -13,6 +13,7 @@ import { fetchPredictionStats } from "@/services/prediction.api";
 import { Prediction } from "@/types/prediction.types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
@@ -60,7 +61,22 @@ export default function HistoryScreen() {
         const iconName = getRiskIcon(item.riskLevel);
 
         return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
+            <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.7}
+                onPress={() =>
+                    router.push({
+                        pathname: "/(record)/historydetailscreen",
+                        params: {
+                            date,
+                            coarseLabel: item.coarseLabel,
+                            fineLabel: item.fineLabel,
+                            riskLevel: item.riskLevel,
+                            riskScore: String(item.riskScore),
+                        },
+                    })
+                }
+            >
                 <View style={styles.dateRow}>
                     <Ionicons name="calendar-outline" size={16} color="#6B7280" />
                     <Text style={styles.date}>{date}</Text>
