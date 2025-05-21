@@ -338,46 +338,40 @@ export default function ResultScreen() {
                             </Text>
                         </View>
                         <View style={styles.diseaseList}>
-                            {result.ranks.slice(1).map((rank, index) => (
-                                <TouchableOpacity
-                                    key={rank.rank}
-                                    style={[
-                                        styles.diseaseItem,
-                                        selectedIndex === index + 1 &&
-                                            styles.selectedDiseaseItem,
-                                    ]}
-                                    onPress={() => setSelectedIndex(index + 1)}
-                                >
-                                    <View style={styles.rankContainer}>
-                                        <Text style={styles.rank}>
-                                            {index + 2}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.diseaseDetails}>
-                                        <Text style={styles.diseaseItemName}>
-                                            {diseaseNameMap[rank.fineLabel] ||
-                                                rank.fineLabel}
-                                        </Text>
+                        {result.ranks.map((rank, index) => (
+                            <TouchableOpacity
+                                key={rank.rank}
+                                style={[
+                                    styles.diseaseItem,
+                                    selectedIndex === index && styles.selectedDiseaseItem,
+                                ]}
+                                onPress={() => setSelectedIndex(index)}
+                            >
+                                <View style={styles.rankContainer}>
+                                    <Text style={styles.rank}>
+                                        {index + 1}
+                                    </Text>
+                                </View>
+                                <View style={styles.diseaseDetails}>
+                                    <Text style={styles.diseaseItemName}>
+                                        {diseaseNameMap[rank.fineLabel] || rank.fineLabel}
+                                    </Text>
+                                    <View style={styles.progressBarContainer}>
                                         <View
-                                            style={styles.progressBarContainer}
-                                        >
-                                            <View
-                                                style={[
-                                                    styles.progressBar,
-                                                    {
-                                                        width: `${
-                                                            rank.riskScore * 100
-                                                        }%`,
-                                                    },
-                                                ]}
-                                            />
-                                        </View>
-                                        <Text style={styles.diseaseScore}>
-                                            {(rank.riskScore * 100).toFixed(1)}%
-                                        </Text>
+                                            style={[
+                                                styles.progressBar,
+                                                {
+                                                    width: `${rank.riskScore * 100}%`,
+                                                },
+                                            ]}
+                                        />
                                     </View>
-                                </TouchableOpacity>
-                            ))}
+                                    <Text style={styles.diseaseScore}>
+                                        {(rank.riskScore * 100).toFixed(1)}%
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
                         </View>
                     </View>
 
