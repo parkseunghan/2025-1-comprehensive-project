@@ -188,7 +188,7 @@ export default function ProfileDetailScreen() {
                     </View>
 
                     <EditableField
-                        label="나이"
+                        label="(만)나이"
                         value={editableProfile.age}
                         editing={editField === "age"}
                         onPressEdit={() => setEditField("age")}

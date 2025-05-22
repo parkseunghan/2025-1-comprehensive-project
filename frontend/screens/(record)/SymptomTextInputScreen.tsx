@@ -162,16 +162,16 @@ export default function SymptomTextInputScreen() {
         <Text style={styles.greeting}>
           👤 {user?.name}님, 현재 프로필이 반영됩니다.
         </Text>
-
         <Text style={styles.inputLabel}>현재 증상을 입력해 주세요:</Text>
         <TextInput
-          placeholder="예: 기침이 심하고 열이 나요. 배도 아파요"
-          multiline
-          numberOfLines={3}
-          value={text}
-          onChangeText={setText}
-          style={styles.textInput}
-        />
+            placeholder="예: 기침이 심하고 열이 나요. 배도 아파요"
+            multiline
+            numberOfLines={3}
+            value={text}
+            onChangeText={setText}
+            style={styles.textInput}
+          />
+          <Text style={styles.inputLabel}>ℹ️  2개 이상의 증상을 입력해주세요.</Text>
 
         <Animated.View
           style={[

@@ -145,8 +145,10 @@ import {
             </View>
   
             <ScrollView contentContainerStyle={styles.scrollContent}>
-              <Text style={styles.title}>증상을 검색하거나 대분류를 선택하세요.</Text>
-  
+            <View style={styles.titleBlock}>
+  <Text style={styles.title}>증상을 검색하거나 대분류를 선택하세요.</Text>
+  <Text style={styles.noticeLine}>ℹ️  2개 이상의 증상을 입력해주세요.</Text>
+</View>
               {selected.length > 0 && (
                 <View style={styles.selectedBox}>
                   {selected.map((name) => (
@@ -222,11 +224,33 @@ import {
     scrollContent: {
       paddingBottom: 80,
     },
+    titleBlock: {
+      marginBottom: 12, // 전체 블록 간격
+    },
+    
     title: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: "bold",
-      marginTop: 12,
-      marginBottom: 12,
+      marginBottom: 2, // 제목과 안내문구 간격 좁게
+      color: "#111827",
+    },
+    
+    noticeLine: {
+      fontSize: 14,
+      color: "#6B7280",
+      textAlign: "left", // ✅ 왼쪽 정렬
+      marginTop: 0,
+      marginBottom: 12, // ✅ 검색창과는 간격 확보
+    },
+    
+    input: {
+      borderWidth: 1,
+      borderColor: "#EF4444", // 예시: 오류 강조 색상
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      fontSize: 16,
+      color: "#111827",
     },
     selectedBox: {
       flexDirection: "row",

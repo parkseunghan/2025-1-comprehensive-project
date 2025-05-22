@@ -228,7 +228,7 @@ return (
             </View>
             </View>
 
-            {renderEditableField("나이", "age", "numeric")}
+            {renderEditableField("(만)나이", "age", "numeric")}
             {renderEditableField("키(cm)", "height", "numeric")}
             {renderEditableField("몸무게(kg)", "weight", "numeric")}
 
