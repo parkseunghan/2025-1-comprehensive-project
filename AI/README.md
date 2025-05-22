@@ -163,7 +163,7 @@ ai/
 
 > ⚠️ **주의사항**  
 > 모든 데이터는 **의료 전문가의 진단을 대체할 수 없으며**, 실제 의료 목적이 아닌 **연구 및 학습 목적**으로만 사용되어야 합니다. 각 데이터셋의 원 저작자와 라이선스 조건을 반드시 준수해야 합니다.
----
+
 
 ### 1. [Disease Symptom Description Dataset](https://www.kaggle.com/datasets/itachi9604/disease-symptom-description-dataset)
 - **Author**: *Itachi9604*  
@@ -171,7 +171,6 @@ ai/
 - **License**: Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0)  
 - **Note**: 비상업적 용도로만 사용 가능. 의료적 진단을 대체하지 않음
 
----
 
 ### 2. [Disease Symptom Prediction Dataset](https://www.kaggle.com/datasets/karthikudyawar/disease-symptom-prediction)
 - **Author**: *Karthik Udyawar*  
@@ -179,7 +178,6 @@ ai/
 - **License**: 공개 (공식 라이선스 명시 없음)  
 - **Note**: 증상 기반 질병 예측 모델링에 유용
 
----
 
 ### 3. [Disease, Symptoms and Patient Profile Dataset](https://www.kaggle.com/datasets/uom190346a/disease-symptoms-and-patient-profile-dataset)
 - **Author**: *Mubeen Shakir (uom190346a)*  
@@ -187,7 +185,6 @@ ai/
 - **License**: 공개 (공식 라이선스 명시 없음)  
 - **Note**: 사용자 기반 맞춤형 예측 모델 개발에 참고
 
----
 
 ### 4. [Disease Prediction Using Machine Learning](https://www.kaggle.com/datasets/kaushil268/disease-prediction-using-machine-learning)
 - **Author**: *Kaushil Shah*  
