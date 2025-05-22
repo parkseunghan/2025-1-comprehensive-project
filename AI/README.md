@@ -4,20 +4,28 @@
 내과 질환을 예측하는 **AI 모델 학습 및 추론 코드**를 포함하고 있습니다.
 
 ---
+
 ## 📁 디렉토리 구성
+
 | 경로 | 설명 |
 |------|------|
 | `scripts/embed_sbert_features.py` | SBERT 임베딩 벡터 생성 |
 | `scripts/train_coarse_model.py`  | coarse(질병군) 분류 모델 학습 |
 | `scripts/train_fine_models.py`   | fine(세부 질병) 분류 모델 학습 |
 | `scripts/predict_disease.py`     | 통합 추론 함수 정의 |
+| `scripts/extract_symptom_keywords.py` | 증상 키워드 기반 symptom_map 생성 |
+| `scripts/save_artifacts.py` | 모델 부속 객체 저장 (인코더 등) |
+| `scripts/model_util.py` | 예측 로직 유틸리티 함수 모음 |
 | `predict_demo.py`                | 샘플 기반 예측 실행 |
+| `main.py`                        | 전체 학습 + 예측 파이프라인 실행 |
+| `ai_server.py`                   | FastAPI 기반 예측 API 서버 |
 | `models/`                        | 학습된 모델 및 인코더 저장 |
 | `data/`                          | 학습용 CSV 및 설정 파일 보관 |
 
 ---
 
-### 🔍 예측 
+## 🔍 예측 구조
+
               사용자 입력
         (증상 키워드 + 신체 정보)  
                   ↓  
@@ -38,11 +46,10 @@
 
 ### 0. 가상환경
 
-```sh
-# python 3.9.11 설치 후
-py -3.9 -m venv venv # 가상환경 생성
-
-source venv/Scripts/activate # 가상환경 실행
+```bash
+# Python 3.9.11 설치 후
+python3.9 -m venv venv
+source venv/bin/activate  # 윈도우는 venv\Scripts\activate
 ```
 
 ### 1. 라이브러리 설치
@@ -61,15 +68,20 @@ python scripts/train_coarse_model.py
 python scripts/train_fine_models.py
 ```
 
-### 4. 예측 실행
+### 4. 예측 테스트 (로컬 실행)
 ```
-python app.py
+python main.py
+```
+
+### 5. 예측 테스트 (데모 실행)
+```
+python predict_demo.py
 ```
 
 
 ---
 
-## 🔍 예측 결과 예시
+## 예측 결과 예시 (JSON)
 - 🎯 **Top-3 예측 질병**
   1. 폐렴 (91.2%)
   2. 천식 (6.3%)
@@ -82,17 +94,23 @@ python app.py
 
 ## 📌 사용 모델
 - SBERT: snunlp/KR-SBERT-V40K-klueNLI-augSTS
-- MLP 기반 분류기 (수치/범주형 피처)
-- Focal Loss 적용 (fine 분류 모델 일부)
+- Coarse 분류: BERT 임베딩 + MLP 하이브리드
+- Fine 분류: 그룹별 개별 MLP + Focal Loss 일부 적용
+- 위험도 계산: 나이, BMI, 지병, 약물 등 고려한 커스텀 가중치 함수
 ---
 
 ## 📂 주요 파일 설명
 
 ### 파일 역할
-- models/	.h5 모델과 .pkl 인코더 저장
-- data/raw/	원본 학습 데이터 CSV
--  data/processed/	SBERT 임베딩 .npy
-- data/fine_config.json	fine 모델 학습 설정 파일
+| 경로 | 설명 |
+|------|------|
+| `ai_server.py` | SFastAPI 기반 추론 API 서버 (/predict) |
+| `main.py`  | 	전체 파이프라인 일괄 실행용 |
+| `predict_demo.py`   | 샘플 예측 결과 확인용 스크립트 |
+| `scripts/model_util.py`     | 	`predict_coarse_fine()` 포함 핵심 예측 함수 |
+| `scripts/save_artifacts.py` | 	scaler, 인코더 등 부속 모델 저장용 |
+| `scripts/extract_symptom_keywords.py` | 질병별 증상 키워드 맵 추출 JSON 생성 |
+
 ---
 ### 디렉토리 구조
 ```
