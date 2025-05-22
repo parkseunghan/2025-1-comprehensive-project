@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 
-const PRIMARY_COLOR = "#D92B4B"; // 브랜드 포인트 컬러
+const PRIMARY_COLOR = "#D92B4B"; // 아이덴티티 색상
 
 export default function AppInfoScreen() {
   const router = useRouter();
@@ -20,9 +20,10 @@ export default function AppInfoScreen() {
           color="#111827"
           onPress={() => router.push("/(tabs)/setting")}
         />
+        <Text style={styles.headerTitle}>앱 정보</Text>
       </View>
 
-      {/* 아이콘 */}
+      {/* 앱 아이콘 */}
       <View style={styles.iconContainer}>
         <Image
           source={require("@/images/AJINGA_LOGO.png")}
@@ -31,8 +32,8 @@ export default function AppInfoScreen() {
         />
       </View>
 
-      {/* 타이틀 */}
-      <Text style={styles.title}>AI 진단 도우미</Text>
+      {/* 브랜드명 + 버전 */}
+      <Text style={styles.title}>AI 내과 진단 도우미</Text>
       <Text style={styles.version}>v{appVersion}</Text>
 
       {/* 정보 카드 */}
@@ -45,7 +46,7 @@ export default function AppInfoScreen() {
         <InfoItem label="라이선스" value="MIT License" />
       </View>
 
-      {/* 하단 안내 */}
+      {/* 하단 문구 */}
       <View style={styles.footer}>
         <Ionicons name="information-circle-outline" size={18} color="#9CA3AF" />
         <Text style={styles.footerText}>본 앱은 학습 목적의 데모 앱입니다.</Text>
@@ -74,8 +75,14 @@ const styles = StyleSheet.create({
   header: {
     width: "100%",
     flexDirection: "row",
-    justifyContent: "flex-start",
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginLeft: 12,
+    color: "#111827",
   },
   iconContainer: {
     alignItems: "center",

@@ -56,6 +56,20 @@ export default function HistoryDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
+
+        {/* 상단 타이틀 */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#111827" />
+          <Text style={styles.headerTitle}>진단 상세</Text>
+        </TouchableOpacity>
+      </View>
+
+
+        {/* 📊 상단 결과 카드 */}
         <LinearGradient
           colors={[gradientColors[0], gradientColors[1]]}
           start={{ x: 0, y: 0 }}
@@ -114,6 +128,25 @@ export default function HistoryDetailScreen() {
 
 
 const styles = StyleSheet.create({
+    header: {
+      width: "100%",
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    backButton: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      marginLeft: 4,
+      color: "#111827",
+    },
+  
     container: {
       flex: 1,
       backgroundColor: "#f9fafb",
@@ -243,7 +276,7 @@ const styles = StyleSheet.create({
       lineHeight: 20,
     },
     button: {
-      backgroundColor: "#6366F1",
+      backgroundColor: "#D92B4B",
       paddingVertical: 14,
       borderRadius: 12,
       alignItems: "center",
