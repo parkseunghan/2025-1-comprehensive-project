@@ -1,3 +1,4 @@
+// ✅ SymptomInputScreen.tsx
 import { useEffect, useRef, useState } from "react";
 import {
     View,
@@ -57,13 +58,9 @@ export default function SymptomInputScreen() {
     });
 
     const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
-    const [selectedMedicationIds, setSelectedMedicationIds] = useState<
-        string[]
-    >([]);
+    const [selectedMedicationIds, setSelectedMedicationIds] = useState<string[]>([]);
 
-    const [editField, setEditField] = useState<
-        keyof typeof profileState | null
-    >(null);
+    const [editField, setEditField] = useState<keyof typeof profileState | null>(null);
     const [buttonState, setButtonState] = useState<"scroll" | "next">("scroll");
 
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -96,12 +93,16 @@ export default function SymptomInputScreen() {
                 useNativeDriver: true,
             }),
         ]).start();
+
+        // 버튼 상태 조기 변경
+        setTimeout(() => setButtonState("next"), 100);
     }, [profile]);
 
     const mutation = useMutation({
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
+                name: profileState.name,
                 gender: profileState.gender as "남성" | "여성",
                 age: Number(profileState.age),
                 height: parseFloat(profileState.height),
@@ -122,8 +123,7 @@ export default function SymptomInputScreen() {
                 weight: updatedUser.weight,
                 bmi:
                     updatedUser.height > 0
-                        ? updatedUser.weight /
-                          Math.pow(updatedUser.height / 100, 2)
+                        ? updatedUser.weight / Math.pow(updatedUser.height / 100, 2)
                         : 0,
                 role: updatedUser.role,
                 diseases: updatedUser.diseases.map((d) => ({
@@ -148,16 +148,10 @@ export default function SymptomInputScreen() {
     };
 
     const getDiseaseNames = () =>
-        selectedDiseaseIds
-            .map((id) => diseaseList.find((d) => d.sickCode === id)?.name)
-            .filter(Boolean)
-            .join(", ");
+        selectedDiseaseIds.map((id) => diseaseList.find((d) => d.sickCode === id)?.name).filter(Boolean).join(", ");
 
     const getMedicationNames = () =>
-        selectedMedicationIds
-            .map((id) => medicationList.find((m) => m.id === id)?.name)
-            .filter(Boolean)
-            .join(", ");
+        selectedMedicationIds.map((id) => medicationList.find((m) => m.id === id)?.name).filter(Boolean).join(", ");
 
     const diseaseCategories = [...new Set(diseaseList.map((d) => d.category))];
 
@@ -170,281 +164,155 @@ export default function SymptomInputScreen() {
 
     const bmi = calculateBMI(profileState.height, profileState.weight);
 
-    const handleButtonClick = () => {
-        if (buttonState === "scroll") {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-            setButtonState("next");
-        } else {
-            mutation.mutate();
-        }
-    };
+    const handleButtonClick = () => mutation.mutate();
 
-    const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const { layoutMeasurement, contentOffset, contentSize } =
-            event.nativeEvent;
-        const isScrolledToBottom =
-            layoutMeasurement.height + contentOffset.y >=
-            contentSize.height - 10;
-        if (isScrolledToBottom && buttonState === "scroll") {
-            setButtonState("next");
-        }
-    };
 
-    return (
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-            <View style={styles.header}>
-                <BackButton />
+const renderEditableField = (label: string, key: keyof typeof profileState, keyboardType: "default" | "numeric" = "default") => (
+    <View style={styles.inputGroup}>
+        <TouchableOpacity
+            style={styles.inputHeader}
+            onPress={() => setEditField(key)}
+            activeOpacity={0.7}
+        >
+            <Text style={styles.inputLabel}>{label}</Text>
+            <Ionicons name="create-outline" size={16} color="#6B7280" />
+        </TouchableOpacity>
+        {editField === key ? (
+            <TextInput
+                style={styles.inputValue}
+                value={profileState[key]}
+                onChangeText={(text) => handleChange(key, text)}
+                onBlur={() => setEditField(null)}
+                autoFocus
+                keyboardType={keyboardType}
+            />
+        ) : (
+            <TouchableOpacity onPress={() => setEditField(key)}>
+                <Text style={styles.inputValue}>{profileState[key]}</Text>
+            </TouchableOpacity>
+        )}
+    </View>
+);
+
+return (
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <View style={styles.header}>
+            <BackButton />
+        </View>
+
+        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.inputGroup}>
+            <View style={styles.inputHeader}>
+                <Text style={styles.inputLabel}>이름</Text>
+            </View>
+            <Text style={styles.inputValue}>{profileState.name || "-"}</Text>
+            </View>
+            <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>성별</Text>
+            <View style={styles.radioGroup}>
+                {["남성", "여성"].map((item) => (
+                <TouchableOpacity
+                    key={item}
+                    style={styles.radioItem}
+                    onPress={() => handleChange("gender", item)}
+                >
+                    <View
+                    style={[
+                        styles.radioCircle,
+                        profileState.gender === item && styles.radioCircleSelected,
+                    ]}
+                    />
+                    <Text style={styles.radioLabel}>{item}</Text>
+                </TouchableOpacity>
+                ))}
+            </View>
             </View>
 
-            <ScrollView
-                ref={scrollViewRef}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-            >
-                {/* 이름 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>이름</Text>
-                    </View>
-                    <Text style={styles.inputValue}>{profileState.name}</Text>
+            {renderEditableField("나이", "age", "numeric")}
+            {renderEditableField("키(cm)", "height", "numeric")}
+            {renderEditableField("몸무게(kg)", "weight", "numeric")}
+
+            <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>BMI</Text>
+                <Text style={styles.inputValue}>{bmi}</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+                <View style={styles.inputHeader}>
+                    <Text style={styles.inputLabel}>지병</Text>
+                    <TouchableOpacity onPress={() => setCategoryModalOpen(true)}>
+                        <Ionicons name="add" size={16} color="#6B7280" />
+                    </TouchableOpacity>
                 </View>
+                <Text style={styles.inputValue}>{getDiseaseNames() || "-"}</Text>
+            </View>
 
-                {/* 성별 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>성별</Text>
-                        <TouchableOpacity
-                            onPress={() => setEditField("gender")}
-                        >
-                            <Ionicons
-                                name="create-outline"
-                                size={16}
-                                color="#6B7280"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    {editField === "gender" ? (
-                        <View style={styles.radioGroup}>
-                            {["남성", "여성"].map((item) => (
-                                <TouchableOpacity
-                                    key={item}
-                                    style={styles.radioItem}
-                                    onPress={() => {
-                                        handleChange("gender", item);
-                                        setEditField(null);
-                                    }}
-                                >
-                                    <View
-                                        style={[
-                                            styles.radioCircle,
-                                            profileState.gender === item &&
-                                                styles.radioCircleSelected,
-                                        ]}
-                                    />
-                                    <Text style={styles.radioLabel}>
-                                        {item}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    ) : (
-                        <Text style={styles.inputValue}>
-                            {profileState.gender}
-                        </Text>
-                    )}
+            <View style={styles.inputGroup}>
+                <View style={styles.inputHeader}>
+                    <Text style={styles.inputLabel}>복용 약물</Text>
+                    <TouchableOpacity onPress={() => setMedicationModalOpen(true)}>
+                        <Ionicons name="add" size={16} color="#6B7280" />
+                    </TouchableOpacity>
                 </View>
+                <Text style={styles.inputValue}>{getMedicationNames() || "-"}</Text>
+            </View>
+        </ScrollView>
 
-                {/* 나이 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>나이</Text>
-                        <TouchableOpacity onPress={() => setEditField("age")}>
-                            <Ionicons
-                                name="create-outline"
-                                size={16}
-                                color="#6B7280"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    {editField === "age" ? (
-                        <TextInput
-                            style={styles.inputValue}
-                            value={profileState.age}
-                            onChangeText={(text) => handleChange("age", text)}
-                            onBlur={() => setEditField(null)}
-                            autoFocus
-                            keyboardType="numeric"
-                        />
-                    ) : (
-                        <Text style={styles.inputValue}>
-                            {profileState.age}
-                        </Text>
-                    )}
-                </View>
-
-                {/* 키 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>키(cm)</Text>
-                        <TouchableOpacity
-                            onPress={() => setEditField("height")}
-                        >
-                            <Ionicons
-                                name="create-outline"
-                                size={16}
-                                color="#6B7280"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    {editField === "height" ? (
-                        <TextInput
-                            style={styles.inputValue}
-                            value={profileState.height}
-                            onChangeText={(text) =>
-                                handleChange("height", text)
-                            }
-                            onBlur={() => setEditField(null)}
-                            autoFocus
-                            keyboardType="numeric"
-                        />
-                    ) : (
-                        <Text style={styles.inputValue}>
-                            {profileState.height}
-                        </Text>
-                    )}
-                </View>
-
-                {/* 몸무게 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>몸무게(kg)</Text>
-                        <TouchableOpacity
-                            onPress={() => setEditField("weight")}
-                        >
-                            <Ionicons
-                                name="create-outline"
-                                size={16}
-                                color="#6B7280"
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    {editField === "weight" ? (
-                        <TextInput
-                            style={styles.inputValue}
-                            value={profileState.weight}
-                            onChangeText={(text) =>
-                                handleChange("weight", text)
-                            }
-                            onBlur={() => setEditField(null)}
-                            autoFocus
-                            keyboardType="numeric"
-                        />
-                    ) : (
-                        <Text style={styles.inputValue}>
-                            {profileState.weight}
-                        </Text>
-                    )}
-                </View>
-
-                {/* BMI */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>BMI</Text>
-                    <Text style={styles.inputValue}>{bmi}</Text>
-                </View>
-
-                {/* 지병 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>지병</Text>
-                        <TouchableOpacity
-                            onPress={() => setCategoryModalOpen(true)}
-                        >
-                            <Ionicons name="add" size={16} color="#6B7280" />
-                        </TouchableOpacity>
-                    </View>
-                    <Text style={styles.inputValue}>
-                        {getDiseaseNames() || "-"}
-                    </Text>
-                </View>
-
-                {/* 약물 */}
-                <View style={styles.inputGroup}>
-                    <View style={styles.inputHeader}>
-                        <Text style={styles.inputLabel}>복용 약물</Text>
-                        <TouchableOpacity
-                            onPress={() => setMedicationModalOpen(true)}
-                        >
-                            <Ionicons name="add" size={16} color="#6B7280" />
-                        </TouchableOpacity>
-                    </View>
-                    <Text style={styles.inputValue}>
-                        {getMedicationNames() || "-"}
-                    </Text>
-                </View>
-            </ScrollView>
-
-            <Animated.View
-                style={[
-                    styles.buttonWrapper,
-                    {
-                        opacity: fadeAnim,
-                        transform: [{ translateY }],
-                        pointerEvents: "auto",
-                    },
-                ]}
-            >
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={handleButtonClick}
-                >
-                    <Text style={styles.buttonText}>
-                        {buttonState === "scroll" ? "화면 스크롤" : "다음"}
-                    </Text>
-                </TouchableOpacity>
-            </Animated.View>
-
-            <DiseaseCategorySelectModal
-                visible={categoryModalOpen}
-                categories={diseaseCategories}
-                diseaseList={diseaseList}
-                selected={selectedDiseaseIds}
-                onSelectDiseases={(ids) => setSelectedDiseaseIds(ids)}
-                onOpenSubcategory={(cat) => {
-                    setSelectedCategory(cat);
-                    setCategoryModalOpen(false);
-                    setListModalOpen(true);
-                }}
-                onClose={() => setCategoryModalOpen(false)}
-            />
-
-            <DiseaseListSelectModal
-                visible={listModalOpen}
-                category={selectedCategory}
-                diseaseList={diseaseList}
-                selected={selectedDiseaseIds}
-                onToggle={(items) => setSelectedDiseaseIds(items)}
-                onSave={() => setListModalOpen(false)}
-                onBack={() => {
-                    setListModalOpen(false);
-                    setCategoryModalOpen(true);
-                }}
-            />
-
-            <MedicationSelectModal
-                visible={medicationModalOpen}
-                selected={selectedMedicationIds}
-                medicationList={medicationList}
-                isLoading={false}
-                onClose={() => setMedicationModalOpen(false)}
-                onSave={(items) => {
-                    setSelectedMedicationIds(items);
-                    setMedicationModalOpen(false);
-                }}
-            />
+        <Animated.View
+            style={[
+                styles.buttonWrapper,
+                {
+                    opacity: fadeAnim,
+                    transform: [{ translateY }],
+                    pointerEvents: "auto",
+                },
+            ]}
+        >
+            <TouchableOpacity style={styles.button} onPress={handleButtonClick}>
+                <Text style={styles.buttonText}>다음</Text>
+            </TouchableOpacity>
         </Animated.View>
-    );
+
+        <DiseaseCategorySelectModal
+            visible={categoryModalOpen}
+            categories={diseaseCategories}
+            diseaseList={diseaseList}
+            selected={selectedDiseaseIds}
+            onSelectDiseases={(ids) => setSelectedDiseaseIds(ids)}
+            onOpenSubcategory={(cat) => {
+                setSelectedCategory(cat);
+                setCategoryModalOpen(false);
+                setListModalOpen(true);
+            }}
+            onClose={() => setCategoryModalOpen(false)}
+        />
+
+        <DiseaseListSelectModal
+            visible={listModalOpen}
+            category={selectedCategory}
+            diseaseList={diseaseList}
+            selected={selectedDiseaseIds}
+            onToggle={(items) => setSelectedDiseaseIds(items)}
+            onSave={() => setListModalOpen(false)}
+            onBack={() => {
+                setListModalOpen(false);
+                setCategoryModalOpen(true);
+            }}
+        />
+
+        <MedicationSelectModal
+            visible={medicationModalOpen}
+            selected={selectedMedicationIds}
+            medicationList={medicationList}
+            isLoading={false}
+            onClose={() => setMedicationModalOpen(false)}
+            onSave={(items) => {
+                setSelectedMedicationIds(items);
+                setMedicationModalOpen(false);
+            }}
+        />
+    </Animated.View>
+);
 }
 
 const styles = StyleSheet.create({
