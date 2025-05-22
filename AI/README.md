@@ -82,13 +82,19 @@ python predict_demo.py
 ---
 
 ## 예측 결과 예시 (JSON)
-- 🎯 **Top-3 예측 질병**
-  1. 폐렴 (91.2%)
-  2. 천식 (6.3%)
-  3. COPD (1.8%)
-
-- 📊 **위험도 점수**: 3.4 / **높음**
-- 💡 **가이드라인**: 빠른 병원 방문이 필요합니다.
+```json
+{
+  "coarse_label": "호흡기",
+  "top_predictions": [
+    { "label": "폐렴", "prob": 0.912 },
+    { "label": "천식", "prob": 0.063 },
+    { "label": "COPD", "prob": 0.018 }
+  ],
+  "risk_score": 3.4,
+  "risk_level": "높음",
+  "recommendation": "빠른 병원 방문이 필요합니다."
+}
+```
 
 ---
 
