@@ -280,3 +280,10 @@ flowchart TD
 
 ---
 
+
+## License
+
+This project is licensed under the **MIT License**.  
+© 2025 이승겸 (Team Trio)
+
+See the [LICENSE](./LICENSE) file for more details.
