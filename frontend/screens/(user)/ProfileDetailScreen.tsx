@@ -88,6 +88,7 @@ export default function ProfileDetailScreen() {
         mutationFn: async () => {
             return updateUserProfile({
                 id: user!.id,
+                name: editableProfile.name,
                 gender: editableProfile.gender as "남성" | "여성",
                 age: Number(editableProfile.age),
                 height: parseFloat(editableProfile.height),

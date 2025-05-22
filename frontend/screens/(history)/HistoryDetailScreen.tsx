@@ -1,4 +1,4 @@
-// 📄 screens/(record)/HistoryDetailScreen.tsx
+// 📄 screens/(history)/HistoryDetailScreen.tsx
 
 import React, { useEffect, useState } from "react";
 import {

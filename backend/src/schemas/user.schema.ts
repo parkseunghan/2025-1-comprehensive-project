@@ -4,6 +4,7 @@ import { z } from "zod";
 
 // 🔹 사용자 프로필 업데이트 스키마
 export const userUpdateSchema = z.object({
+  name: z.string().optional(),
   gender: z.enum(["남성", "여성"]), // ✅ 현재 DB 기준 (string)
   age: z.number().min(1).max(120),
   height: z.number().min(50).max(250),

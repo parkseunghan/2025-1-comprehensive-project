@@ -6,6 +6,7 @@ import { z } from "zod";
 export const genderSchema = z.enum(["남성", "여성"]);
 
 export const userProfileSchema = z.object({
+  name: z.string().min(1, "이름은 필수입니다."),
   gender: genderSchema,
   age: z.coerce.number().min(1).max(120),
   height: z.coerce.number().min(50).max(250),
