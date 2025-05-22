@@ -388,23 +388,20 @@ function EditableNameField({
                     onBlur={onBlur}
                 />
             ) : (
-                <View style={styles.nameRow}>
+                <TouchableOpacity onPress={onPressEdit} style={styles.nameRow}>
                     <Text style={styles.userName}>{value}</Text>
-                    <TouchableOpacity
-                        onPress={onPressEdit}
+                    <Ionicons
+                        name="create-outline"
+                        size={16}
+                        color="#6B7280"
                         style={{ marginLeft: 6 }}
-                    >
-                        <Ionicons
-                            name="create-outline"
-                            size={16}
-                            color="#6B7280"
-                        />
-                    </TouchableOpacity>
-                </View>
+                    />
+                </TouchableOpacity>
             )}
         </View>
     );
 }
+
 
 function EditableField({
     label,
@@ -416,12 +413,15 @@ function EditableField({
 }: any) {
     return (
         <View style={styles.itemRow}>
-            <View style={styles.itemHeader}>
+            <TouchableOpacity
+                onPress={onPressEdit}
+                activeOpacity={0.8}
+                style={styles.itemHeader}
+            >
                 <Text style={styles.itemLabel}>{label}</Text>
-                <TouchableOpacity onPress={onPressEdit}>
-                    <Ionicons name="create-outline" size={16} color="#6B7280" />
-                </TouchableOpacity>
-            </View>
+                <Ionicons name="create-outline" size={16} color="#6B7280" />
+            </TouchableOpacity>
+
             {editing ? (
                 <TextInput
                     style={styles.itemInput}
@@ -432,11 +432,16 @@ function EditableField({
                     onBlur={onBlur}
                 />
             ) : (
-                <Text style={styles.itemValue}>{value}</Text>
+                <TouchableOpacity onPress={onPressEdit}>
+                    <Text style={styles.itemValue}>
+                        {value || "입력되지 않음"}
+                    </Text>
+                </TouchableOpacity>
             )}
         </View>
     );
 }
+
 
 function EditableTextWithButton({ label, value, onPress }: any) {
     return (
