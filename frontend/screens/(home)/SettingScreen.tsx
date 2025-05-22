@@ -44,7 +44,7 @@ export default function SettingScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>앱</Text>
         <SettingItem label="데이터 초기화" icon="refresh-outline" />
-        <SettingItem label="앱 정보" icon="information-circle-outline" />
+        <SettingItem label="앱 정보" icon="information-circle-outline" onPress={() => router.push("/(home)/appinfoscreen")}/>
         <LogoutButton />
       </View>
     </ScrollView>
