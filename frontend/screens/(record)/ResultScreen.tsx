@@ -1,3 +1,5 @@
+// 📄 screens/(record)/ResultScreen.tsx
+
 import {
     View,
     Text,
@@ -26,17 +28,11 @@ import { getDiseaseInfo } from "@/services/disease.api";
 const { width } = Dimensions.get("window");
 
 export default function ResultScreen() {
-    const [result, setResult] = useState<
-        (Prediction & { ranks: PredictionRank[] }) | null
-    >(null);
+    const [result, setResult] = useState<(Prediction & { ranks: PredictionRank[] }) | null>(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const [diseaseInfo, setDiseaseInfo] = useState<{
-        description: string;
-        tips: string;
-    } | null>(null);
+    const [diseaseInfo, setDiseaseInfo] = useState<{ description: string; tips: string } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 애니메이션 값
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -49,17 +45,13 @@ export default function ResultScreen() {
                 const result = await getPredictionByRecord(recordId);
                 setResult(result);
 
-                // 초기 질병 정보 로드 (TOP1)
                 if (result?.ranks && result.ranks.length > 0) {
                     const topDisease = result.ranks[0];
                     const mappedName = diseaseNameMap[topDisease.fineLabel];
                     if (mappedName) {
                         const info = await getDiseaseInfo(mappedName);
                         if (info) {
-                            setDiseaseInfo({
-                                description: info.description,
-                                tips: info.tips,
-                            });
+                            setDiseaseInfo({ description: info.description, tips: info.tips });
                         }
                     }
                 }
@@ -67,7 +59,6 @@ export default function ResultScreen() {
                 console.error("결과 불러오기 실패:", error);
             } finally {
                 setIsLoading(false);
-                // 애니메이션 시작
                 Animated.parallel([
                     Animated.timing(fadeAnim, {
                         toValue: 1,
@@ -82,7 +73,6 @@ export default function ResultScreen() {
                 ]).start();
             }
         };
-
         fetchResult();
     }, []);
 
@@ -136,27 +126,12 @@ export default function ResultScreen() {
         return (
             <SafeAreaView style={styles.loadingContainer}>
                 <View style={styles.loadingContent}>
-                    <LinearGradient
-                        colors={["#D92B4B", "#9C2D4D"]}
-                        style={styles.loadingIconContainer}
-                    >
-                        <MaterialCommunityIcons
-                            name="brain"
-                            size={40}
-                            color="#fff"
-                        />
+                    <LinearGradient colors={["#D92B4B", "#9C2D4D"]} style={styles.loadingIconContainer}>
+                        <MaterialCommunityIcons name="brain" size={40} color="#fff" />
                     </LinearGradient>
-                    <ActivityIndicator
-                        size="large"
-                        color="#D92B4B"
-                        style={{ marginTop: 20 }}
-                    />
-                    <Text style={styles.loadingText}>
-                        AI가 분석 결과를 준비하고 있습니다
-                    </Text>
-                    <Text style={styles.loadingSubText}>
-                        잠시만 기다려주세요...
-                    </Text>
+                    <ActivityIndicator size="large" color="#D92B4B" style={{ marginTop: 20 }} />
+                    <Text style={styles.loadingText}>AI가 분석 결과를 준비하고 있습니다</Text>
+                    <Text style={styles.loadingSubText}>잠시만 기다려주세요...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -166,126 +141,66 @@ export default function ResultScreen() {
         return (
             <SafeAreaView style={styles.loadingContainer}>
                 <View style={styles.errorContent}>
-                    <MaterialCommunityIcons
-                        name="alert-circle-outline"
-                        size={60}
-                        color="#D92B4B"
-                    />
-                    <Text style={styles.errorText}>
-                        결과를 불러올 수 없습니다
-                    </Text>
-                    <TouchableOpacity
-                        onPress={handleExit}
-                        style={styles.errorButton}
-                    >
-                        <Text style={styles.errorButtonText}>
-                            처음으로 돌아가기
-                        </Text>
+                    <MaterialCommunityIcons name="alert-circle-outline" size={60} color="#D92B4B" />
+                    <Text style={styles.errorText}>결과를 불러올 수 없습니다</Text>
+                    <TouchableOpacity onPress={handleExit} style={styles.errorButton}>
+                        <Text style={styles.errorButtonText}>처음으로 돌아가기</Text>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
     }
-
-    // TOP1 질병 정보
+    
     const topDisease = result.ranks[0];
-    const mappedTopDiseaseName =
-        diseaseNameMap[topDisease.fineLabel] || topDisease.fineLabel;
-
-    // 현재 선택된 질병 정보
-    const selectedDisease = result.ranks[selectedIndex];
-    const mappedSelectedDiseaseName =
-        diseaseNameMap[selectedDisease.fineLabel] || selectedDisease.fineLabel;
+    const mappedTopDiseaseName = diseaseNameMap[topDisease.fineLabel] || topDisease.fineLabel;
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
                 <View style={styles.headerTitleContainer}>
-                    <MaterialCommunityIcons
-                        name="brain"
-                        size={24}
-                        color="#D92B4B"
-                    />
+                    <MaterialCommunityIcons name="brain" size={24} color="#D92B4B" />
                     <Text style={styles.headerTitle}>예측 결과</Text>
                 </View>
             </View>
 
-            <ScrollView
-                style={styles.container}
-                showsVerticalScrollIndicator={false}
-            >
-                <Animated.View
-                    style={[
-                        styles.animatedContainer,
-                        {
-                            opacity: fadeAnim,
-                            transform: [{ translateY: slideAnim }],
-                        },
-                    ]}
-                >
-                    {/* 최상위 예측 질병 카드 */}
+            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+                <Animated.View style={[styles.animatedContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+                    {/* 최우선 예측 질병 카드 */}
                     <View style={styles.topResultCard}>
-                        <LinearGradient
-                            colors={getRiskColor(result.riskLevel)}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.topResultGradient}
-                        >
+                        <LinearGradient colors={getRiskColor(result.riskLevel)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.topResultGradient}>
                             <View style={styles.topResultHeader}>
                                 <View style={styles.diagnosisContainer}>
-                                    <Text style={styles.diagnosisLabel}>
-                                        최우선 예측 질병
-                                    </Text>
+                                    <Text style={styles.diagnosisLabel}>최우선 예측 질병</Text>
                                     <View style={styles.diagnosisBadge}>
-                                        <FontAwesome5
-                                            name="medal"
-                                            size={14}
-                                            color="#fff"
-                                        />
-                                        <Text style={styles.diagnosisBadgeText}>
-                                            TOP 1
-                                        </Text>
+                                        <FontAwesome5 name="medal" size={14} color="#fff" />
+                                        <Text style={styles.diagnosisBadgeText}>TOP 1</Text>
                                     </View>
                                 </View>
                                 <Text style={styles.diseaseName}>
-                                    {mappedTopDiseaseName}
+                                    {result.coarseLabel} / {mappedTopDiseaseName}
                                 </Text>
                             </View>
 
                             <View style={styles.riskIndicatorContainer}>
                                 <View style={styles.riskIndicator}>
                                     <Text style={styles.riskScoreText}>
-                                        {(topDisease.riskScore * 100).toFixed(
-                                            1
-                                        )}
-                                        %
+                                        {(topDisease.riskScore * 100).toFixed(1)}%
                                     </Text>
                                     <Text style={styles.riskLevelText}>
-                                        {result.riskLevel}{" "}
-                                        <Text style={styles.riskEmoji}>
-                                            {getRiskEmoji(result.riskLevel)}
-                                        </Text>
+                                        {result.riskLevel} <Text style={styles.riskEmoji}>{getRiskEmoji(result.riskLevel)}</Text>
                                     </Text>
                                 </View>
                                 <View style={styles.circleContainer}>
-                                    <View
-                                        style={[
-                                            styles.circle,
-                                            styles.innerCircle,
-                                        ]}
-                                    />
+                                    <View style={[styles.circle, styles.innerCircle]} />
                                     <View
                                         style={[
                                             styles.progressCircle,
                                             {
-                                                height: `${
-                                                    topDisease.riskScore * 100
-                                                }%`,
+                                                height: `${topDisease.riskScore * 100}%`,
                                                 backgroundColor:
                                                     result.riskLevel === "높음"
                                                         ? "#ff4b2b"
-                                                        : result.riskLevel ===
-                                                          "중간"
+                                                        : result.riskLevel === "중간"
                                                         ? "#fc4a1a"
                                                         : "#56ab2f",
                                             },
@@ -300,100 +215,60 @@ export default function ResultScreen() {
                     {diseaseInfo?.description && (
                         <View style={styles.infoCard}>
                             <View style={styles.cardHeader}>
-                                <MaterialCommunityIcons
-                                    name="information-outline"
-                                    size={22}
-                                    color="#3b82f6"
-                                />
+                                <MaterialCommunityIcons name="information-outline" size={22} color="#3b82f6" />
                                 <Text style={styles.cardTitle}>질병 정보</Text>
                             </View>
-                            <Text style={styles.infoText}>
-                                {diseaseInfo.description}
-                            </Text>
+                            <Text style={styles.infoText}>{diseaseInfo.description}</Text>
                         </View>
                     )}
 
                     {/* 관리 팁 카드 */}
                     <View style={styles.tipsCard}>
                         <View style={styles.cardHeader}>
-                            <MaterialCommunityIcons
-                                name="lightbulb-outline"
-                                size={22}
-                                color="#f59e0b"
-                            />
+                            <MaterialCommunityIcons name="lightbulb-outline" size={22} color="#f59e0b" />
                             <Text style={styles.cardTitle}>관리 팁</Text>
                         </View>
-                        <Text style={styles.tipsText}>
-                            {diseaseInfo?.tips ?? result.guideline}
-                        </Text>
+                        <Text style={styles.tipsText}>{diseaseInfo?.tips ?? result.guideline}</Text>
                     </View>
 
                     {/* 예측된 다른 질병들 */}
                     <View style={styles.otherDiseasesCard}>
                         <View style={styles.cardHeader}>
                             <Ionicons name="list" size={22} color="#D92B4B" />
-                            <Text style={styles.cardTitle}>
-                                다른 가능한 질병
-                            </Text>
+                            <Text style={styles.cardTitle}>다른 가능한 질병</Text>
                         </View>
                         <View style={styles.diseaseList}>
-                        {result.ranks.map((rank, index) => (
-                            <TouchableOpacity
-                                key={rank.rank}
-                                style={[
-                                    styles.diseaseItem,
-                                    selectedIndex === index && styles.selectedDiseaseItem,
-                                ]}
-                                onPress={() => setSelectedIndex(index)}
-                            >
-                                <View style={styles.rankContainer}>
-                                    <Text style={styles.rank}>
-                                        {index + 1}
-                                    </Text>
-                                </View>
-                                <View style={styles.diseaseDetails}>
-                                    <Text style={styles.diseaseItemName}>
-                                        {diseaseNameMap[rank.fineLabel] || rank.fineLabel}
-                                    </Text>
-                                    <View style={styles.progressBarContainer}>
-                                        <View
-                                            style={[
-                                                styles.progressBar,
-                                                {
-                                                    width: `${rank.riskScore * 100}%`,
-                                                },
-                                            ]}
-                                        />
+                            {result.ranks.map((rank, index) => (
+                                <TouchableOpacity
+                                    key={rank.rank}
+                                    style={[styles.diseaseItem, selectedIndex === index && styles.selectedDiseaseItem]}
+                                    onPress={() => setSelectedIndex(index)}
+                                >
+                                    <View style={styles.rankContainer}>
+                                        <Text style={styles.rank}>{index + 1}</Text>
                                     </View>
-                                    <Text style={styles.diseaseScore}>
-                                        {(rank.riskScore * 100).toFixed(1)}%
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
+                                    <View style={styles.diseaseDetails}>
+                                        <Text style={styles.diseaseItemName}>
+                                            {result.coarseLabel} / {diseaseNameMap[rank.fineLabel] || rank.fineLabel}
+                                        </Text>
+                                        <View style={styles.progressBarContainer}>
+                                            <View style={[styles.progressBar, { width: `${rank.riskScore * 100}%` }]} />
+                                        </View>
+                                        <Text style={styles.diseaseScore}>{(rank.riskScore * 100).toFixed(1)}%</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
                         </View>
                     </View>
 
-                    {/* 푸터 버튼 컨테이너*/}
+                    {/* 푸터 버튼 */}
                     <View style={styles.footerButtons}>
-                        <TouchableOpacity
-                            onPress={() => router.push("/history")}
-                            style={[styles.footerButton, styles.historyButton]}
-                        >
-                            <Ionicons
-                                name="time-outline"
-                                size={20}
-                                color="#D92B4B"
-                            />
-                            <Text style={styles.historyButtonText}>
-                                진단 기록
-                            </Text>
+                        <TouchableOpacity onPress={() => router.push("/history")} style={[styles.footerButton, styles.historyButton]}>
+                            <Ionicons name="time-outline" size={20} color="#D92B4B" />
+                            <Text style={styles.historyButtonText}>진단 기록</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity
-                            onPress={handleExit}
-                            style={[styles.footerButton, styles.exitButton]}
-                        >
+                        <TouchableOpacity onPress={handleExit} style={[styles.footerButton, styles.exitButton]}>
                             <Text style={styles.exitButtonText}>메인으로</Text>
                         </TouchableOpacity>
                     </View>
