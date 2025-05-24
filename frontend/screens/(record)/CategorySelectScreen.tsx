@@ -1,3 +1,4 @@
+//  (record)/CategorySelectScreen.tsx
 import {
     View,
     Text,
@@ -147,7 +148,7 @@ import {
             <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.titleBlock}>
   <Text style={styles.title}>증상을 검색하거나 대분류를 선택하세요.</Text>
-  <Text style={styles.noticeLine}>ℹ️  2개 이상의 증상을 입력해주세요.</Text>
+  <Text style={styles.noticeLine}>ℹ️  2개 이상의 증상을 선택해주세요.</Text>
 </View>
               {selected.length > 0 && (
                 <View style={styles.selectedBox}>

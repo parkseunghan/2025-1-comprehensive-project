@@ -23,10 +23,8 @@ import { createSymptomRecord } from "@/services/record.api";
 import { requestPrediction, requestPredictionToDB } from "@/services/prediction.api";
 
 import { LLMExtractKeyword, NlpExtractResponse } from "@/types/symptom.types";
-import { calculateRiskLevel, generateGuideline } from "@/utils/risk-utils";
-
+import LoadingScreen from "@/common/LoadingScreen";
 import BackButton from "@/common/BackButton";
-import LoadingScreen from "@/common/LoadingScreen"; // ✅ 추가
 
 export default function SymptomTextInputScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -36,7 +34,7 @@ export default function SymptomTextInputScreen() {
   const { selected: selectedSymptomKeywords } = useSymptomStore();
 
   const [text, setText] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // ✅ 로딩 제어
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -54,9 +52,7 @@ export default function SymptomTextInputScreen() {
   }, []);
 
   const runPredictionPipeline = async (extracted: LLMExtractKeyword[]) => {
-    setIsLoading(true); // ✅ 로딩 시작
-
-    // 최소 0.5초 로딩 유지 보장
+    setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     try {
@@ -84,16 +80,6 @@ export default function SymptomTextInputScreen() {
         fineLabel: pred.fineLabel,
         riskScore: pred.riskScore,
       }));
-      console.log("🚀 예측 결과 저장 요청 전송:", {
-        recordId: record.id,
-        predictions: predictionRanks,
-        age: user.age,
-        bmi: user.bmi,
-        gender: user.gender,
-        diseases: user.diseases?.map((d) => d.id),
-        medications: user.medications?.map((m) => m.id),
-        symptomKeywords: extracted.map((item) => item.symptom),
-      });
 
       await requestPredictionToDB({
         recordId: record.id,
@@ -105,7 +91,6 @@ export default function SymptomTextInputScreen() {
         medications: user.medications?.map((m) => m.id) ?? [],
         symptomKeywords: extracted.map((item) => item.symptom),
       });
-
 
       router.push("/(record)/result");
     } catch (err) {
@@ -127,17 +112,27 @@ export default function SymptomTextInputScreen() {
       if (mode === "nlp") {
         const response: NlpExtractResponse = await extractSymptomsWithNLP(text);
         const extracted = response.results;
-        if (extracted.length === 0) {
-          Alert.alert("⚠️ NLP로 증상 키워드를 추출하지 못했어요.");
+
+        if (extracted.length < 2) {
+          Alert.alert(
+            "⚠️ 추출된 증상이 부족합니다.",
+            "최소 2개 이상의 증상을 입력하거나 문장을 구체적으로 작성해 주세요."
+          );
           return;
         }
+
         await runPredictionPipeline(extracted);
       } else {
         const extracted = await extractSymptoms(text);
-        if (extracted.length === 0) {
-          Alert.alert("⚠️ LLM으로 증상 키워드를 추출하지 못했어요.");
+
+        if (extracted.length < 2) {
+          Alert.alert(
+            "⚠️ 추출된 증상이 부족합니다.",
+            "최소 2개 이상의 증상을 입력하거나 문장을 구체적으로 작성해 주세요."
+          );
           return;
         }
+
         await runPredictionPipeline(extracted);
       }
     } catch (err) {
@@ -149,7 +144,7 @@ export default function SymptomTextInputScreen() {
   };
 
   return isLoading ? (
-    <LoadingScreen /> // ✅ 전체 로딩 화면 출력
+    <LoadingScreen />
   ) : (
     <Animated.View
       style={[styles.container, { opacity: fadeAnim, pointerEvents: "auto" }]}
@@ -164,14 +159,14 @@ export default function SymptomTextInputScreen() {
         </Text>
         <Text style={styles.inputLabel}>현재 증상을 입력해 주세요:</Text>
         <TextInput
-            placeholder="예: 기침이 심하고 열이 나요. 배도 아파요"
-            multiline
-            numberOfLines={3}
-            value={text}
-            onChangeText={setText}
-            style={styles.textInput}
-          />
-          <Text style={styles.inputLabel}>ℹ️  2개 이상의 증상을 입력해주세요.</Text>
+          placeholder="예: 기침이 심하고 열이 나요. 배도 아파요"
+          multiline
+          numberOfLines={3}
+          value={text}
+          onChangeText={setText}
+          style={styles.textInput}
+        />
+        <Text style={styles.inputLabel}>ℹ️  2개 이상의 증상을 입력해주세요.</Text>
 
         <Animated.View
           style={[
