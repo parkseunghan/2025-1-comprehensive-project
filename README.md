@@ -100,7 +100,7 @@ ollama run mistral
 
 
 
-# 프로젝트명: AI 진단 도우미 (AI 기반 자가 진단 서비스 - SmartHealth: AI Self-Diagnosis System)
+# 프로젝트명: AI 내과 진단 도우미 (AI 기반 자가 진단 서비스 - SmartHealth: AI Self-Diagnosis System)
 
 AI 모델을 기반으로 사용자 증상을 입력 받아 질병을 예측하고, 건강 기록을 관리하는 자가진단 모바일 앱입니다.
 
@@ -162,7 +162,10 @@ flowchart TD
 
 ### AI Server
 - BERT 기반 하이브리드 모델 (MLP 결합) 사용
+-- SBERT (KR-SBERT-V40K-klueNLI-augSTS)
 - coarse → fine 구조로 질병 예측
+-- fine 모델은 coarse 그룹별로 개별 학습되며, 일부 모델에는 Focal Loss가 적용됩니다.
+-- coarse 모델은 SBERT 임베딩과 수치형 피처를 결합한 하이브리드 구조입니다.
 - 위험도 점수(riskScore), 예측 결과(coarseLabel, fineLabel), 가이드라인 제공
 
 ### PostgreSQL

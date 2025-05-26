@@ -77,9 +77,9 @@ function generateGuideline(riskLevel: string): string {
  * 🔹 위험 점수 → 위험 등급
  */
 function calculateRiskLevel(score: number, fineLabel: string): string {
-  if (score >= 7.0 && EMERGENCY_DISEASES.includes(fineLabel)) return "응급";
-  if (score >= 5.5) return "높음";
-  if (score >= 3.5) return "보통";
+  if (score >= 5.0 && EMERGENCY_DISEASES.includes(fineLabel)) return "응급";
+  if (score >= 3.5) return "높음";
+  if (score >= 2.5) return "보통";
   return "낮음";
 }
 
