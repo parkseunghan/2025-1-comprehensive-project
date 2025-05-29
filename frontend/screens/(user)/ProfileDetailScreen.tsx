@@ -1,4 +1,4 @@
-// ✅ ProfileDetailScreen.tsx
+// ✅ Enhanced ProfileDetailScreen.tsx
 import {
     View,
     Text,
@@ -8,10 +8,13 @@ import {
     TouchableOpacity,
     TextInput,
     Alert,
+    StatusBar,
+    Animated,
+    Dimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather, FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { fetchCurrentUser, updateUserProfile } from "@/services/user.api";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -23,9 +26,22 @@ import { fetchAllDiseases } from "@/services/disease.api";
 import { fetchAllMedications } from "@/services/medication.api";
 import { Disease } from "@/types/disease.types";
 import { Medication } from "@/types/medication.types";
+import { LinearGradient } from "expo-linear-gradient";
+
+const { width } = Dimensions.get("window");
 
 export default function ProfileDetailScreen() {
     const { user, token, setAuth } = useAuthStore();
+
+    // 애니메이션 레퍼런스들
+    const titleOpacity = useRef(new Animated.Value(0)).current;
+    const titleTranslateY = useRef(new Animated.Value(30)).current;
+    const cardOpacity = useRef(new Animated.Value(0)).current;
+    const cardTranslateY = useRef(new Animated.Value(50)).current;
+    const formOpacity = useRef(new Animated.Value(0)).current;
+    const formTranslateY = useRef(new Animated.Value(50)).current;
+    const buttonOpacity = useRef(new Animated.Value(0)).current;
+    const buttonScale = useRef(new Animated.Value(0.9)).current;
 
     const { data: profile } = useQuery({
         queryKey: ["user", user?.id],
@@ -69,6 +85,71 @@ export default function ProfileDetailScreen() {
     const uniqueCategories = useMemo(() => {
         return [...new Set(diseaseList.map((d) => d.category).filter(Boolean))];
     }, [diseaseList]);
+
+    // 애니메이션 실행
+    useEffect(() => {
+        const animateComponents = () => {
+            // 제목 애니메이션
+            Animated.timing(titleOpacity, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+            }).start();
+            
+            Animated.timing(titleTranslateY, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }).start();
+
+            // 카드 애니메이션 (200ms 지연)
+            setTimeout(() => {
+                Animated.timing(cardOpacity, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }).start();
+                
+                Animated.timing(cardTranslateY, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }).start();
+            }, 200);
+
+            // 폼 애니메이션 (400ms 지연)
+            setTimeout(() => {
+                Animated.timing(formOpacity, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }).start();
+                
+                Animated.timing(formTranslateY, {
+                    toValue: 0,
+                    duration: 800,
+                    useNativeDriver: true,
+                }).start();
+            }, 400);
+
+            // 버튼 애니메이션 (600ms 지연)
+            setTimeout(() => {
+                Animated.timing(buttonOpacity, {
+                    toValue: 1,
+                    duration: 600,
+                    useNativeDriver: true,
+                }).start();
+                
+                Animated.timing(buttonScale, {
+                    toValue: 1,
+                    duration: 600,
+                    useNativeDriver: true,
+                }).start();
+            }, 600);
+        };
+
+        animateComponents();
+    }, []);
 
     useEffect(() => {
         if (profile) {
@@ -139,199 +220,275 @@ export default function ProfileDetailScreen() {
 
     return (
         <View style={styles.root}>
-            <BackButton style={styles.backButton} />
+            <StatusBar barStyle="light-content" />
+            
+            {/* 상단 그라데이션 헤더 */}
+            <LinearGradient
+                colors={['#D92B4B', '#FF6B8A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.headerGradient}
+            >
+                <BackButton style={styles.backButton} />
+                <Animated.Text 
+                    style={[
+                        styles.title,
+                        {
+                            opacity: titleOpacity,
+                            transform: [{ translateY: titleTranslateY }]
+                        }
+                    ]}
+                >
+                    프로필 정보
+                </Animated.Text>
+            </LinearGradient>
+
             <ScrollView
                 contentContainerStyle={styles.container}
                 showsVerticalScrollIndicator={false}
+                style={styles.scrollView}
             >
-                <Text style={styles.title}>프로필 정보</Text>
-                <View style={styles.card}>
-                    <EditableNameField
-                        value={editableProfile.name}
-                        editing={editField === "name"}
-                        onPressEdit={() => setEditField("name")}
-                        onChange={(v: string) =>
-                            setEditableProfile((prev) => ({ ...prev, name: v }))
+                {/* 프로필 카드 */}
+                <Animated.View 
+                    style={[
+                        styles.profileCardContainer,
+                        {
+                            opacity: cardOpacity,
+                            transform: [{ translateY: cardTranslateY }]
                         }
-                        onBlur={() => setEditField(null)}
-                    />
-                    <Text style={styles.userEmail}>{user?.email}</Text>
-                </View>
-                <View style={styles.infoBox}>
-                    <View style={styles.itemRow}>
-                        <Text style={styles.itemLabel}>성별</Text>
-                        <View style={styles.radioGroup}>
-                            {["남성", "여성"].map((item) => (
-                                <TouchableOpacity
-                                    key={item}
-                                    onPress={() =>
-                                        setEditableProfile((prev) => ({
-                                            ...prev,
-                                            gender: item,
-                                        }))
-                                    }
-                                    style={styles.radioItem}
-                                >
-                                    <View
-                                        style={[
-                                            styles.radioCircle,
-                                            editableProfile.gender === item &&
-                                                styles.radioCircleSelected,
-                                        ]}
-                                    />
-                                    <Text style={styles.radioLabel}>
-                                        {item}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
+                    ]}
+                >
+                    <View style={styles.card}>
+                        <LinearGradient
+                            colors={['#D92B4B', '#FF6B8A']}
+                            style={styles.avatar}
+                        >
+                            <Feather name="user" size={32} color="#ffffff" />
+                        </LinearGradient>
+                        
+                        <EditableNameField
+                            value={editableProfile.name}
+                            editing={editField === "name"}
+                            onPressEdit={() => setEditField("name")}
+                            onChange={(v: string) =>
+                                setEditableProfile((prev) => ({ ...prev, name: v }))
+                            }
+                            onBlur={() => setEditField(null)}
+                        />
+                        <Text style={styles.userEmail}>{user?.email}</Text>
+                    </View>
+                </Animated.View>
+
+                {/* 정보 입력 폼 */}
+                <Animated.View 
+                    style={[
+                        styles.formContainer,
+                        {
+                            opacity: formOpacity,
+                            transform: [{ translateY: formTranslateY }]
+                        }
+                    ]}
+                >
+                    <View style={styles.infoBox}>
+                        <View style={styles.sectionHeader}>
+                            <FontAwesome5 name="user-edit" size={16} color="#D92B4B" />
+                            <Text style={styles.sectionTitle}>기본 정보</Text>
                         </View>
+
+                        <View style={styles.itemRow}>
+                            <Text style={styles.itemLabel}>성별</Text>
+                            <View style={styles.radioGroup}>
+                                {["남성", "여성"].map((item) => (
+                                    <TouchableOpacity
+                                        key={item}
+                                        onPress={() =>
+                                            setEditableProfile((prev) => ({
+                                                ...prev,
+                                                gender: item,
+                                            }))
+                                        }
+                                        style={styles.radioItem}
+                                    >
+                                        <View
+                                            style={[
+                                                styles.radioCircle,
+                                                editableProfile.gender === item &&
+                                                    styles.radioCircleSelected,
+                                            ]}
+                                        />
+                                        <Text style={styles.radioLabel}>
+                                            {item}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+
+                        <EditableField
+                            label="(만)나이"
+                            value={editableProfile.age}
+                            editing={editField === "age"}
+                            onPressEdit={() => setEditField("age")}
+                            onChange={(v: string) =>
+                                setEditableProfile((prev) => ({ ...prev, age: v }))
+                            }
+                            onBlur={() => setEditField(null)}
+                            icon="calendar"
+                            unit="세"
+                        />
+                        <EditableField
+                            label="키"
+                            value={editableProfile.height}
+                            editing={editField === "height"}
+                            onPressEdit={() => setEditField("height")}
+                            onChange={(v: string) =>
+                                setEditableProfile((prev) => ({
+                                    ...prev,
+                                    height: v,
+                                }))
+                            }
+                            onBlur={() => setEditField(null)}
+                            icon="trending-up"
+                            unit="cm"
+                        />
+                        <EditableField
+                            label="몸무게"
+                            value={editableProfile.weight}
+                            editing={editField === "weight"}
+                            onPressEdit={() => setEditField("weight")}
+                            onChange={(v: string) =>
+                                setEditableProfile((prev) => ({
+                                    ...prev,
+                                    weight: v,
+                                }))
+                            }
+                            onBlur={() => setEditField(null)}
+                            icon="activity"
+                            unit="kg"
+                        />
                     </View>
 
-                    <EditableField
-                        label="(만)나이"
-                        value={editableProfile.age}
-                        editing={editField === "age"}
-                        onPressEdit={() => setEditField("age")}
-                        onChange={(v: string) =>
-                            setEditableProfile((prev) => ({ ...prev, age: v }))
-                        }
-                        onBlur={() => setEditField(null)}
-                    />
-                    <EditableField
-                        label="키"
-                        value={editableProfile.height}
-                        editing={editField === "height"}
-                        onPressEdit={() => setEditField("height")}
-                        onChange={(v: string) =>
-                            setEditableProfile((prev) => ({
-                                ...prev,
-                                height: v,
-                            }))
-                        }
-                        onBlur={() => setEditField(null)}
-                    />
-                    <EditableField
-                        label="몸무게"
-                        value={editableProfile.weight}
-                        editing={editField === "weight"}
-                        onPressEdit={() => setEditField("weight")}
-                        onChange={(v: string) =>
-                            setEditableProfile((prev) => ({
-                                ...prev,
-                                weight: v,
-                            }))
-                        }
-                        onBlur={() => setEditField(null)}
-                    />
-
-                    <EditableTextWithButton
-                        label="지병"
-                        value=""
-                        onPress={() => setDiseaseCategoryModalOpen(true)}
-                    />
-                    {selectedDiseaseIds.length > 0 && (
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                flexWrap: "wrap",
-                                marginTop: 8,
-                            }}
-                        >
-                            {selectedDiseaseIds.map((id) => {
-                                const disease = diseaseList.find(
-                                    (d) => d.sickCode === id
-                                );
-                                return (
-                                    <TouchableOpacity
-                                        key={id}
-                                        onPress={() =>
-                                            setSelectedDiseaseIds((prev) =>
-                                                prev.filter((v) => v !== id)
-                                            )
-                                        }
-                                        style={{
-                                            backgroundColor: "#f3f4f6",
-                                            paddingHorizontal: 10,
-                                            paddingVertical: 4,
-                                            borderRadius: 16,
-                                            margin: 4,
-                                        }}
-                                    >
-                                        <Text style={{ color: "#111827" }}>
-                                            {disease?.name} ✕
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
+                    {/* 의료 정보 섹션 */}
+                    <View style={styles.infoBox}>
+                        <View style={styles.sectionHeader}>
+                            <FontAwesome5 name="heartbeat" size={16} color="#D92B4B" />
+                            <Text style={styles.sectionTitle}>의료 정보</Text>
                         </View>
-                    )}
 
-                    <EditableTextWithButton
-                        label="복용 약물"
-                        value=""
-                        onPress={() => setMedicationModalOpen(true)}
-                    />
-                    {selectedMedicationIds.length > 0 && (
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                flexWrap: "wrap",
-                                marginTop: 8,
-                            }}
-                        >
-                            {selectedMedicationIds.map((id) => {
-                                const med = medicationList.find(
-                                    (m) => m.id === id
-                                );
-                                const displayName = med?.name
-                                    .replace(/\(수출명\s*:\s*.*?\)/g, "")
-                                    .trim();
-
-                                return (
-                                    <TouchableOpacity
-                                        key={id}
-                                        onPress={() =>
-                                            setSelectedMedicationIds((prev) =>
-                                                prev.filter((v) => v !== id)
-                                            )
-                                        }
-                                        style={{
-                                            backgroundColor: "#f3f4f6",
-                                            paddingHorizontal: 10,
-                                            paddingVertical: 4,
-                                            borderRadius: 16,
-                                            margin: 4,
-                                            maxWidth: "100%",
-                                        }}
-                                    >
-                                        <Text
-                                            style={{ color: "#111827" }}
-                                            numberOfLines={1}
-                                            ellipsizeMode="tail"
+                        <EditableTextWithButton
+                            label="지병"
+                            value=""
+                            onPress={() => setDiseaseCategoryModalOpen(true)}
+                            icon="plus"
+                            color="#D92B4B"
+                        />
+                        {selectedDiseaseIds.length > 0 && (
+                            <View style={styles.tagContainer}>
+                                {selectedDiseaseIds.map((id) => {
+                                    const disease = diseaseList.find(
+                                        (d) => d.sickCode === id
+                                    );
+                                    return (
+                                        <TouchableOpacity
+                                            key={id}
+                                            onPress={() =>
+                                                setSelectedDiseaseIds((prev) =>
+                                                    prev.filter((v) => v !== id)
+                                                )
+                                            }
+                                            style={[styles.tag, { borderColor: '#D92B4B' + '40' }]}
                                         >
-                                            {displayName} ✕
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                    )}
-                </View>
-                <View style={styles.saveButtonWrapper}>
+                                            <Text style={[styles.tagText, { color: '#D92B4B' }]}>
+                                                {disease?.name}
+                                            </Text>
+                                            <Ionicons name="close" size={14} color="#D92B4B" />
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
+
+                        <EditableTextWithButton
+                            label="복용 약물"
+                            value=""
+                            onPress={() => setMedicationModalOpen(true)}
+                            icon="plus"
+                            color="#4A90E2"
+                        />
+                        {selectedMedicationIds.length > 0 && (
+                            <View style={styles.tagContainer}>
+                                {selectedMedicationIds.map((id) => {
+                                    const med = medicationList.find(
+                                        (m) => m.id === id
+                                    );
+                                    const displayName = med?.name
+                                        .replace(/\(수출명\s*:\s*.*?\)/g, "")
+                                        .trim();
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={id}
+                                            onPress={() =>
+                                                setSelectedMedicationIds((prev) =>
+                                                    prev.filter((v) => v !== id)
+                                                )
+                                            }
+                                            style={[styles.tag, { borderColor: '#4A90E2' + '40' }]}
+                                        >
+                                            <Text 
+                                                style={[styles.tagText, { color: '#4A90E2' }]}
+                                                numberOfLines={1}
+                                                ellipsizeMode="tail"
+                                            >
+                                                {displayName}
+                                            </Text>
+                                            <Ionicons name="close" size={14} color="#4A90E2" />
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
+                    </View>
+                </Animated.View>
+
+                {/* 저장 버튼 */}
+                <Animated.View 
+                    style={[
+                        styles.saveButtonWrapper,
+                        {
+                            opacity: buttonOpacity,
+                            transform: [{ scale: buttonScale }]
+                        }
+                    ]}
+                >
                     <TouchableOpacity
                         style={styles.saveButton}
                         onPress={() => mutation.mutate()}
+                        disabled={mutation.isPending}
                     >
-                        <Text style={styles.saveText}>저장</Text>
+                        <LinearGradient
+                            colors={['#D92B4B', '#FF6B8A']}
+                            style={styles.saveButtonGradient}
+                        >
+                            {mutation.isPending ? (
+                                <Text style={styles.saveText}>저장 중...</Text>
+                            ) : (
+                                <>
+                                    <Feather name="check" size={18} color="#ffffff" />
+                                    <Text style={styles.saveText}>저장하기</Text>
+                                </>
+                            )}
+                        </LinearGradient>
                     </TouchableOpacity>
-                </View>
+                </Animated.View>
 
+                {/* 모달들 */}
                 <DiseaseCategorySelectModal
                     visible={diseaseCategoryModalOpen}
                     categories={uniqueCategories}
                     diseaseList={diseaseList}
                     selected={selectedDiseaseIds}
-                    onSelectDiseases={(ids) => setSelectedDiseaseIds(ids)} // ✅ 검색에서 바로 선택
+                    onSelectDiseases={(ids) => setSelectedDiseaseIds(ids)}
                     onOpenSubcategory={(cat) => {
                         setSelectedCategory(cat);
                         setDiseaseCategoryModalOpen(false);
@@ -345,11 +502,11 @@ export default function ProfileDetailScreen() {
                     category={selectedCategory}
                     diseaseList={diseaseList}
                     selected={selectedDiseaseIds}
-                    onToggle={(ids) => setSelectedDiseaseIds(ids)} // ✅ 배열 반영
+                    onToggle={(ids) => setSelectedDiseaseIds(ids)}
                     onSave={() => setDiseaseListModalOpen(false)}
                     onBack={() => {
                         setDiseaseListModalOpen(false);
-                        setDiseaseCategoryModalOpen(true); // 뒤로가기 시 값 반영 안 함
+                        setDiseaseCategoryModalOpen(true);
                     }}
                 />
 
@@ -386,22 +543,19 @@ function EditableNameField({
                     keyboardType="default"
                     autoFocus
                     onBlur={onBlur}
+                    placeholderTextColor="#9CA3AF"
                 />
             ) : (
                 <TouchableOpacity onPress={onPressEdit} style={styles.nameRow}>
-                    <Text style={styles.userName}>{value}</Text>
-                    <Ionicons
-                        name="create-outline"
-                        size={16}
-                        color="#6B7280"
-                        style={{ marginLeft: 6 }}
-                    />
+                    <Text style={styles.userName}>{value || "이름을 입력하세요"}</Text>
+                    <View style={styles.editIconContainer}>
+                        <Feather name="edit-2" size={14} color="#D92B4B" />
+                    </View>
                 </TouchableOpacity>
             )}
         </View>
     );
 }
-
 
 function EditableField({
     label,
@@ -410,31 +564,46 @@ function EditableField({
     onPressEdit,
     onChange,
     onBlur,
+    icon,
+    unit,
 }: any) {
     return (
         <View style={styles.itemRow}>
-            <TouchableOpacity
-                onPress={onPressEdit}
-                activeOpacity={0.8}
-                style={styles.itemHeader}
-            >
-                <Text style={styles.itemLabel}>{label}</Text>
-                <Ionicons name="create-outline" size={16} color="#6B7280" />
-            </TouchableOpacity>
+            <View style={styles.itemHeader}>
+                <View style={styles.labelContainer}>
+                    <View style={styles.fieldIcon}>
+                        <Feather name={icon} size={14} color="#6B7280" />
+                    </View>
+                    <Text style={styles.itemLabel}>{label}</Text>
+                </View>
+                
+                <TouchableOpacity
+                    onPress={onPressEdit}
+                    style={styles.editButton}
+                >
+                    <Feather name="edit-2" size={12} color="#D92B4B" />
+                </TouchableOpacity>
+            </View>
 
             {editing ? (
-                <TextInput
-                    style={styles.itemInput}
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="numeric"
-                    autoFocus
-                    onBlur={onBlur}
-                />
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.itemInput}
+                        value={value}
+                        onChangeText={onChange}
+                        keyboardType="numeric"
+                        autoFocus
+                        onBlur={onBlur}
+                        placeholder="입력하세요"
+                        placeholderTextColor="#9CA3AF"
+                    />
+                    {unit && <Text style={styles.unitText}>{unit}</Text>}
+                </View>
             ) : (
-                <TouchableOpacity onPress={onPressEdit}>
+                <TouchableOpacity onPress={onPressEdit} style={styles.valueContainer}>
                     <Text style={styles.itemValue}>
                         {value || "입력되지 않음"}
+                        {value && unit && ` ${unit}`}
                     </Text>
                 </TouchableOpacity>
             )}
@@ -442,136 +611,316 @@ function EditableField({
     );
 }
 
-
-function EditableTextWithButton({ label, value, onPress }: any) {
+function EditableTextWithButton({ label, value, onPress, icon, color }: any) {
     return (
         <View style={styles.itemRow}>
             <View style={styles.itemHeader}>
-                <Text style={styles.itemLabel}>{label}</Text>
-                <TouchableOpacity onPress={onPress}>
-                    <Ionicons name="add" size={16} color="#6B7280" />
+                <View style={styles.labelContainer}>
+                    <View style={styles.fieldIcon}>
+                        <FontAwesome5 
+                            name={label === "지병" ? "heartbeat" : "pills"} 
+                            size={14} 
+                            color="#6B7280" 
+                        />
+                    </View>
+                    <Text style={styles.itemLabel}>{label}</Text>
+                </View>
+                
+                <TouchableOpacity onPress={onPress} style={[styles.addButton, { borderColor: color + '40' }]}>
+                    <Feather name={icon} size={14} color={color} />
                 </TouchableOpacity>
             </View>
-            <Text style={styles.itemValue}>{value}</Text>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: "#F4F1FF" },
+    root: { 
+        flex: 1, 
+        backgroundColor: "#F8F9FC" 
+    },
+    
+    // 헤더 스타일
+    headerGradient: {
+        paddingTop: Platform.OS === 'ios' ? 60 : 40,
+        paddingBottom: 30,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     backButton: {
         position: "absolute",
-        top: 20,
-        left: 16,
+        top: Platform.OS === 'ios' ? 60 : 40,
+        left: 20,
         zIndex: 10,
         padding: 8,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 20,
     },
-    container: { paddingTop: 70, paddingHorizontal: 24, paddingBottom: 60 },
     title: {
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: "bold",
-        color: "#1E3A8A",
-        marginBottom: 28,
+        color: "#FFFFFF",
         textAlign: "center",
+    },
+    
+    scrollView: {
+        flex: 1,
+    },
+    container: { 
+        paddingTop: 20, 
+        paddingHorizontal: 20, 
+        paddingBottom: 30 
+    },
+    
+    // 프로필 카드 스타일
+    profileCardContainer: {
+        marginBottom: 24,
     },
     card: {
         backgroundColor: "#ffffff",
-        borderRadius: 20,
-        paddingVertical: 28,
-        paddingHorizontal: 20,
-        marginBottom: 24,
+        borderRadius: 24,
+        paddingVertical: 32,
+        paddingHorizontal: 24,
         alignItems: "center",
+        shadowColor: '#D92B4B',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 8,
         borderWidth: 1,
-        borderColor: "#E5E7EB",
-        ...Platform.select({
-            ios: {
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 6,
-            },
-            android: {
-                elevation: 3,
-            },
-            web: {
-                boxShadow: "0px 2px 8px rgba(0,0,0,0.05)",
-            },
-        }),
+        borderColor: '#D92B4B' + '20',
     },
-    nameContainer: { width: "100%", alignItems: "center", marginBottom: 4 },
-    nameRow: { flexDirection: "row", alignItems: "center" },
-    userName: { fontSize: 20, fontWeight: "bold", color: "#111827" },
-    userEmail: { fontSize: 14, color: "#6B7280" },
+    avatar: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    nameContainer: { 
+        width: "100%", 
+        alignItems: "center", 
+        marginBottom: 8 
+    },
+    nameRow: { 
+        flexDirection: "row", 
+        alignItems: "center",
+        gap: 8,
+    },
+    userName: { 
+        fontSize: 22, 
+        fontWeight: "bold", 
+        color: "#111827",
+        textAlign: 'center',
+    },
+    editIconContainer: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#FFE8ED',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    userEmail: { 
+        fontSize: 14, 
+        color: "#6B7280",
+        opacity: 0.8,
+    },
+    
+    // 폼 컨테이너
+    formContainer: {
+        gap: 20,
+        marginBottom: 30,
+    },
+    
+    // 정보 박스 스타일
     infoBox: {
         backgroundColor: "#ffffff",
-        borderRadius: 16,
+        borderRadius: 20,
         paddingHorizontal: 20,
-        paddingVertical: 10,
-        marginBottom: 28,
+        paddingVertical: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
         borderWidth: 1,
-        borderColor: "#E5E7EB",
-        ...Platform.select({
-            ios: {
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-            },
-            android: {
-                elevation: 1,
-            },
-            web: {
-                boxShadow: "0px 1px 4px rgba(0,0,0,0.05)",
-            },
-        }),
+        borderColor: '#E5E7EB',
     },
-    itemRow: {
-        paddingVertical: 14,
+    
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 20,
+        paddingBottom: 12,
         borderBottomWidth: 1,
-        borderBottomColor: "#E5E7EB",
+        borderBottomColor: '#F3F4F6',
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    
+    itemRow: {
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#F3F4F6",
     },
     itemHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 4,
+        marginBottom: 8,
     },
-    itemLabel: { fontSize: 13, color: "#6B7280" },
-    itemValue: { fontSize: 15, fontWeight: "600", color: "#111827" },
+    labelContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    fieldIcon: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    itemLabel: { 
+        fontSize: 14, 
+        color: "#374151",
+        fontWeight: '500',
+    },
+    editButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#FFE8ED',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#F9FAFB',
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    itemValue: { 
+        fontSize: 16, 
+        fontWeight: "600", 
+        color: "#111827" 
+    },
+    valueContainer: {
+        paddingVertical: 4,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
     itemInput: {
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: "600",
         color: "#111827",
-        paddingVertical: 2,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#F9FAFB',
+        borderRadius: 8,
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
     },
-    radioGroup: { flexDirection: "row", gap: 24, marginTop: 4 },
-    radioItem: { flexDirection: "row", alignItems: "center" },
+    unitText: {
+        fontSize: 14,
+        color: '#6B7280',
+        fontWeight: '500',
+    },
+    
+    // 라디오 버튼 스타일
+    radioGroup: { 
+        flexDirection: "row", 
+        gap: 32, 
+        marginTop: 8 
+    },
+    radioItem: { 
+        flexDirection: "row", 
+        alignItems: "center" 
+    },
     radioCircle: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        borderWidth: 1.5,
-        borderColor: "#9CA3AF",
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: "#D1D5DB",
         marginRight: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     radioCircleSelected: {
-        backgroundColor: "#111827",
-        borderColor: "#111827",
+        borderColor: "#D92B4B",
+        backgroundColor: "#D92B4B",
     },
-    radioLabel: { fontSize: 16, color: "#111827" },
+    radioLabel: { 
+        fontSize: 16, 
+        color: "#111827",
+        fontWeight: '500',
+    },
+    
+    // 태그 스타일
+    tagContainer: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginTop: 12,
+    },
+    tag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: "#FAFAFA",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        maxWidth: width * 0.7,
+    },
+    tagText: {
+        fontSize: 13,
+        fontWeight: '500',
+        flex: 1,
+    },
+    
+    // 저장 버튼 스타일
     saveButtonWrapper: {
-        backgroundColor: "#F4F1FF",
-        paddingHorizontal: 20,
+        marginTop: 20,
+        marginBottom: 20,
     },
     saveButton: {
-        backgroundColor: "#D92B4B",
-        borderRadius: 10,
-        paddingVertical: 14,
-        alignItems: "center",
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#D92B4B',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    saveButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        gap: 8,
     },
     saveText: {
-        color: "#ffffff",
-        fontWeight: "bold",
         fontSize: 16,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
     },
 });
