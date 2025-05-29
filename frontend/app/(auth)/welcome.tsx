@@ -26,10 +26,6 @@ export default function Welcome() {
                 <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
                     <Text style={styles.footerText}>회원가입</Text>
                 </TouchableOpacity>
-                <Text style={styles.footerDivider}> | </Text>
-                <TouchableOpacity onPress={() => { /* TODO: 비회원 로직 */ }}>
-                    <Text style={styles.footerText}>비회원</Text>
-                </TouchableOpacity>
             </View>
         </View>
     );

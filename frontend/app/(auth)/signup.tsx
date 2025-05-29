@@ -1,6 +1,4 @@
 // 📄 app/(auth)/signup.tsx
-// 회원가입 화면 (Zod 유효성 검사 + router 통일)
-
 import { useState } from "react";
 import {
     View,
@@ -30,22 +28,26 @@ export default function SignupScreen() {
     });
     const [emailCheckResult, setEmailCheckResult] = useState<null | boolean>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [agreeToTerms, setAgreeToTerms] = useState(false); // ✅ 추가
 
     const handleChange = (key: keyof SignupForm, value: string) => {
         setForm((prev) => ({ ...prev, [key]: value }));
-        if (key === "email") setEmailCheckResult(null); // 이메일 중복 결과 초기화
+        if (key === "email") setEmailCheckResult(null);
     };
 
     const checkEmailDuplicate = () => {
         if (!form.email.trim()) return;
-        // TODO: API 연결 예정
-        setEmailCheckResult(form.email !== "test@example.com");
+        setEmailCheckResult(form.email !== "test@example.com"); // TODO: 실제 중복 확인 API로 교체
     };
 
     const handleSignup = async () => {
+        if (!agreeToTerms) {
+            Alert.alert("개인정보 수집 동의가 필요합니다.");
+            return;
+        }
+
         try {
             const parsed = signupSchema.parse(form);
-
             setIsLoading(true);
             const res = await signupUser({
                 email: parsed.email,
@@ -74,7 +76,8 @@ export default function SignupScreen() {
         }
     };
 
-    const isPasswordMismatch = form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
+    const isPasswordMismatch =
+        form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
     return (
         <View style={styles.container}>
@@ -83,6 +86,7 @@ export default function SignupScreen() {
                 <BackButton />
                 <Text style={styles.headerText}>회원가입</Text>
             </View>
+
             {/* 📝 입력 필드 */}
             <TextInput
                 style={styles.input}
@@ -145,6 +149,16 @@ export default function SignupScreen() {
                 <View style={{ height: 24 }} />
             )}
 
+            {/* ✅ 개인정보 수집 동의 체크박스 */}
+            <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setAgreeToTerms((prev) => !prev)}
+            >
+                <View style={[styles.checkbox, agreeToTerms && styles.checkboxChecked]} />
+                <Text style={styles.checkboxLabel}>개인정보 수집 및 이용에 동의합니다</Text>
+            </TouchableOpacity>
+
+            {/* 🔘 회원가입 버튼 */}
             <TouchableOpacity
                 style={styles.signupButton}
                 onPress={handleSignup}
@@ -157,6 +171,7 @@ export default function SignupScreen() {
                 )}
             </TouchableOpacity>
 
+            {/* 🔚 하단 */}
             <View style={styles.footer}>
                 <Text style={styles.footerText}>이미 계정이 있으신가요?</Text>
                 <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
@@ -169,7 +184,6 @@ export default function SignupScreen() {
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -181,9 +195,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 40,
-    },
-    backButton: {
-        marginRight: 8,
     },
     headerText: {
         fontSize: 20,
@@ -223,6 +234,27 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 24,
     },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderWidth: 1,
+        borderColor: '#9CA3AF',
+        borderRadius: 4,
+        marginRight: 8,
+    },
+    checkboxChecked: {
+        backgroundColor: '#D92B4B',
+        borderColor: '#D92B4B',
+    },
+    checkboxLabel: {
+        fontSize: 14,
+        color: '#111827',
+    },
     signupButton: {
         backgroundColor: '#D92B4B',
         paddingVertical: 16,
@@ -245,4 +277,3 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
 });
-
