@@ -29,21 +29,11 @@ export default function SettingScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>계정</Text>
         <SettingItem label="비밀번호 변경" icon="lock-closed-outline" onPress={() => router.push("/(user)/change-password")}/>
-        <SettingItem label="이메일 변경" icon="mail-outline" />
-
-      </View>
-
-      {/* 🔹 알림 설정 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>알림</Text>
-        <SettingItem label="푸시 알림 설정" icon="notifications-outline" />
-        <SettingItem label="약 복용 알림 설정" icon="alarm-outline" />
       </View>
 
       {/* 🔹 앱 설정 */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>앱</Text>
-        <SettingItem label="데이터 초기화" icon="refresh-outline" />
         <SettingItem label="앱 정보" icon="information-circle-outline" onPress={() => router.push("/(home)/appinfoscreen")}/>
         <LogoutButton />
       </View>
