@@ -24,6 +24,7 @@ import {
 import { router } from "expo-router";
 import { diseaseNameMap } from "@/utils/diseaseMapping";
 import { getDiseaseInfo } from "@/services/disease.api";
+import RiskGuidelineButton from "@/common/RiskGuidelineButton";
 
 const { width } = Dimensions.get("window");
 
@@ -167,49 +168,66 @@ export default function ResultScreen() {
                 <Animated.View style={[styles.animatedContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
                     {/* 최우선 예측 질병 카드 */}
                     <View style={styles.topResultCard}>
-                        <LinearGradient colors={getRiskColor(result.riskLevel)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.topResultGradient}>
-                            <View style={styles.topResultHeader}>
-                                <View style={styles.diagnosisContainer}>
-                                    <Text style={styles.diagnosisLabel}>최우선 예측 질병</Text>
-                                    <View style={styles.diagnosisBadge}>
-                                        <FontAwesome5 name="medal" size={14} color="#fff" />
-                                        <Text style={styles.diagnosisBadgeText}>TOP 1</Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.diseaseName}>
-                                    {result.coarseLabel} / {mappedTopDiseaseName}
-                                </Text>
+                    <LinearGradient
+                        colors={getRiskColor(result.riskLevel)}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.topResultGradient}
+                    >
+                        <View style={styles.topResultHeader}>
+                        <View style={styles.diagnosisContainer}>
+                            <Text style={styles.diagnosisLabel}>최우선 예측 질병</Text>
+                            <View style={styles.diagnosisBadge}>
+                            <FontAwesome5 name="medal" size={14} color="#fff" />
+                            <Text style={styles.diagnosisBadgeText}>TOP 1</Text>
                             </View>
+                        </View>
+                        <Text style={styles.diseaseName}>
+                            {result.coarseLabel} / {mappedTopDiseaseName}
+                        </Text>
+                        </View>
 
-                            <View style={styles.riskIndicatorContainer}>
-                                <View style={styles.riskIndicator}>
-                                    <Text style={styles.riskScoreText}>
-                                        {(topDisease.riskScore * 100).toFixed(1)}%
-                                    </Text>
-                                    <Text style={styles.riskLevelText}>
-                                        {result.riskLevel} <Text style={styles.riskEmoji}>{getRiskEmoji(result.riskLevel)}</Text>
-                                    </Text>
-                                </View>
-                                <View style={styles.circleContainer}>
-                                    <View style={[styles.circle, styles.innerCircle]} />
-                                    <View
-                                        style={[
-                                            styles.progressCircle,
-                                            {
-                                                height: `${topDisease.riskScore * 100}%`,
-                                                backgroundColor:
-                                                    result.riskLevel === "높음"
-                                                        ? "#ff4b2b"
-                                                        : result.riskLevel === "중간"
-                                                        ? "#fc4a1a"
-                                                        : "#56ab2f",
-                                            },
-                                        ]}
-                                    />
-                                </View>
+                        <View style={styles.riskIndicatorContainer}>
+                        <View style={styles.riskIndicator}>
+                        <View>
+                            <Text style={styles.riskScoreLabel}>예측확률</Text>
+                            <Text style={styles.riskScoreText}>
+                            {(topDisease.riskScore * 100).toFixed(1)}%
+                            </Text>
+                        </View>
+
+                        {/* ✅ 위험도 + 버튼 가로 배치 */}
+                        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+                            <Text style={styles.riskLevelText}>
+                            {result.riskLevel} <Text style={styles.riskEmoji}>{getRiskEmoji(result.riskLevel)}</Text>
+                            </Text>
+                            <View style={{ marginLeft: 6 }}>
+                            <RiskGuidelineButton riskLevel={result.riskLevel as any} />
                             </View>
-                        </LinearGradient>
+                        </View>
+                        </View>
+
+                        <View style={styles.circleContainer}>
+                            <View style={[styles.circle, styles.innerCircle]} />
+                            <View
+                            style={[
+                                styles.progressCircle,
+                                {
+                                height: `${topDisease.riskScore * 100}%`,
+                                backgroundColor:
+                                    result.riskLevel === "높음"
+                                    ? "#ff4b2b"
+                                    : result.riskLevel === "중간"
+                                    ? "#fc4a1a"
+                                    : "#56ab2f",
+                                },
+                            ]}
+                            />
+                        </View>
+                        </View>
+                    </LinearGradient>
                     </View>
+
 
                     {/* 질병 정보 카드 */}
                     {diseaseInfo?.description && (
@@ -254,12 +272,15 @@ export default function ResultScreen() {
                                         <View style={styles.progressBarContainer}>
                                             <View style={[styles.progressBar, { width: `${rank.riskScore * 100}%` }]} />
                                         </View>
-                                        <Text style={styles.diseaseScore}>{(rank.riskScore * 100).toFixed(1)}%</Text>
+                                        <Text style={styles.diseaseScore}>확률: {(rank.riskScore * 100).toFixed(1)}%</Text>
                                     </View>
                                 </TouchableOpacity>
                             ))}
                         </View>
                     </View>
+                    <Text style={styles.disclaimerText}>
+  본 예측 결과는 참고용이며, 정확한 진단 및 치료는 반드시 의사와 상담하시기 바랍니다.
+</Text>
 
                     {/* 푸터 버튼 */}
                     <View style={styles.footerButtons}>
@@ -422,6 +443,11 @@ const styles = StyleSheet.create({
     riskScoreText: {
         fontSize: 28,
         fontWeight: "800",
+        color: "#fff",
+    },
+    riskScoreLabel: {
+        fontSize: 16,
+        fontWeight: "600",
         color: "#fff",
     },
     riskLevelText: {
@@ -614,4 +640,12 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         fontSize: 16,
     },
+    disclaimerText: {
+        fontSize: 13,
+        color: "#666",
+        textAlign: "center",
+        marginBottom: 20,
+        marginHorizontal: 20,
+        lineHeight: 18,
+      },
 });
