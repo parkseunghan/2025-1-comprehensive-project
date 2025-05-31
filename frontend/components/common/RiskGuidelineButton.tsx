@@ -55,7 +55,7 @@ export default RiskGuidelineButton;
 
 const styles = StyleSheet.create({
     iconButton: {
-        backgroundColor: "rgba(255, 255, 255, 0.3)", 
+        backgroundColor: "rgba(255, 255, 255, 0.1)", 
         borderRadius: 20,
         paddingHorizontal: 8,
         paddingVertical: 4,

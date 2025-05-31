@@ -11,6 +11,7 @@ import {
     Dimensions,
     StatusBar,
     Animated,
+    RefreshControl,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -19,9 +20,8 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
-// ✅ 수출명 제거 유틸
 const extractItemName = (raw: string): string =>
     raw.replace(/\(수출명\s*:\s*.*?\)/g, "").trim();
 
@@ -29,11 +29,27 @@ const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
     const { user } = useAuthStore();
-    const { data: profile } = useQuery({
+    const {
+        data: profile,
+        refetch,
+    } = useQuery({
         queryKey: ["user", user?.id],
         queryFn: () => fetchCurrentUser(user!.id),
         enabled: !!user?.id,
     });
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        try {
+            setRefreshing(true);
+            await refetch(); // ✅ 서버에서 유저 정보 다시 불러오기
+        } catch (error) {
+            console.error("새로고침 중 오류 발생:", error);
+        } finally {
+            setRefreshing(false);
+        }
+    }, [refetch]);
 
     // 애니메이션 값들
     const welcomeOpacity = useRef(new Animated.Value(0)).current;
@@ -43,30 +59,25 @@ export default function HomeScreen() {
     const todayOpacity = useRef(new Animated.Value(0)).current;
     const todayTranslateY = useRef(new Animated.Value(30)).current;
 
-    // 컴포넌트 마운트 시 애니메이션 실행
     useEffect(() => {
         const animateTexts = () => {
-            // 환영 메시지 애니메이션
             Animated.timing(welcomeOpacity, {
                 toValue: 1,
                 duration: 800,
                 useNativeDriver: true,
             }).start();
-            
             Animated.timing(welcomeTranslateY, {
                 toValue: 0,
                 duration: 800,
                 useNativeDriver: true,
             }).start();
 
-            // 이름 애니메이션 (300ms 지연)
             setTimeout(() => {
                 Animated.timing(nameOpacity, {
                     toValue: 1,
                     duration: 800,
                     useNativeDriver: true,
                 }).start();
-                
                 Animated.timing(nameTranslateY, {
                     toValue: 0,
                     duration: 800,
@@ -74,14 +85,12 @@ export default function HomeScreen() {
                 }).start();
             }, 300);
 
-            // 오늘 메시지 애니메이션 (600ms 지연)
             setTimeout(() => {
                 Animated.timing(todayOpacity, {
                     toValue: 1,
                     duration: 800,
                     useNativeDriver: true,
                 }).start();
-                
                 Animated.timing(todayTranslateY, {
                     toValue: 0,
                     duration: 800,
@@ -112,11 +121,18 @@ export default function HomeScreen() {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            
-            <ScrollView 
+            <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.contentContainer}
                 style={styles.scrollView}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor="#D92B4B"
+                        colors={["#D92B4B"]}
+                    />
+                }
             >
                 {/* 상단 그라데이션 헤더 - 스크롤 가능 */}
                 <LinearGradient
@@ -401,14 +417,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#F8F9FC",
     },
-    
     scrollView: {
         flex: 1,
     },
     contentContainer: {
         paddingBottom: 30,
-    },
-    
+    },    
     // 헤더 스타일 - 스크롤 가능하도록 수정
     headerGradient: {
         paddingTop: Platform.OS === 'ios' ? 60 : 40,
