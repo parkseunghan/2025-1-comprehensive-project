@@ -220,7 +220,7 @@ SYMPTOM_MAPPING = {
         "ko": ["삼킴 곤란", "음식 삼키기 어려워요", "삼킬 때 아파요"],
         "en": ["difficulty swallowing", "swallowing pain"],
         "token_sets": [
-            {"part1": ["삼킴", "삼키"], "part2": ["곤란", "어렵", "불편", "아프"]}
+            {"part1": ["삼킴", "삼키기"], "part2": ["곤란", "어렵", "불편", "아프", "힘들"]}
         ],
     },
     "발열": {

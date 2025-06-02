@@ -42,7 +42,7 @@ Now extract symptoms from this sentence:
         console.log(`[extractSymptoms] 🔁 LLM 요청 시도 ${i + 1}...`);
         try {
             const res = await axios.post("http://localhost:11434/api/generate", {
-                model: "mistral",
+                model: "phi3",
                 stream: false,
                 prompt,
             });
