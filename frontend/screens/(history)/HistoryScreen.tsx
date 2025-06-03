@@ -1,4 +1,5 @@
-import React from "react";
+// 📄 screens/(history)/HistoryScreen.tsx
+import React, { useState } from "react";
 import {
     View,
     Text,
@@ -13,10 +14,11 @@ import { fetchPredictionStats } from "@/services/prediction.api";
 import { Prediction } from "@/types/prediction.types";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import HistoryDetailModal from "@/modals/history-detail.modal";
 
 export default function HistoryScreen() {
     const insets = useSafeAreaInsets();
+    const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
 
     const { data, isLoading } = useQuery<Prediction[]>({
         queryKey: ["predictionHistory"],
@@ -55,7 +57,6 @@ export default function HistoryScreen() {
     };
 
     const renderItem = ({ item }: { item: Prediction }) => {
-        if (!item.id) console.warn("❗ 예측 항목에 ID가 없습니다:", item);
         const date = formatDate(item.createdAt);
         const color = getRiskColor(item.riskLevel);
         const iconName = getRiskIcon(item.riskLevel);
@@ -64,18 +65,7 @@ export default function HistoryScreen() {
             <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.7}
-                onPress={() =>
-                    router.push({
-                        pathname: "/(record)/historydetailscreen",
-                        params: {
-                            date,
-                            coarseLabel: item.coarseLabel,
-                            fineLabel: item.fineLabel,
-                            riskLevel: item.riskLevel,
-                            riskScore: String(item.riskScore),
-                        },
-                    })
-                }
+                onPress={() => setSelectedPrediction(item)}
             >
                 <View style={styles.dateRow}>
                     <Ionicons name="calendar-outline" size={16} color="#6B7280" />
@@ -92,9 +82,7 @@ export default function HistoryScreen() {
 
                     <View style={styles.riskContainer}>
                         <Text style={styles.riskTitle}>위험도</Text>
-                        <View
-                            style={[styles.riskBadge, { backgroundColor: color + "20" }]}
-                        >
+                        <View style={[styles.riskBadge, { backgroundColor: color + "20" }]}>
                             <Ionicons name={iconName} size={16} color={color} />
                             <Text style={[styles.riskValue, { color }]}>{item.riskLevel}</Text>
                         </View>
@@ -121,16 +109,6 @@ export default function HistoryScreen() {
         );
     };
 
-    const renderEmptyList = () => (
-        <View style={styles.emptyContainer}>
-            <Ionicons name="document-text-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>기록이 없습니다</Text>
-            <Text style={styles.emptySubtitle}>
-                예측을 실행하면 이곳에 기록이 표시됩니다
-            </Text>
-        </View>
-    );
-
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.header}>
@@ -145,17 +123,19 @@ export default function HistoryScreen() {
             ) : (
                 <FlatList
                     data={data}
-                    keyExtractor={(item, index) => {
-                        const key = item.id || `prediction-${index}`;
-                        console.log("🔑 Key used:", key);
-                        return key;
-                    }}
+                    keyExtractor={(item, index) => item.id || `prediction-${index}`}
                     renderItem={renderItem}
                     contentContainerStyle={styles.list}
-                    ListEmptyComponent={renderEmptyList}
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            {/* ✅ 예측 상세 모달 */}
+            <HistoryDetailModal
+                visible={!!selectedPrediction}
+                prediction={selectedPrediction}
+                onClose={() => setSelectedPrediction(null)}
+            />
         </View>
     );
 }

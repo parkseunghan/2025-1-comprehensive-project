@@ -5,6 +5,7 @@ import {
     StyleSheet,
     TouchableOpacity,
     TextInput,
+    Animated,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllDiseases } from "@/services/disease.api";
@@ -12,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BackButton from "@/common/BackButton";
 import { Disease } from "@/types/disease.types";
 import { Feather } from "@expo/vector-icons";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import DiseaseDetailModal from "@/modals/disease-detail.modal";
 
 export default function DiseaseScreen() {
@@ -26,6 +27,25 @@ export default function DiseaseScreen() {
     const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
 
+    // 애니메이션 상태
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(30)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
     const filteredDiseases = useMemo(() => {
         if (!data) return [];
         return data.filter((d) =>
@@ -38,15 +58,16 @@ export default function DiseaseScreen() {
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
+            {/* 🔹 헤더 (애니메이션 없음) */}
             <View style={styles.header}>
                 <BackButton />
-                <View style={styles.titleRow}>
-                    <Feather name="book-open" size={24} color="#7F66FF" style={{ marginRight: 10 }} />
+                <View style={styles.headerTitleWrapper}>
                     <Text style={styles.title}>질병 도감</Text>
                 </View>
+                <View style={{ width: 40 }} />
             </View>
 
-            {/* 🔍 개선된 검색창 */}
+            {/* 🔍 검색창 (애니메이션 없음) */}
             <View style={styles.searchWrapper}>
                 <Feather
                     name="search"
@@ -63,43 +84,52 @@ export default function DiseaseScreen() {
                 />
             </View>
 
-            <FlatList
-                data={filteredDiseases}
-                keyExtractor={(item) => item.sickCode}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        onPress={() => {
-                            setSelectedDisease(item);
-                            setModalVisible(true);
-                        }}
-                    >
-                        <View style={styles.card}>
-                            <Text style={styles.name}>{item.name}</Text>
-                            <Text style={styles.desc} numberOfLines={2}>
-                                {item.description || "설명 없음"}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                )}
-                ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
-                ListEmptyComponent={() => (
-                    <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
-                )}
-            />
+            {/* 🔽 애니메이션 적용 영역 */}
+            <Animated.View
+                style={{
+                    flex: 1,
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }],
+                }}
+            >
+                <FlatList
+                    data={filteredDiseases}
+                    keyExtractor={(item) => item.sickCode}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            onPress={() => {
+                                setSelectedDisease(item);
+                                setModalVisible(true);
+                            }}
+                        >
+                            <View style={styles.card}>
+                                <Text style={styles.name}>{item.name}</Text>
+                                <Text style={styles.desc} numberOfLines={2}>
+                                    {item.description || "설명 없음"}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    )}
+                    ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                    contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+                    ListEmptyComponent={() => (
+                        <Text style={styles.emptyText}>검색 결과가 없습니다.</Text>
+                    )}
+                />
 
-            <DiseaseDetailModal
-                visible={modalVisible}
-                disease={selectedDisease}
-                onClose={() => setModalVisible(false)}
-            />
+                <DiseaseDetailModal
+                    visible={modalVisible}
+                    disease={selectedDisease}
+                    onClose={() => setModalVisible(false)}
+                />
 
-            <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
-                <Text style={styles.footerText}>
-                    ※ 본 질병 정보는 건강보험심사평가원 API를 기반으로 하며,{"\n"}
-                    공공누리 제1유형(출처표시)에 따라 자유롭게 이용할 수 있습니다.
-                </Text>
-            </View>
+                <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
+                    <Text style={styles.footerText}>
+                        ※ 본 질병 정보는 건강보험심사평가원 API를 기반으로 하며,{"\n"}
+                        공공누리 제1유형(출처표시)에 따라 자유롭게 이용할 수 있습니다.
+                    </Text>
+                </View>
+            </Animated.View>
         </View>
     );
 }
@@ -111,13 +141,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     header: {
-        paddingTop: 24,
-        marginBottom: 12,
-    },
-    titleRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginTop: 12,
+        justifyContent: "space-between",
+        paddingTop: 30,
+        marginBottom: 25,
+    },
+    headerTitleWrapper: {
+        flex: 1,
+        alignItems: "center",
     },
     title: {
         fontSize: 22,
@@ -171,10 +203,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
     },
     footer: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
+        marginTop: 12,
         backgroundColor: "#fff",
         paddingVertical: 8,
         paddingHorizontal: 16,

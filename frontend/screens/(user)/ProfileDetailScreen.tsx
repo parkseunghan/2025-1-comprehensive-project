@@ -1,4 +1,4 @@
-// ✅ Enhanced ProfileDetailScreen.tsx
+// ✅ Enhanced ProfileDetailScreen.tsx (고정 헤더 + 카드 애니메이션)
 import {
     View,
     Text,
@@ -9,8 +9,8 @@ import {
     TextInput,
     Alert,
     StatusBar,
-    Animated,
     Dimensions,
+    Animated,
 } from "react-native";
 import { Ionicons, Feather, FontAwesome5 } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -32,16 +32,6 @@ const { width } = Dimensions.get("window");
 
 export default function ProfileDetailScreen() {
     const { user, token, setAuth } = useAuthStore();
-
-    // 애니메이션 레퍼런스들
-    const titleOpacity = useRef(new Animated.Value(0)).current;
-    const titleTranslateY = useRef(new Animated.Value(30)).current;
-    const cardOpacity = useRef(new Animated.Value(0)).current;
-    const cardTranslateY = useRef(new Animated.Value(50)).current;
-    const formOpacity = useRef(new Animated.Value(0)).current;
-    const formTranslateY = useRef(new Animated.Value(50)).current;
-    const buttonOpacity = useRef(new Animated.Value(0)).current;
-    const buttonScale = useRef(new Animated.Value(0.9)).current;
 
     const { data: profile } = useQuery({
         queryKey: ["user", user?.id],
@@ -82,74 +72,38 @@ export default function ProfileDetailScreen() {
     const [diseaseListModalOpen, setDiseaseListModalOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("");
 
+    // 애니메이션을 위한 Animated Values
+    const profileCardAnimation = useRef(new Animated.Value(0)).current;
+    const basicInfoAnimation = useRef(new Animated.Value(0)).current;
+    const medicalInfoAnimation = useRef(new Animated.Value(0)).current;
+    const saveButtonAnimation = useRef(new Animated.Value(0)).current;
+
     const uniqueCategories = useMemo(() => {
         return [...new Set(diseaseList.map((d) => d.category).filter(Boolean))];
     }, [diseaseList]);
 
-    // 애니메이션 실행
-    useEffect(() => {
-        const animateComponents = () => {
-            // 제목 애니메이션
-            Animated.timing(titleOpacity, {
-                toValue: 1,
-                duration: 800,
-                useNativeDriver: true,
-            }).start();
-            
-            Animated.timing(titleTranslateY, {
+    const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+    const successAnim = useRef(new Animated.Value(0)).current;
+
+    const showSuccess = () => {
+        setShowSuccessBanner(true);
+        Animated.timing(successAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+        }).start();
+
+        setTimeout(() => {
+            Animated.timing(successAnim, {
                 toValue: 0,
-                duration: 800,
+                duration: 300,
                 useNativeDriver: true,
-            }).start();
-
-            // 카드 애니메이션 (200ms 지연)
-            setTimeout(() => {
-                Animated.timing(cardOpacity, {
-                    toValue: 1,
-                    duration: 800,
-                    useNativeDriver: true,
-                }).start();
-                
-                Animated.timing(cardTranslateY, {
-                    toValue: 0,
-                    duration: 800,
-                    useNativeDriver: true,
-                }).start();
-            }, 200);
-
-            // 폼 애니메이션 (400ms 지연)
-            setTimeout(() => {
-                Animated.timing(formOpacity, {
-                    toValue: 1,
-                    duration: 800,
-                    useNativeDriver: true,
-                }).start();
-                
-                Animated.timing(formTranslateY, {
-                    toValue: 0,
-                    duration: 800,
-                    useNativeDriver: true,
-                }).start();
-            }, 400);
-
-            // 버튼 애니메이션 (600ms 지연)
-            setTimeout(() => {
-                Animated.timing(buttonOpacity, {
-                    toValue: 1,
-                    duration: 600,
-                    useNativeDriver: true,
-                }).start();
-                
-                Animated.timing(buttonScale, {
-                    toValue: 1,
-                    duration: 600,
-                    useNativeDriver: true,
-                }).start();
-            }, 600);
-        };
-
-        animateComponents();
-    }, []);
+            }).start(() => {
+                setShowSuccessBanner(false);
+                router.replace("/(tabs)/home");
+            });
+        }, 2500);
+    };
 
     useEffect(() => {
         if (profile) {
@@ -164,6 +118,31 @@ export default function ProfileDetailScreen() {
             setSelectedMedicationIds(profile.medications.map((m) => m.id));
         }
     }, [profile]);
+
+    // 컴포넌트 마운트 시 애니메이션 실행
+    useEffect(() => {
+        const animations = [
+            { anim: profileCardAnimation, delay: 100 },
+            { anim: basicInfoAnimation, delay: 200 },
+            { anim: medicalInfoAnimation, delay: 300 },
+            { anim: saveButtonAnimation, delay: 400 },
+        ];
+
+        const animationPromises = animations.map(
+            ({ anim, delay }) =>
+                new Promise<void>((resolve) => {
+                    setTimeout(() => {
+                        Animated.timing(anim, {
+                            toValue: 1,
+                            duration: 600,
+                            useNativeDriver: true,
+                        }).start(() => resolve());
+                    }, delay);
+                })
+        );
+
+        Promise.all(animationPromises);
+    }, []);
 
     const mutation = useMutation({
         mutationFn: async () => {
@@ -204,11 +183,7 @@ export default function ProfileDetailScreen() {
                 })),
             };
             setAuth(token!, mappedUser);
-            Alert.alert("저장 완료", "프로필 정보가 저장되었습니다.");
-            router.replace("/(tabs)/home");
-        },
-        onError: () => {
-            Alert.alert("오류", "프로필 저장에 실패했습니다.");
+            showSuccess(); // ✅ 배너 표시 함수 호출
         },
     });
 
@@ -221,57 +196,60 @@ export default function ProfileDetailScreen() {
     return (
         <View style={styles.root}>
             <StatusBar barStyle="light-content" />
-            
-            {/* 상단 그라데이션 헤더 */}
-            <LinearGradient
-                colors={['#D92B4B', '#FF6B8A']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.headerGradient}
-            >
-                <BackButton style={styles.backButton} />
-                <Animated.Text 
-                    style={[
-                        styles.title,
-                        {
-                            opacity: titleOpacity,
-                            transform: [{ translateY: titleTranslateY }]
-                        }
-                    ]}
+
+            {/* 고정 상단 그라데이션 헤더 */}
+            <View style={styles.fixedHeader}>
+                <LinearGradient
+                    colors={["#D92B4B", "#FF6B8A"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.headerGradient}
                 >
-                    프로필 정보
-                </Animated.Text>
-            </LinearGradient>
+                    <BackButton style={styles.backButton} />
+                    <Text style={styles.title}>프로필 정보</Text>
+                </LinearGradient>
+            </View>
 
             <ScrollView
                 contentContainerStyle={styles.container}
                 showsVerticalScrollIndicator={false}
                 style={styles.scrollView}
             >
-                {/* 프로필 카드 */}
-                <Animated.View 
+                {/* 프로필 카드 - 애니메이션 적용 */}
+                <Animated.View
                     style={[
                         styles.profileCardContainer,
                         {
-                            opacity: cardOpacity,
-                            transform: [{ translateY: cardTranslateY }]
-                        }
+                            opacity: profileCardAnimation,
+                            transform: [
+                                {
+                                    translateY:
+                                        profileCardAnimation.interpolate({
+                                            inputRange: [0, 1],
+                                            outputRange: [50, 0],
+                                        }),
+                                },
+                            ],
+                        },
                     ]}
                 >
                     <View style={styles.card}>
                         <LinearGradient
-                            colors={['#D92B4B', '#FF6B8A']}
+                            colors={["#D92B4B", "#FF6B8A"]}
                             style={styles.avatar}
                         >
                             <Feather name="user" size={32} color="#ffffff" />
                         </LinearGradient>
-                        
+
                         <EditableNameField
                             value={editableProfile.name}
                             editing={editField === "name"}
                             onPressEdit={() => setEditField("name")}
                             onChange={(v: string) =>
-                                setEditableProfile((prev) => ({ ...prev, name: v }))
+                                setEditableProfile((prev) => ({
+                                    ...prev,
+                                    name: v,
+                                }))
                             }
                             onBlur={() => setEditField(null)}
                         />
@@ -280,18 +258,31 @@ export default function ProfileDetailScreen() {
                 </Animated.View>
 
                 {/* 정보 입력 폼 */}
-                <Animated.View 
-                    style={[
-                        styles.formContainer,
-                        {
-                            opacity: formOpacity,
-                            transform: [{ translateY: formTranslateY }]
-                        }
-                    ]}
-                >
-                    <View style={styles.infoBox}>
+                <View style={styles.formContainer}>
+                    {/* 기본 정보 - 애니메이션 적용 */}
+                    <Animated.View
+                        style={[
+                            styles.infoBox,
+                            {
+                                opacity: basicInfoAnimation,
+                                transform: [
+                                    {
+                                        translateY:
+                                            basicInfoAnimation.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: [50, 0],
+                                            }),
+                                    },
+                                ],
+                            },
+                        ]}
+                    >
                         <View style={styles.sectionHeader}>
-                            <FontAwesome5 name="user-edit" size={16} color="#D92B4B" />
+                            <FontAwesome5
+                                name="user-edit"
+                                size={16}
+                                color="#D92B4B"
+                            />
                             <Text style={styles.sectionTitle}>기본 정보</Text>
                         </View>
 
@@ -312,7 +303,8 @@ export default function ProfileDetailScreen() {
                                         <View
                                             style={[
                                                 styles.radioCircle,
-                                                editableProfile.gender === item &&
+                                                editableProfile.gender ===
+                                                    item &&
                                                     styles.radioCircleSelected,
                                             ]}
                                         />
@@ -330,7 +322,10 @@ export default function ProfileDetailScreen() {
                             editing={editField === "age"}
                             onPressEdit={() => setEditField("age")}
                             onChange={(v: string) =>
-                                setEditableProfile((prev) => ({ ...prev, age: v }))
+                                setEditableProfile((prev) => ({
+                                    ...prev,
+                                    age: v,
+                                }))
                             }
                             onBlur={() => setEditField(null)}
                             icon="calendar"
@@ -366,12 +361,32 @@ export default function ProfileDetailScreen() {
                             icon="activity"
                             unit="kg"
                         />
-                    </View>
+                    </Animated.View>
 
-                    {/* 의료 정보 섹션 */}
-                    <View style={styles.infoBox}>
+                    {/* 의료 정보 섹션 - 애니메이션 적용 */}
+                    <Animated.View
+                        style={[
+                            styles.infoBox,
+                            {
+                                opacity: medicalInfoAnimation,
+                                transform: [
+                                    {
+                                        translateY:
+                                            medicalInfoAnimation.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: [50, 0],
+                                            }),
+                                    },
+                                ],
+                            },
+                        ]}
+                    >
                         <View style={styles.sectionHeader}>
-                            <FontAwesome5 name="heartbeat" size={16} color="#D92B4B" />
+                            <FontAwesome5
+                                name="file-medical"
+                                size={16}
+                                color="#D92B4B"
+                            />
                             <Text style={styles.sectionTitle}>의료 정보</Text>
                         </View>
 
@@ -396,18 +411,19 @@ export default function ProfileDetailScreen() {
                                                     prev.filter((v) => v !== id)
                                                 )
                                             }
-                                            style={[styles.tag, { borderColor: '#D92B4B' + '40' }]}
+                                            style={[
+                                                styles.tag,
+                                                { borderColor: "#D92B4B30" },
+                                            ]}
                                         >
-                                            <Text style={[styles.tagText, { color: '#D92B4B' }]}>
-                                                {disease?.name}
+                                            <Text style={styles.tagText}>
+                                                {disease?.name} ✕
                                             </Text>
-                                            <Ionicons name="close" size={14} color="#D92B4B" />
                                         </TouchableOpacity>
                                     );
                                 })}
                             </View>
                         )}
-
                         <EditableTextWithButton
                             label="복용 약물"
                             value=""
@@ -429,36 +445,50 @@ export default function ProfileDetailScreen() {
                                         <TouchableOpacity
                                             key={id}
                                             onPress={() =>
-                                                setSelectedMedicationIds((prev) =>
-                                                    prev.filter((v) => v !== id)
+                                                setSelectedMedicationIds(
+                                                    (prev) =>
+                                                        prev.filter(
+                                                            (v) => v !== id
+                                                        )
                                                 )
                                             }
-                                            style={[styles.tag, { borderColor: '#4A90E2' + '40' }]}
+                                            style={[
+                                                styles.tag,
+                                                { borderColor: "#4A90E230" },
+                                            ]}
                                         >
-                                            <Text 
-                                                style={[styles.tagText, { color: '#4A90E2' }]}
+                                            <Text
+                                                style={styles.tagText}
                                                 numberOfLines={1}
                                                 ellipsizeMode="tail"
                                             >
-                                                {displayName}
+                                                {displayName} ✕
                                             </Text>
-                                            <Ionicons name="close" size={14} color="#4A90E2" />
                                         </TouchableOpacity>
                                     );
                                 })}
                             </View>
                         )}
-                    </View>
-                </Animated.View>
+                    </Animated.View>
+                </View>
 
-                {/* 저장 버튼 */}
-                <Animated.View 
+                {/* 저장 버튼 - 애니메이션 적용 */}
+                <Animated.View
                     style={[
                         styles.saveButtonWrapper,
                         {
-                            opacity: buttonOpacity,
-                            transform: [{ scale: buttonScale }]
-                        }
+                            opacity: saveButtonAnimation,
+                            transform: [
+                                {
+                                    translateY: saveButtonAnimation.interpolate(
+                                        {
+                                            inputRange: [0, 1],
+                                            outputRange: [50, 0],
+                                        }
+                                    ),
+                                },
+                            ],
+                        },
                     ]}
                 >
                     <TouchableOpacity
@@ -467,15 +497,21 @@ export default function ProfileDetailScreen() {
                         disabled={mutation.isPending}
                     >
                         <LinearGradient
-                            colors={['#D92B4B', '#FF6B8A']}
+                            colors={["#D92B4B", "#FF6B8A"]}
                             style={styles.saveButtonGradient}
                         >
                             {mutation.isPending ? (
                                 <Text style={styles.saveText}>저장 중...</Text>
                             ) : (
                                 <>
-                                    <Feather name="check" size={18} color="#ffffff" />
-                                    <Text style={styles.saveText}>저장하기</Text>
+                                    <Feather
+                                        name="check"
+                                        size={18}
+                                        color="#ffffff"
+                                    />
+                                    <Text style={styles.saveText}>
+                                        저장하기
+                                    </Text>
                                 </>
                             )}
                         </LinearGradient>
@@ -522,6 +558,51 @@ export default function ProfileDetailScreen() {
                     }}
                 />
             </ScrollView>
+            {showSuccessBanner && (
+                <Animated.View
+                    style={[
+                        {
+                            position: "absolute",
+                            top: 100,
+                            left: 20,
+                            right: 20,
+                            backgroundColor: "#22C55E",
+                            paddingVertical: 12,
+                            paddingHorizontal: 16,
+                            borderRadius: 12,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            zIndex: 2000,
+                            elevation: 10,
+                            opacity: successAnim,
+                            transform: [
+                                {
+                                    translateY: successAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [-40, 0],
+                                    }),
+                                },
+                            ],
+                        },
+                    ]}
+                >
+                    <Feather
+                        name="check-circle"
+                        size={18}
+                        color="#fff"
+                        style={{ marginRight: 8 }}
+                    />
+                    <Text
+                        style={{
+                            color: "#fff",
+                            fontSize: 14,
+                            fontWeight: "500",
+                        }}
+                    >
+                        저장 완료! 프로필이 업데이트되었습니다.
+                    </Text>
+                </Animated.View>
+            )}
         </View>
     );
 }
@@ -547,7 +628,9 @@ function EditableNameField({
                 />
             ) : (
                 <TouchableOpacity onPress={onPressEdit} style={styles.nameRow}>
-                    <Text style={styles.userName}>{value || "이름을 입력하세요"}</Text>
+                    <Text style={styles.userName}>
+                        {value || "이름을 입력하세요"}
+                    </Text>
                     <View style={styles.editIconContainer}>
                         <Feather name="edit-2" size={14} color="#D92B4B" />
                     </View>
@@ -576,7 +659,7 @@ function EditableField({
                     </View>
                     <Text style={styles.itemLabel}>{label}</Text>
                 </View>
-                
+
                 <TouchableOpacity
                     onPress={onPressEdit}
                     style={styles.editButton}
@@ -600,7 +683,10 @@ function EditableField({
                     {unit && <Text style={styles.unitText}>{unit}</Text>}
                 </View>
             ) : (
-                <TouchableOpacity onPress={onPressEdit} style={styles.valueContainer}>
+                <TouchableOpacity
+                    onPress={onPressEdit}
+                    style={styles.valueContainer}
+                >
                     <Text style={styles.itemValue}>
                         {value || "입력되지 않음"}
                         {value && unit && ` ${unit}`}
@@ -612,21 +698,36 @@ function EditableField({
 }
 
 function EditableTextWithButton({ label, value, onPress, icon, color }: any) {
+    const getIconName = () => {
+        if (label === "지병") return "heartbeat";
+        if (label === "복용 약물") return "pills";
+        return "notes-medical";
+    };
+
+    const getIconColor = () => {
+        if (label === "지병") return "#D92B4B"; // 빨강
+        if (label === "복용 약물") return "#4A90E2"; // 파랑
+        return;
+    };
+
     return (
         <View style={styles.itemRow}>
             <View style={styles.itemHeader}>
                 <View style={styles.labelContainer}>
                     <View style={styles.fieldIcon}>
-                        <FontAwesome5 
-                            name={label === "지병" ? "heartbeat" : "pills"} 
-                            size={14} 
-                            color="#6B7280" 
+                        <FontAwesome5
+                            name={getIconName()}
+                            size={14}
+                            color={getIconColor()}
                         />
                     </View>
                     <Text style={styles.itemLabel}>{label}</Text>
                 </View>
-                
-                <TouchableOpacity onPress={onPress} style={[styles.addButton, { borderColor: color + '40' }]}>
+
+                <TouchableOpacity
+                    onPress={onPress}
+                    style={[styles.addButton, { borderColor: color + "40" }]}
+                >
                     <Feather name={icon} size={14} color={color} />
                 </TouchableOpacity>
             </View>
@@ -635,27 +736,31 @@ function EditableTextWithButton({ label, value, onPress, icon, color }: any) {
 }
 
 const styles = StyleSheet.create({
-    root: { 
-        flex: 1, 
-        backgroundColor: "#F8F9FC" 
+    root: {
+        flex: 1,
+        backgroundColor: "#F8F9FC",
     },
-    
-    // 헤더 스타일
+
+    // 고정 헤더 스타일
+    fixedHeader: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+    },
     headerGradient: {
-        paddingTop: Platform.OS === 'ios' ? 60 : 40,
-        paddingBottom: 30,
+        paddingTop: 25,
+        paddingBottom: 25,
         paddingHorizontal: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
     },
     backButton: {
         position: "absolute",
-        top: Platform.OS === 'ios' ? 60 : 40,
         left: 20,
         zIndex: 10,
         padding: 8,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 20,
     },
     title: {
         fontSize: 24,
@@ -663,16 +768,17 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         textAlign: "center",
     },
-    
+
     scrollView: {
         flex: 1,
+        marginTop: Platform.OS === "ios" ? 120 : 100, // 고정 헤더 높이만큼 여백 추가
     },
-    container: { 
-        paddingTop: 20, 
-        paddingHorizontal: 20, 
-        paddingBottom: 30 
+    container: {
+        paddingTop: 20,
+        paddingHorizontal: 20,
+        paddingBottom: 30,
     },
-    
+
     // 프로필 카드 스타일
     profileCardContainer: {
         marginBottom: 24,
@@ -683,88 +789,83 @@ const styles = StyleSheet.create({
         paddingVertical: 32,
         paddingHorizontal: 24,
         alignItems: "center",
-        shadowColor: '#D92B4B',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 8,
-        borderWidth: 1,
-        borderColor: '#D92B4B' + '20',
+        borderWidth: 0.4,
+        borderColor: "#FF6B8A",
     },
     avatar: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
         marginBottom: 16,
     },
-    nameContainer: { 
-        width: "100%", 
-        alignItems: "center", 
-        marginBottom: 8 
+    nameContainer: {
+        width: "100%",
+        alignItems: "center",
+        marginBottom: 8,
     },
-    nameRow: { 
-        flexDirection: "row", 
+    nameRow: {
+        flexDirection: "row",
         alignItems: "center",
         gap: 8,
     },
-    userName: { 
-        fontSize: 22, 
-        fontWeight: "bold", 
+    userName: {
+        fontSize: 22,
+        fontWeight: "bold",
         color: "#111827",
-        textAlign: 'center',
+        textAlign: "center",
     },
     editIconContainer: {
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: '#FFE8ED',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: "#FFE8ED",
+        justifyContent: "center",
+        alignItems: "center",
     },
-    userEmail: { 
-        fontSize: 14, 
+    userEmail: {
+        fontSize: 14,
         color: "#6B7280",
         opacity: 0.8,
     },
-    
+
     // 폼 컨테이너
     formContainer: {
         gap: 20,
         marginBottom: 30,
     },
-    
+
     // 정보 박스 스타일
     infoBox: {
         backgroundColor: "#ffffff",
         borderRadius: 20,
         paddingHorizontal: 20,
         paddingVertical: 20,
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
         elevation: 4,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: "#E5E7EB",
     },
-    
+
     sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 8,
         marginBottom: 20,
         paddingBottom: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        borderBottomColor: "#F3F4F6",
     },
     sectionTitle: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
+        fontWeight: "bold",
+        color: "#333",
     },
-    
+
     itemRow: {
         paddingVertical: 16,
         borderBottomWidth: 1,
@@ -777,51 +878,49 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     labelContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 8,
     },
     fieldIcon: {
         width: 20,
         height: 20,
-        borderRadius: 10,
-        backgroundColor: '#F3F4F6',
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
-    itemLabel: { 
-        fontSize: 14, 
+    itemLabel: {
+        fontSize: 14,
         color: "#374151",
-        fontWeight: '500',
+        fontWeight: "500",
     },
     editButton: {
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: '#FFE8ED',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: "#FFE8ED",
+        justifyContent: "center",
+        alignItems: "center",
     },
     addButton: {
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: "#F9FAFB",
         borderWidth: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
-    itemValue: { 
-        fontSize: 16, 
-        fontWeight: "600", 
-        color: "#111827" 
+    itemValue: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#111827",
     },
     valueContainer: {
         paddingVertical: 4,
     },
     inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
         gap: 8,
     },
     itemInput: {
@@ -830,27 +929,27 @@ const styles = StyleSheet.create({
         color: "#111827",
         paddingVertical: 8,
         paddingHorizontal: 12,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: "#F9FAFB",
         borderRadius: 8,
         flex: 1,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: "#E5E7EB",
     },
     unitText: {
         fontSize: 14,
-        color: '#6B7280',
-        fontWeight: '500',
+        color: "#6B7280",
+        fontWeight: "500",
     },
-    
+
     // 라디오 버튼 스타일
-    radioGroup: { 
-        flexDirection: "row", 
-        gap: 32, 
-        marginTop: 8 
+    radioGroup: {
+        flexDirection: "row",
+        gap: 32,
+        marginTop: 8,
     },
-    radioItem: { 
-        flexDirection: "row", 
-        alignItems: "center" 
+    radioItem: {
+        flexDirection: "row",
+        alignItems: "center",
     },
     radioCircle: {
         width: 20,
@@ -859,19 +958,19 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: "#D1D5DB",
         marginRight: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
     radioCircleSelected: {
         borderColor: "#D92B4B",
         backgroundColor: "#D92B4B",
     },
-    radioLabel: { 
-        fontSize: 16, 
+    radioLabel: {
+        fontSize: 16,
         color: "#111827",
-        fontWeight: '500',
+        fontWeight: "500",
     },
-    
+
     // 태그 스타일
     tagContainer: {
         flexDirection: "row",
@@ -880,22 +979,18 @@ const styles = StyleSheet.create({
         marginTop: 12,
     },
     tag: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: "#FAFAFA",
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20,
         borderWidth: 1,
-        maxWidth: width * 0.7,
+        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: "#FAFAFA",
     },
     tagText: {
-        fontSize: 13,
-        fontWeight: '500',
-        flex: 1,
+        fontSize: 12,
+        color: "#4B5563",
+        fontWeight: "500",
     },
-    
+
     // 저장 버튼 스타일
     saveButtonWrapper: {
         marginTop: 20,
@@ -903,24 +998,24 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         borderRadius: 16,
-        overflow: 'hidden',
-        shadowColor: '#D92B4B',
+        overflow: "hidden",
+        shadowColor: "#D92B4B",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 6,
     },
     saveButtonGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
         paddingVertical: 16,
         paddingHorizontal: 24,
         gap: 8,
     },
     saveText: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
+        fontWeight: "bold",
+        color: "#FFFFFF",
     },
 });

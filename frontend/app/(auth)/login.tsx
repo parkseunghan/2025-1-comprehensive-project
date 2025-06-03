@@ -43,8 +43,6 @@ export default function LoginScreen() {
                 console.log("✅ 성별 있음 → 홈으로 이동");
                 router.replace("/(tabs)/home"); // 🏠 홈으로
             }
-            Alert.alert("✅ 로그인 성공", "홈 화면으로 이동합니다.");
-
         }
     };
 

@@ -8,7 +8,11 @@ import {
     StyleSheet,
     TextInput,
     Dimensions,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { Disease } from "@/types/disease.types";
 
 interface Props {
@@ -35,12 +39,30 @@ export default function DiseaseCategorySelectModal({
     const [searchTerm, setSearchTerm] = useState("");
     const [tempSelected, setTempSelected] = useState<string[]>([]);
 
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
     useEffect(() => {
         if (visible) {
             setSearchTerm("");
             setTempSelected(selected);
         }
-    }, [visible]);
+    }, [visible, selected]);
+
+    useEffect(() => {
+        const show = Keyboard.addListener("keyboardDidShow", (e) => {
+            setKeyboardHeight(e.endCoordinates.height);
+            setIsKeyboardVisible(true);
+        });
+        const hide = Keyboard.addListener("keyboardDidHide", () => {
+            setKeyboardHeight(0);
+            setIsKeyboardVisible(false);
+        });
+        return () => {
+            show.remove();
+            hide.remove();
+        };
+    }, []);
 
     const toggleDisease = (id: string) => {
         setTempSelected((prev) =>
@@ -51,80 +73,107 @@ export default function DiseaseCategorySelectModal({
     const filteredDiseases = diseaseList.filter((d) =>
         d.name.includes(searchTerm)
     );
-
     const showSearchResults = searchTerm.trim().length > 0;
+
+    const getContainerMaxHeight = () => {
+        if (isKeyboardVisible) {
+            return SCREEN_HEIGHT - keyboardHeight - 50;
+        }
+        return SCREEN_HEIGHT * 0.85;
+    };
+
+    const getModalHeight = () => {
+        const baseHeight = 160;
+        const maxContentHeight = SCREEN_HEIGHT * 0.8 - baseHeight;
+        if (isKeyboardVisible) {
+            const availableHeight = SCREEN_HEIGHT - keyboardHeight - 140;
+            return Math.min(availableHeight, maxContentHeight);
+        }
+        const itemHeight = 50;
+        const neededHeight = filteredDiseases.length * itemHeight;
+        const dynamicHeight = Math.min(neededHeight, maxContentHeight);
+        return Math.max(dynamicHeight, 150);
+    };
 
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-            <View style={styles.overlay}>
-                <View style={styles.container}>
-                    <Text style={styles.title}>지병 선택</Text>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+                <View style={styles.overlay}>
+                    <View style={[styles.container, { maxHeight: getContainerMaxHeight() }]}>
+                        <Text style={styles.title}>지병 선택</Text>
 
-                    <TextInput
-                        placeholder="질병명을 입력하세요"
-                        value={searchTerm}
-                        onChangeText={setSearchTerm}
-                        style={styles.searchInput}
-                        placeholderTextColor="#9CA3AF"
-                    />
+                        <View style={styles.searchWrapper}>
+                            <Feather name="search" size={18} color="#9CA3AF" style={styles.searchIcon} />
+                            <TextInput
+                                placeholder="질병명을 입력하세요"
+                                value={searchTerm}
+                                onChangeText={setSearchTerm}
+                                style={styles.searchInput}
+                                placeholderTextColor="#6B7280"
+                            />
+                        </View>
 
-                    <ScrollView
-                        style={styles.scrollArea}
-                        contentContainerStyle={{ paddingBottom: 12 }}
-                    >
-                        {showSearchResults ? (
-                            filteredDiseases.length > 0 ? (
-                                filteredDiseases.map((d) => (
+                        <ScrollView
+                            style={[styles.scrollArea, { maxHeight: getModalHeight() }]}
+                            contentContainerStyle={{ paddingBottom: 12 }}
+                            keyboardShouldPersistTaps="handled"
+                        >
+                            {showSearchResults ? (
+                                filteredDiseases.length > 0 ? (
+                                    filteredDiseases.map((d) => (
+                                        <TouchableOpacity
+                                            key={d.sickCode}
+                                            onPress={() => toggleDisease(d.sickCode)}
+                                            style={styles.item}
+                                        >
+                                            <Text
+                                                style={[
+                                                    styles.text,
+                                                    tempSelected.includes(d.sickCode) && styles.selected,
+                                                ]}
+                                            >
+                                                {d.name} {tempSelected.includes(d.sickCode) && "✔"}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))
+                                ) : (
+                                    <Text style={styles.noResult}>일치하는 질병이 없습니다.</Text>
+                                )
+                            ) : (
+                                categories.map((cat) => (
                                     <TouchableOpacity
-                                        key={d.sickCode}
-                                        onPress={() => toggleDisease(d.sickCode)}
+                                        key={cat}
+                                        onPress={() => onOpenSubcategory(cat)}
                                         style={styles.item}
                                     >
-                                        <Text
-                                            style={[
-                                                styles.text,
-                                                tempSelected.includes(d.sickCode) &&
-                                                    styles.selected,
-                                            ]}
-                                        >
-                                            {d.name} {tempSelected.includes(d.sickCode) && "✔"}
-                                        </Text>
+                                        <Text style={styles.text}>{cat}</Text>
                                     </TouchableOpacity>
                                 ))
-                            ) : (
-                                <Text style={styles.noResult}>일치하는 질병이 없습니다.</Text>
-                            )
-                        ) : (
-                            categories.map((cat) => (
-                                <TouchableOpacity
-                                    key={cat}
-                                    onPress={() => onOpenSubcategory(cat)}
-                                    style={styles.item}
-                                >
-                                    <Text style={styles.text}>{cat}</Text>
-                                </TouchableOpacity>
-                            ))
-                        )}
-                    </ScrollView>
+                            )}
+                        </ScrollView>
 
-                    <View style={styles.buttonRow}>
-                        <TouchableOpacity onPress={onClose} style={styles.button}>
-                            <Text style={styles.cancel}>닫기</Text>
-                        </TouchableOpacity>
-                        {showSearchResults && (
-                            <TouchableOpacity
-                                onPress={() => {
-                                    onSelectDiseases(tempSelected);
-                                    onClose();
-                                }}
-                                style={styles.button}
-                            >
-                                <Text style={styles.confirm}>선택 저장</Text>
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity onPress={onClose} style={styles.button}>
+                                <Text style={styles.cancel}>닫기</Text>
                             </TouchableOpacity>
-                        )}
+                            {showSearchResults && (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        onSelectDiseases(tempSelected);
+                                        onClose();
+                                    }}
+                                    style={styles.button}
+                                >
+                                    <Text style={styles.confirm}>선택 저장</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     </View>
                 </View>
-            </View>
+            </KeyboardAvoidingView>
         </Modal>
     );
 }
@@ -140,25 +189,37 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         borderRadius: 10,
         padding: 20,
-        maxHeight: SCREEN_HEIGHT * 0.8,
+        width: "100%",
+        minHeight: 250,
     },
     title: {
         fontSize: 18,
         fontWeight: "bold",
         marginBottom: 12,
     },
-    searchInput: {
-        height: 40,
-        borderWidth: 1.5,
-        borderColor: "#D1D5DB",
-        borderRadius: 8,
-        paddingHorizontal: 12,
+    searchWrapper: {
+        position: "relative",
         marginBottom: 12,
-        color: "black",
+    },
+    searchIcon: {
+        position: "absolute",
+        top: 12,
+        left: 10,
+        zIndex: 1,
+    },
+    searchInput: {
+        borderWidth: 1.5,
+        borderRadius: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 36,
+        fontSize: 15,
+        color: "#111827",
+        backgroundColor: "#fff",
+        borderColor: "#D92B4B",
     },
     scrollArea: {
-        maxHeight: SCREEN_HEIGHT * 0.5,
         marginBottom: 12,
+        flexShrink: 1,
     },
     item: {
         paddingVertical: 12,
@@ -188,9 +249,11 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 8,
         backgroundColor: "#f9fafb",
+        borderWidth: 1,
+        borderColor: "#D1D5DB",
     },
     cancel: {
-        color: "#6B7280",
+        color: "#000",
         fontWeight: "bold",
     },
     confirm: {

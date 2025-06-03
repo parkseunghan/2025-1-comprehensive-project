@@ -1,4 +1,3 @@
-// 📄 app/(auth)/signup.tsx
 import { useState } from "react";
 import {
     View,
@@ -16,6 +15,7 @@ import { signupUser } from "@/services/auth.api";
 import { useAuthStore } from "@/store/auth.store";
 import { signupSchema, SignupForm } from "@/schemas/auth.schema";
 import BackButton from "@/common/BackButton";
+import { Ionicons } from "@expo/vector-icons"; // ✅ 체크 아이콘 추가
 
 export default function SignupScreen() {
     const setAuth = useAuthStore((state) => state.setAuth);
@@ -28,7 +28,7 @@ export default function SignupScreen() {
     });
     const [emailCheckResult, setEmailCheckResult] = useState<null | boolean>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [agreeToTerms, setAgreeToTerms] = useState(false); // ✅ 추가
+    const [agreeToTerms, setAgreeToTerms] = useState(false);
 
     const handleChange = (key: keyof SignupForm, value: string) => {
         setForm((prev) => ({ ...prev, [key]: value }));
@@ -37,7 +37,7 @@ export default function SignupScreen() {
 
     const checkEmailDuplicate = () => {
         if (!form.email.trim()) return;
-        setEmailCheckResult(form.email !== "test@example.com"); // TODO: 실제 중복 확인 API로 교체
+        setEmailCheckResult(form.email !== "test@example.com"); // TODO: 실제 API로 교체
     };
 
     const handleSignup = async () => {
@@ -149,12 +149,14 @@ export default function SignupScreen() {
                 <View style={{ height: 24 }} />
             )}
 
-            {/* ✅ 개인정보 수집 동의 체크박스 */}
+            {/* ✅ 개인정보 수집 동의 체크버튼 */}
             <TouchableOpacity
                 style={styles.checkboxContainer}
                 onPress={() => setAgreeToTerms((prev) => !prev)}
             >
-                <View style={[styles.checkbox, agreeToTerms && styles.checkboxChecked]} />
+                <View style={styles.checkbox}>
+                    {agreeToTerms && <Ionicons name="checkmark" size={16} color="#D92B4B" />}
+                </View>
                 <Text style={styles.checkboxLabel}>개인정보 수집 및 이용에 동의합니다</Text>
             </TouchableOpacity>
 
@@ -246,10 +248,8 @@ const styles = StyleSheet.create({
         borderColor: '#9CA3AF',
         borderRadius: 4,
         marginRight: 8,
-    },
-    checkboxChecked: {
-        backgroundColor: '#D92B4B',
-        borderColor: '#D92B4B',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     checkboxLabel: {
         fontSize: 14,

@@ -178,9 +178,11 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 8,
         backgroundColor: "#f9fafb",
+        borderWidth: 1,
+        borderColor: "#D1D5DB",
     },
     cancel: {
-        color: "#6B7280",
+        color: "#000",
         fontWeight: "bold",
     },
     confirm: {
