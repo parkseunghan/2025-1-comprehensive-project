@@ -771,7 +771,7 @@ const styles = StyleSheet.create({
 
     scrollView: {
         flex: 1,
-        marginTop: Platform.OS === "ios" ? 120 : 100, // 고정 헤더 높이만큼 여백 추가
+        paddingTop: 90,
     },
     container: {
         paddingTop: 20,
