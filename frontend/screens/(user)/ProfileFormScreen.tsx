@@ -84,7 +84,7 @@ export default function ProfileFormScreen() {
                 ...parsed,
             });
 
-            Alert.alert("✅ 저장 완료", "프로필 정보가 저장되었습니다.");
+            
             router.replace("/(tabs)/home");
         } catch (err: any) {
             if (err instanceof z.ZodError) {

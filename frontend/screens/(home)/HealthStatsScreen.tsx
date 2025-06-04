@@ -125,7 +125,8 @@ export default function HealthStatsScreen() {
             ([name, count]) => {
                 let color = COLORS.success;
                 if (name.includes("높음")) color = COLORS.danger;
-                else if (name.includes("중간")) color = COLORS.warning;
+                else if (name.includes("중간")) color = COLORS.success;
+                else if (name.includes("보통")) color = COLORS.warning;
 
                 return {
                     name,
